@@ -1,0 +1,220 @@
+<?xml version="1.0"?>
+
+<project name="mpi" default="all" basedir=".">
+    <property name="mpi.dir" value="src/mpi"/>
+    <property name="doc.dir" value="doc"/>
+    <property name="mpjdev.dir" value="src/mpjdev"/>	
+    <property name="mpjbuf.dir" value="src/mpjbuf"/>
+    <property name="xdev.dir" value="src/xdev/"/>	
+    <property name="niodev.dir" value="src/xdev/niodev"/>   
+    <property name="lib.dir" value="lib/"/>   
+    <property name="src.dir" value="src"/>   
+    <property name="mx.native.dir" value="src/xdev/mxdev/lib"/>
+     
+    <!-- cannot access ${java.home} ..? --> 
+    <!-- <property name="java_home" 
+              value="/home/users/dsg/shafia/install/jdk1.5.0_05"/> -->
+    <property environment="env"/>
+    <property name="mx_home" value="${env.MX_HOME}"/>
+    <property name="java_home" value="${env.JAVA_HOME}"/>
+
+    <!-- <property name="mx_home" value="/usr/local/mx"/> 
+    <property environment="env"/> -->
+
+    <!-- If Batik toolkit is installed, define environment variable
+         BATIK_HOME to regenerate documentation PNG files from SVG
+    <property environment="env"/> -->
+    <property name="batik.dir" value="${env.BATIK_HOME}"/>
+
+    <!-- If Perl is not available in specified location, generation
+         of Java files from templates will be skipped. -->
+    
+    <property name="perl.executable" value="/usr/bin/perl"/>
+    <!--
+    <property name="perl.executable" value="c:/Perl/bin/perl.exe"/>
+    <property name="perl.executable" value="/cygwin/bin/perl.exe"/>
+    -->
+    
+    
+    <target name="havePerl">
+        <available property="perl.present" file="${perl.executable}"/>
+    </target>
+
+    <macrodef name="perl">
+
+        <attribute name="dir"/>
+        <attribute name="script"/>
+
+        <sequential>
+            <exec dir="@{dir}" executable="${perl.executable}">
+	        <arg value="@{script}" />
+            </exec>			
+        </sequential>
+    </macrodef>
+
+    <target name="perlAvailability" depends="havePerl"
+            unless="perl.present">
+        <echo>NOTE: Perl executable not found in expected location.</echo>
+        <echo>      Java files will NOT be regenerated from templates.</echo>
+    </target>
+
+    <target name="generateJava" depends="perlAvailability"
+            if="perl.present">
+        <perl dir="src/mpi" script="generate.pl"/>
+        <perl dir="src/mpjbuf" script="generate.pl"/>
+    </target>
+
+    <target name="cleanJava" depends="perlAvailability"
+            if="perl.present">
+        <perl dir="src/mpjbuf" script="clean.pl"/>
+        <perl dir="src/mpi" script="clean.pl"/>
+    </target>
+
+
+    <target name="compile" description="compiles mpj code"
+            depends="generateJava">
+        
+	<javac srcdir="${src.dir}" 
+	classpath="lib/wrapper.jar:lib/org.mortbay.jetty.jar:lib/log4j-1.2.11.jar" 
+	sourcepath="${src.dir}"
+	debug="true"
+	/>
+    </target> 
+
+    <target name="jars" description="builds jar files ..">
+     <jar destfile="${lib.dir}/mpj.jar" basedir="src"
+          includes="mpi/*.class mpjbuf/*.class mpjdev/*.class xdev/*.class 
+	  	    xdev/niodev/*.class xdev/mxdev/*.class">
+	  <manifest>
+            <attribute name="Class-path" value="log4j-1.2.11.jar"/> 
+          </manifest>  
+     </jar>
+     
+     <jar destfile="${lib.dir}/daemon.jar" basedir="src"
+          includes="runtime/daemon/*.class runtime/*.class">
+	  <manifest>
+            <attribute name="Main-class" 
+	               value="runtime.daemon.WrapperSimpleApp" /> 
+            <attribute name="Class-path" 
+	    value="wrapper.jar log4j-1.2.11.jar"/> 
+          </manifest>  
+     </jar>
+
+     <jar destfile="${lib.dir}/loader1.jar" basedir="src"
+          includes="runtime/daemon/*.class runtime/*.class">
+	  <manifest>
+            <attribute name="Main-class" 
+	               value="runtime.daemon.Wrapper" /> 
+        <!--    <attribute name="Class-path" 
+	    value="wrapper.jar log4j-1.2.11.jar mpj.jar"/>  -->
+          </manifest> 
+     </jar>
+
+     <jar destfile="${lib.dir}/loader2.jar" basedir="src"
+          includes="runtime/daemon/*.class runtime/*.class">
+	  <manifest>
+            <attribute name="Main-class" 
+	               value="runtime.daemon.ThreadedWrapper" /> 
+        <!--    <attribute name="Class-path" 
+	    value="wrapper.jar log4j-1.2.11.jar mpj.jar"/>  -->
+          </manifest>  
+     </jar>
+
+     <jar destfile="${lib.dir}/starter.jar" basedir="src"
+          includes="runtime/starter/*.class runtime/*.class">
+	  <manifest>
+	   <attribute name="Main-class" value="runtime.starter.MPJRun" />
+           <attribute name="Class-path" 
+	   value="org.mortbay.jetty.jar log4j-1.2.11.jar javax.servlet.jar"/> 
+	  </manifest>  
+     </jar>
+    </target>
+
+    <target name="mxlib" description="generates native MX code">
+
+      <javah destdir="${mx.native.dir}" force="yes" 
+             classpath="${src.dir}">
+        <class name="xdev.mxdev.MXDevice"/>
+        <class name="xdev.mxdev.MXSendRequest"/>
+        <class name="xdev.mxdev.MXRecvRequest"/>
+      </javah>
+      <exec dir="${mx.native.dir}" executable="gcc">
+        <arg value="xdev_mxdev_MXSendRequest.c"/>
+        <arg value="xdev_mxdev_MXRecvRequest.c"/>
+        <arg value="xdev_mxdev_MXDevice.c"/>
+        <arg value="-o"/>
+        <arg value="libmxdev.so"/>
+        <arg value="-shared"/>
+        <arg value="-I"/>
+        <arg value="."/>
+        <arg value="-I"/>
+        <arg value="${java_home}/include"/>
+        <arg value="-I"/>
+        <arg value="${java_home}/include/linux"/>
+        <arg value="-I"/>
+        <arg value="${mx_home}/include"/>
+        <arg value="-L"/>
+        <arg value="${mx_home}/lib"/>
+        <arg value="-lmyriexpress"/>
+      </exec>
+
+      <move file="${mx.native.dir}/libmxdev.so" todir="${lib.dir}"/> 
+      <!--
+      <delete>
+        <fileset dir="${mx.native.dir}" includes="*.h"/>
+      </delete>
+      -->
+    </target>
+
+    <target name="clean">  <!-- depends="cleanJava"> -->
+	<delete>
+	 <fileset dir="${mpi.dir}" includes="**/*.class"/>
+	 <fileset dir="${mpjdev.dir}" includes="**/*.class"/>
+	 <fileset dir="${xdev.dir}" includes="**/*.class"/>
+	 <fileset dir="${mpjbuf.dir}" includes="**/*.class"/>
+	 <fileset dir="src/runtime" includes="**/*.class"/>
+	 <fileset dir="src/runtime" includes="*.class"/>
+	</delete>	 
+    </target>
+
+    <target name="veryclean" depends="clean"/> <!-- ,cleanJava"/> -->
+
+    <!-- Processing SVG images to PNG (for documentation) -->
+
+    <target name="haveBatik">
+        <available property="batik.present"
+                   file="${batik.dir}/batik-rasterizer.jar"/>
+    </target>
+
+    <macrodef name="rasterize">
+
+        <attribute name="dir"/>
+        <attribute name="name"/>
+
+        <sequential>
+            <java jar="${batik.dir}/batik-rasterizer.jar"
+                  fork="true" failonerror="true">
+
+                <arg value="@{dir}/@{name}.svg"/>
+            </java>
+        </sequential>
+    </macrodef>
+
+    <target name="figures" depends="haveBatik" if="batik.present">
+        <rasterize dir="${doc.dir}/images" name="mpj-section"/>
+        <rasterize dir="${doc.dir}/images" name="mpj-static"/>
+    </target>
+
+    <target name="java-docs" depends="figures">
+      <javadoc
+        destdir="${doc.dir}/javadocs"
+	classpath="${lib.dir}/org.mortbay.jetty.jar:${lib.dir}/javax.servlet.jar:${lib.dir}/wrapper.jar:${lib.dir}/log4j-1.2.11.jar">
+          <packageset dir="${src.dir}">
+          </packageset>
+      </javadoc>
+    </target>
+
+    <target name="all" depends="compile,jars,java-docs,clean" 
+            description="All"/>
+
+</project>

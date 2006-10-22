@@ -1,0 +1,13 @@
+Beta release version 0.24 -- 
+-- Fixed bugs in cartcomm and graphcomm. The constructors should use
+   copying by value instead of copying by reference
+-- Fixed bug in persistent request class that produced NullPointerException
+-- Changed test-cases for specify direct byte buffers for use with 
+   buffered mode of send. 
+Beta release version 0.23 -- (11th September, 2005)
+-- Implemented Dims_create with limited functionality  
+-- Documented mixing local loader and remote loader problems
+Beta release version 0.22 -- (8th September, 2005)
+Alpha internal release version 0.21 -- (25th August, 2005)
+Alpha internal release version 0.2  -- (24th August, 2005)
+Alpha internal release version 0.1  -- (28th June, 2005)
