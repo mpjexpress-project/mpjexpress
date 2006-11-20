@@ -2641,7 +2641,7 @@ public class NIODevice
   void doRendezSendCompletion(SocketChannel socketChannel,
                               SelectionKey key) throws Exception {
 
-    //synchronized (rendez_send_buffer) {
+    synchronized (rendez_send_buffer) {
       if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
         logger.debug("---doRendezSendCompletion---");
       }
@@ -2658,7 +2658,7 @@ public class NIODevice
       rendez_send_buffer.flip();
       msgReceivedFrom = socketChannel;
 
-    //}
+    }
     if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
       logger.debug("rendezCtrlPart followed by a send ....(release rLock)");
     }
@@ -3491,7 +3491,7 @@ public class NIODevice
                   case ACK_HEADER:
 
                     /* Recv ACK from Receiver */
-                    //buffer_sem.acquire();
+                    buffer_sem.acquire();
                     doRendezSendCompletion(socketChannel, key);
                     (new Thread(rendezSenderThread)).start();
                     break;
@@ -3690,7 +3690,7 @@ public class NIODevice
         int recvCounter = 0;
 
         /* Read what the receiver just sent */
-        //synchronized (rendez_send_buffer) {
+        synchronized (rendez_send_buffer) {
           channel = msgReceivedFrom;
           goAhead = rendez_send_buffer.get();
           tag = rendez_send_buffer.getInt();
@@ -3698,9 +3698,9 @@ public class NIODevice
           sendCounter = rendez_send_buffer.getInt();
           recvCounter = rendez_send_buffer.getInt();
           rendez_send_buffer.clear();
-        //}
+        }
 
-        //buffer_sem.signal();
+        buffer_sem.signal();
 
         if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
           logger.debug(" Started rendezSenderThread " + tag);
