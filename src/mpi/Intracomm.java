@@ -1515,7 +1515,9 @@ public class Intracomm
     if(op.worker == null) {
 
       Request req = null;
-      Object tmpbuf = sendbuf;
+      //BUG:
+      //Object tmpbuf = sendbuf;
+      Object tmpbuf = createTemporaryBuffer(datatype, count) ; 
 
       if(root != Rank()) 
         req = isend(sendbuf, sendoffset, count, datatype, root, 
@@ -1595,6 +1597,75 @@ public class Intracomm
    * Java binding of the MPI operation <tt>MPI_ALLREDUCE</tt>.
    */
 
+  Object createTemporaryBuffer(Datatype datatype, int count) { 
+
+    Object tempBuffer = null ; 
+
+    switch (datatype.baseType) {
+
+      case Datatype.UNDEFINED:
+        System.out.println("Intracomm.createTemporaryBuffer() - "+
+                           "UNDEFINED datatype"); 
+        break;
+
+      case Datatype.NULL:
+        System.out.println("Intracomm.createTemporaryBuffer() - "+
+                           "NULL datatype"); 
+        break;
+
+      case Datatype.BYTE:
+        tempBuffer = new byte[count*datatype.Size()] ;
+        break;
+
+      case Datatype.CHAR:
+        tempBuffer = new char[count*datatype.Size()] ;
+        break;
+
+      case Datatype.SHORT:
+        tempBuffer = new short[count*datatype.Size()] ;
+        break;
+
+      case Datatype.BOOLEAN:
+        tempBuffer = new byte[count*datatype.Size()] ;
+        break;
+
+      case Datatype.INT:
+        tempBuffer = new int[count*datatype.Size()] ;
+        break;
+
+      case Datatype.LONG:
+        tempBuffer = new long[count*datatype.Size()] ;
+        break;
+
+      case Datatype.FLOAT:
+        tempBuffer = new float[count*datatype.Size()] ;
+        break;
+
+      case Datatype.DOUBLE:
+        tempBuffer = new double[count*datatype.Size()] ;
+        break;
+
+      case Datatype.PACKED: 
+        System.out.println("Intracomm.createTemporaryBuffer() - "+
+                           "PACKED datatype"); 
+        break;
+
+      case Datatype.OBJECT: 
+        //System.out.println("Intracomm.createTemporaryBuffer() - "+
+        //                   "OBJECT datatype"); 
+	tempBuffer = new Object[count*datatype.Size()] ; 
+        break;
+
+      default:
+        System.out.println("Intracomm.createTemporaryBuffer() - "+
+                           "default datatype"); 
+        break;
+    }
+
+    return tempBuffer ; 
+
+  }
+
   public void Allreduce(Object sendbuf, int sendoffset,
                         Object recvbuf, int recvoffset, int count,
                         Datatype datatype, Op op) throws MPIException {
@@ -1610,7 +1681,10 @@ public class Intracomm
 			"see this for MAXLOC ");
       }
       Request req[] = new Request[Size()];
-      Object tmpbuf = sendbuf;
+
+      //BUG: this is a bug, identified by Sarah Nakao
+      //Object tmpbuf = sendbuf;
+      Object tmpbuf = createTemporaryBuffer(datatype, count) ; 
 
       for (int i = 0; i < req.length; i++) {
         if(i != Rank()) 
@@ -1790,7 +1864,9 @@ public class Intracomm
     if(op.worker == null) {
 
       Request req[] = new Request[Size()];
-      Object tmpbuf = sendbuf;
+      //BUG:
+      //Object tmpbuf = sendbuf;
+      Object tmpbuf = createTemporaryBuffer(datatype, count) ; 
       System.arraycopy(sendbuf, sendoffset, tmpbuf, sendoffset, 
 		      count*datatype.size);
 
