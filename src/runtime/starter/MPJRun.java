@@ -814,7 +814,7 @@ public class MPJRun {
 
       if(!alreadyPresent) { 
 
-        //if( addressT or nameT already present, then you are fucked ) {
+        //if( addressT or nameT already present, then you are buggered ) {
         //}
       
         /* What is the solution for this? */

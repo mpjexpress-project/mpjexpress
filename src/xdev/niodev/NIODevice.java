@@ -2446,7 +2446,8 @@ public class NIODevice
 
   /* called from the selector thread, and accept the connections */
   boolean doAccept(SelectableChannel keyChannel,
-                   Vector channelCollection, boolean blocking) throws Exception {
+                   Vector channelCollection, boolean blocking) 
+	                                             throws Exception {
     SocketChannel peerChannel = null;
 
     synchronized (channelCollection) {
@@ -2454,7 +2455,14 @@ public class NIODevice
       if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
         logger.debug("---doAccept---");
       }
-      peerChannel = ( (ServerSocketChannel) keyChannel).accept();
+
+      if(keyChannel.isOpen()) { 
+        peerChannel = ( (ServerSocketChannel) keyChannel).accept();
+      }
+      else { 
+        return false; 
+      }
+
       if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
         logger.debug("Added channel " + peerChannel);
       }
@@ -3320,7 +3328,7 @@ public class NIODevice
               logger.debug("---selector EVENT---");
             }
 
-            if (key.isAcceptable()) {
+            if (key.isValid() && key.isAcceptable()) {
 
               ServerSocketChannel sChannel =
                   (ServerSocketChannel) keyChannel;
@@ -3338,7 +3346,7 @@ public class NIODevice
               }
 
             }
-            else if (key.isReadable()) {
+            else if (key.isValid() && key.isReadable()) {
 
               socketChannel = (SocketChannel) keyChannel;
 
@@ -3645,7 +3653,7 @@ public class NIODevice
                 } 
               }
             }
-            else if (key.isWritable()) {
+            else if (key.isValid() && key.isWritable()) {
 
               if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
                 logger.debug("WRITE_EVENT (should not see it)");

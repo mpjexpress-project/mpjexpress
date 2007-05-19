@@ -95,15 +95,15 @@ public class TestSuite {
     EnvTester envTester = new EnvTester(args) ; 	 
     ErrStreamPrinter printer = new ErrStreamPrinter(args) ; 
     
-    for(int y=0 ; y<1 ; y++) {	  
-      //System.out.println("init<"+me+">y<"+y+">");
+    for(int y=0 ; y<10 ; y++) {	  
+      System.out.println("init<"+me+">y<"+y+">");
       MPI.Init(args); 
       me = MPI.COMM_WORLD.Rank(); 
       size = MPI.COMM_WORLD.Size(); 
       MPI.COMM_WORLD.Barrier() ; 
-      //System.out.println("mid<"+me+">y<"+y+">");
+      System.out.println("mid<"+me+">y<"+y+">");
       MPI.Finalize();
-      //System.out.println("end<"+me+">y<"+y+">");
+      System.out.println("end<"+me+">y<"+y+">");
     }
     
     for(int i =0 ; i< 1 ; i++) {
