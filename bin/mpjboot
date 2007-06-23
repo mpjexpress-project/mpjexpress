@@ -11,6 +11,8 @@ count=0
 
 for i in `echo $lines`; do 
   host=`echo $i`    
-  ssh $host "cd $MPJ_HOME/bin;./mpjdaemon start;"
+  ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_64 start;"
+  #ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_ppc_64 start;" 
+  #ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_solaris_sparc_64 start;" # solaris_sparc_64
   count=`expr $count + 1`
 done
