@@ -4,6 +4,9 @@
 
  Copyright (c) 2005 - 2007
    1. Distributed Systems Group, University of Portsmouth
+   2. Aamir Shafi, Assistant Professor at NUST
+   3. Bryan Carpenter, Senior Researcher at the University of Southampton
+   4. Mark Baker, Professor at the University of Reading
 
  The bulk of code in this distribution was developed by the Distributed Systems 
  Group at the University of Portsmouth. Some sections of the code like 
