@@ -14,11 +14,10 @@
 </h1>
 
 <h4 align="center">
-Beta Release (0.26)<br />
+Beta Release (0.27)<br />
 Aamir Shafi, Bryan Carpenter, and Mark Baker<br />
-Distributed Systems Group, University of Portsmouth<br />
 Last updated: $Date: 2006/11/17 13:49:07 $<br /><br />
-The latest version of this document is available <a href="http://dsg.port.ac.uk/projects/mpj/soft/readme.php"> here </a>
+The latest version of this document is available <a href="http://mpj-express.org/docs/readme/README.html"> here </a>
 </h4>			  
 
 <a name="toc"></a>
@@ -40,9 +39,11 @@ The latest version of this document is available <a href="http://dsg.port.ac.uk/
   <li> <a href="#testedplatforms"> Tested platforms </a> </li>
   <li> <a href="#javadocs"> Java-docs </a> </li>
   <li> <a href="#contact"> Contact and support </a> </li>
-  <li> <a href="#misc"> Miscellaneous </a> 
+<li> <a href="#misc"> Miscellaneous </a> 
     <ol>
       <li> <a href="#debug"> Turning debugging on and off  </a> </li> 
+      <li> <a href="#daemon_consoles">Running daemons in console mode</a> </li> 
+      <li> <a href="#dmnvarplats">Running MPJ Express daemons on Solaris, PowerPC Linux, and PowerPC Mac OS X</a> </li> 
       <li> <a href="#psl"> Changing protocol switch limit </a> </li> 
       <li> <a href="#apichanges"> API changes between mpiJava-1.2.x and 
       MPJ Express
@@ -53,6 +54,8 @@ The latest version of this document is available <a href="http://dsg.port.ac.uk/
   </li>
   <li> <a href="#issues">Known issues and limitations </a> 
     <ol>   
+      <li> <a href="#hanging"> Test cases hang on Solaris and Windows </a> </li>
+      <li> <a href="#longboot"> Takes a long time to bootstrap MPJ processes </a> </li>
       <li> <a href="#merge"> Intercomm.Merge(..) -- limited functionality 
            </a> </li>
       <li> <a href="#pack"> Using MPI.PACK datatype -- tweaked  </a> </li>
@@ -1369,7 +1372,22 @@ Java-docs can be seen in $MPJ_HOME/doc/javadocs
      for the runtime is turned on. To turn it off, the users can edit 
      src/runtime/starter/MPJRun.java and src/runtime/daemon/MPJDaemon.java 
      and change the value of DEBUG flag. 
-      </li>  
+      </li> 
+
+      <li> MPJ Express runtime daemons can be debugged as follows: 
+        <ul>
+	  <li> Edit $MPJ_HOME/conf/wrapper.conf file. 
+	  </li>
+	  <li> Change the value of wrapper.logfile.loglevel from "NONE" to 
+	       "DEBUG". 
+	  </li> 
+	  <li> Now the output of mpjboot, mpjhalt, and other daemon activities
+	       can be seen in $MPJ_HOME/logs/wrapper.log file. This information
+	       is pretty useful for diagnosing and fixing daemons errors.
+	  </li>
+	</ul>
+      </li> 
+      
    </ul>
 
   
@@ -1404,9 +1422,84 @@ Java-docs can be seen in $MPJ_HOME/doc/javadocs
     </li> 
   </ul>
 
+<br />
+<a name="daemon_consoles"></a>
+<li>
+   For debugging purposes, sometimes it is useful to run the daemons in 
+   console mode. This can be achieved in the following way: 
 
+   <ol>
+      <li> 
+        <code> cd $MPJ_HOME/bin </code>
+      </li>
 
+      <li> On UNIX systems, execute 
+      <code> ./mpjdaemon_linux_x86_32 console </code>. Here we are starting 
+       the daemon on a 32 bit x86 processor. Choose the appropriate script 
+       for your machine. 
+      </li>  	
 
+      <li> On Windows, execute 
+           <code>
+	        cd %MPJ_HOME%/bin ; 
+	        wrapper.exe -c ../conf/wrapper.conf
+	   </code> 
+      </li>
+      </li>
+      
+    </ol>  	
+</li>
+
+<br />
+<a name="dmnvarplats"></a>
+<li> 
+   With default settings attempting to start MPJ Express daemons on UltraSPARC 
+   Solaris, PowerPC (PPC) Linux, or PPC Mac OS X would result in an error 
+   like this: 
+   <pre> 
+     mpjboot machines 
+     Starting mpjd... 
+     ./mpjdaemon_linux_x86_32: line 1: ./daemon_linux_x86_32: cannot execute binary file 
+   </pre>
+
+   The reason is that by default x86 based code is called, which naturally does
+   not work on PPCs and UltraSPARCs. 
+
+   We are currently in the process of writing smart scripts that call 
+   the appropriate libraries based on the processor architecture and 
+   operating system. In the meantime, this problem can be fixed in the 
+   following way: 
+
+   <ul> 
+     <li> Solaris
+	  <pre> 
+	  a. Edit $MPJ_HOME/bin/mpjboot and $MPJ_HOME/bin/mpjhalt
+	  b. Comment the line ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_32 start;"
+	  c. Uncomment the line #ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_solaris_sparc_64 start;"
+	  d. cd $MPJ_HOME/lib
+	  e. cp libwrapper.so_solaris_sparc_64 libwrapper.so
+	  </pre>
+     </li>
+     <li> PPC64 Linux
+	  <pre> 
+	  a. Edit $MPJ_HOME/bin/mpjboot and $MPJ_HOME/bin/mpjhalt
+	  b. Comment the line ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_32 start;"
+	  c. Uncomment the line #ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_ppc_64 start;" 
+	  d. cd $MPJ_HOME/lib
+	  e. cp libwrapper.so_linux_ppc_64 libwrapper.so
+	  </pre>
+     </li>
+     <li> PPC32 Mac OS X
+	  <pre> 
+	  a. Edit $MPJ_HOME/bin/mpjboot and $MPJ_HOME/bin/mpjhalt
+	  b. Comment the line ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_32 start;"
+	  c. Uncomment the line #ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_macosx_ppc_32 start;"
+	  d. cd $MPJ_HOME/lib
+	  e. cp libwrapper.jnilib_macosx_ppc_32 libwrapper.jnilib
+	  </pre>
+     </li>
+   </ul> 
+</li>
 
 <br />
 <a name="apichanges"></a>
@@ -1431,6 +1524,9 @@ in general,</li>
 <a href="http://www.des.udc.es/~gltaboada/"> Guillermo Taboada </a> for 
 alpha testing of the software
 </li>
+<li>
+<a href="http://hpc.niit.edu.pk/~mohsan"> Mohsan Jameel </a> for testing of the software 
+</li>
 </ul>
 
 
@@ -1443,7 +1539,118 @@ alpha testing of the software
 <h2> Known issues and limitations </h2>
 </li>
 
-<ol>
+<ul>
+<a name="hanging"> </a>
+<li>
+  <p>
+  There is a known (upto some extent) problem on Windows and Solaris that 
+  results in hanging MPJ processes. Normally this will be observed when 
+  MPJ test-cases will hang, as result, not completing or throwing any 
+  error message. 
+  </p>
+
+  <p> We partially understand the problem but if some user encounters 
+  this problem, we would request some more debugging information. The 
+  required information can be obtained as follows. 
+  Edit $MPJ_HOME/src/xdev/niodev/NIODevice.java and goto line 3673 
+  and uncomment the line "ioe1.printStackTrace() ;". The line 3673 
+  is in the MPJ Express release 0.27 and it might change in 
+  the future. The general code snippet is like this: 
+  <pre> 
+
+      catch (Exception ioe1) {
+        if(mpi.MPI.DEBUG && logger.isDebugEnabled() )  {
+          logger.debug(" error in selector thread " + ioe1.getMessage());
+        }
+        //ioe1.printStackTrace() ;
+      } //end catch(Exception e) ...
+
+      if(mpi.MPI.DEBUG && logger.isDebugEnabled()) {
+        logger.debug(" last statement in selector thread");
+      }
+
+    } //end run()
+
+  }; //end selectorThread which is an inner class
+
+  </pre> 
+   </p> 	
+
+   <p> As a result now, when test-cases are executed again, users will
+       see stacks periodically. Most of these are related to socket 
+       closed exceptions that are normal. If the code hangs now,  
+       the latest stack trace that is not about socket being closed 
+       is perhaps the reason of this hanging behaviour. We would request
+       the users to kindly email us the output so that we can fix the 
+       problem. A stack trace that leaves MPJ Express hanging on Solaris 
+       is as follows: 
+
+       <pre>
+         java.nio.channels.CancelledKeyException
+           at sun.nio.ch.SelectionKeyImpl.ensureValid(SelectionKeyImpl.java:55)
+           at sun.nio.ch.SelectionKeyImpl.readyOps(SelectionKeyImpl.java:69)
+           at java.nio.channels.SelectionKey.isAcceptable(SelectionKey.java:342)
+           at xdev.niodev.NIODevice$2.run(NIODevice.java:3330)
+           at java.lang.Thread.run(Thread.java:595)
+       </pre>
+       
+    </p>
+</li>
+
+<br />
+<a name="longboot"> </a>
+<li>
+
+  <p> Some users have noticed that it takes a long time to bootstrap 
+      MPJ Express processes. For example,
+  </p> 
+
+<pre>
+user@machine:~/mpj-user> mpjrun.sh -np 6 -jar $MPJ_HOME/lib/test.jar
+16:15:43.400 EVENT  Starting Jetty/4.2.23
+16:15:43.415 EVENT  Started HttpContext[/]
+16:15:43.419 EVENT  Started SocketListener on 0.0.0.0:15000
+16:15:43.419 EVENT  Started org.mortbay.http.HttpServer@23ac23ac
+16:15:43.420 EVENT  Starting Jetty/4.2.23
+16:15:43.420 EVENT  Started HttpContext[/]
+16:15:43.421 EVENT  Started SocketListener on 0.0.0.0:15001
+16:15:43.421 EVENT  Started org.mortbay.http.HttpServer@50265026
+
+[ pause for a minute or two ]
+
+Starting process <0> on <m1>
+Starting process <1> on <m1>
+
+[ pause for a minute or two ]
+
+Starting process <2> on <m2>
+Starting process <3> on <m3>
+
+[ pause for a minute or two ]
+
+Starting process <4> on <m3>
+Starting process <5> on <m3>
+
+[ job starts ]
+</pre> 
+
+<p> Thanks to Andy Botting who is one of the users that identified this 
+    problem. This problem is perhaps related to name resolution and we are
+    currently working to fix it. 
+</p> 
+  
+</li>
+
+<br />
+<a name="merge"> </a>
+<li>
+   The merge operation is implemented with limited functionality. The processes 
+   in local-group and remote-group *have* to specify 'high' 
+   argument. Also, the value specified by local-group processes should be 
+   opposite to remote-group processes. 
+</li>
+
+<br />
 <a name="merge"> </a>
 <li>
    The merge operation is implemented with limited functionality. The processes 
@@ -1622,7 +1829,7 @@ $. What is the count/numEls/type value of Status when MPI.PACK is
 $. happy with group and communicator operations ... ???? ???? ????   
 $. jetty output ...just hate jetty for outputting lines! 
 -->
-</ol>
+</ul>
 
 </ol>
 </body>
