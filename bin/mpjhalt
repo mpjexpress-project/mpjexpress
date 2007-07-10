@@ -13,5 +13,6 @@ for i in `echo $lines`; do
   ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_32 stop;"
   #ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_64 stop;"
   #ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_ppc_64 stop;" 
-  #ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_solaris_sparc_64 stop;" # solaris_sparc_64
+  #ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_macosx_ppc_32 stop;"
+  #ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_solaris_sparc_64 stop;" 
 done
