@@ -3,15 +3,15 @@
  The MIT License
 
  Copyright (c) 2005 - 2007
-   1. Distributed Systems Group, University of Portsmouth
-   2. Aamir Shafi, Assistant Professor at NUST
-   3. Bryan Carpenter, Senior Researcher at the University of Southampton
-   4. Mark Baker, Professor at the University of Reading
+   1. Distributed Systems Group, University of Portsmouth (2005)
+   2. Aamir Shafi (2005 - 2007)
+   3. Bryan Carpenter (2005 - 2007)
+   4. Mark Baker (2005 - 2007)
 
  The bulk of code in this distribution was developed by the Distributed Systems 
  Group at the University of Portsmouth. Some sections of the code like 
  the buffering API and derived datatypes include contributions developed at 
- the Community Grids Lab at Indiana University.
+ the Community Grids Lab at Indiana University. 
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the

@@ -1,9 +1,12 @@
 /*
  The MIT License
 
- Copyright (c) 2005 
-    1. Distributed Systems Group, University of Portsmouth
-    2. Community Grids Laboratory, Indiana University 
+ Copyright (c) 2005 - 2007
+   1. Distributed Systems Group, University of Portsmouth (2005)
+   2. Community Grids Laboratory, Indiana University (2005)
+   3. Aamir Shafi (2005 - 2007)
+   4. Bryan Carpenter (2005 - 2007)
+   5. Mark Baker (2005 - 2007)
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
