@@ -1111,7 +1111,7 @@ JNIEXPORT jlong JNICALL Java_xdev_mxdev_MXDevice_nativePeek
   //printf(" nativePeek \n");fflush(stdout); 
   mx_request_t peekedRequest ; 
   mx_return_t rc ; 
-  mx_status_t status ; 
+  //mx_status_t status ; 
   uint32_t result ; 
   //JRequestStruct *jrequest ; 
   //jobject javaRequest, statusInRequest ; 

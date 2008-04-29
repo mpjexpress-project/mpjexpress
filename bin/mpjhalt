@@ -10,9 +10,9 @@ lines=`cat $1`
 
 for i in `echo $lines`; do 
   host=`echo $i`    
-  ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_32 stop;"
-  #ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_64 stop;"
-  #ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_ppc_64 stop;" 
-  #ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_macosx_ppc_32 stop;"
-  #ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_solaris_sparc_64 stop;" 
+  ssh $host 'cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_32 stop;'
+  #ssh $host 'cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_64 stop;'
+  #ssh $host 'cd $MPJ_HOME/bin;./mpjdaemon_linux_ppc_64 stop;' 
+  #ssh $host 'cd $MPJ_HOME/bin;./mpjdaemon_macosx_ppc_32 stop;'
+  #ssh $host 'cd $MPJ_HOME/bin;./mpjdaemon_solaris_sparc_64 stop;' 
 done
