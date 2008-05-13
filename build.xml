@@ -133,7 +133,7 @@
     <target name="mxlib" description="generates native MX code">
 
       <javah destdir="${mx.native.dir}" force="yes" 
-             classpath="${src.dir}">
+	     classpath="${lib.dir}/mpj.jar">
         <class name="xdev.mxdev.MXDevice"/>
         <class name="xdev.mxdev.MXSendRequest"/>
         <class name="xdev.mxdev.MXRecvRequest"/>
