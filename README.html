@@ -50,6 +50,8 @@ The latest version of this document is available <a href="http://mpj-express.org
       </a> </li>
       <li> <a href="#ack"> Acknowledgements 
       </a> </li>
+      <li> <a href="#myridev"> Using the Myrinet deviceM
+      </a> </li>
     </ol>
   </li>
   <li> <a href="#issues">Known issues and limitations </a> 
@@ -1529,6 +1531,86 @@ alpha testing of the software
 </li>
 </ul>
 
+<br />
+<a name="myridev"></a>
+<li> Using the Myrinet device </li>
+
+<ul>
+
+
+<li> Export the MX_HOME variable. Assuming the Myrinet eXpress (MX) dirver
+     is in /opt/mx, the variable is exported as follows:
+
+          <pre>
+	              export MX_HOME=/opt/mx
+          </pre>
+
+</li>
+
+<li> Edit build.xml (in $MPJ_HOME) and change the following line:
+
+</li>
+
+</li>
+
+  <pre>
+    &lt;target name=&quot;all&quot; depends=&quot;compile,jars,java-docs,clean&quot;
+  </pre>
+
+to:
+
+  <pre>
+    &lt;target name=&quot;all&quot; depends=&quot;mxlib,compile,jars,java-docs,clean&quot;
+  </pre>
+
+Note that we have added mxlib in the value of &quot;depends&quot; attribute.
+
+<li> Being in $MPJ_HOME directory, run the command &quot;ant&quot;. You will see some funny warning messages from gcc but things will work. The native libraries *.so and JAR files are produced in $MPJ_HOME/lib directory.
+
+</li>
+
+<li>Now write machines file. Basically for this, run mx_info (assuming $MX_HOME/bin is in the $PATH variable) you'll get something like this:
+
+<pre>
+-bash-3.00$ mx_info
+MX Version: 1.1.7rc3cvs1_1_fixes
+MX Build: @indus1:/opt/mx2g-1.1.7rc3 Thu May 31 11:03:00 PKT 2007
+2 Myrinet boards installed.
+The MX driver is configured to support up to 4 instances and 1024 nodes.
+
+[ .. ]
+
+ROUTE COUNT
+INDEX MAC ADDRESS HOST NAME P0
+----- ----------- --------- ---
+0) 00:60:dd:47:ad:7c indus1:0 1,1
+1) 00:60:dd:47:ad:68 indus4:0 1,1
+
+[ .. ]
+
+</pre>
+
+This means we have two machines &quot;indus1&quot; and &quot;indus4&quot;
+connected to each other via Myrinet and they are using NIC-0.
+
+So now for this configuration, my machines file would look like this:
+
+<pre>
+indus1
+indus4
+</pre>
+
+<li> The device can be used by executing:
+
+<pre>
+mpjrun.sh -np 2 -dev mxdev -Djava.library.path=$MPJ_HOME/lib HelloWorld
+</pre>
+
+This command is assuming the Myrinet NICs with id 0 are used, this may be changed by using the mpjrun switch called &quot;-mxboardnum&quot;
+
+</li>
+
+</ul>
 
 </ol>
 <!-- end of ack subsection --> 
