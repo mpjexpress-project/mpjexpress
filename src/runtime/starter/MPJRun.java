@@ -209,14 +209,21 @@ public class MPJRun {
       if(DEBUG && logger.isDebugEnabled()) { 
 	logger.debug("procsPerMachineTable " + procsPerMachineTable);
       }
-	      
+
+      /* FIXME: should we not be checking all IP addresses of remote 
+                machine? Does it make sense? */
+
+      String hAddress = 
+                     socketChannel.socket().getInetAddress().getHostAddress();
       String hName = socketChannel.socket().getInetAddress().getHostName();
 
-      /* 
-       * It can't be a good assumption that procsPerMachineTable contains
-       * hostNames as keys ..can be it an IP????
-       */
-      int nProcesses = ((Integer) procsPerMachineTable.get(hName)).intValue();
+      Integer nProcessesInt = ((Integer) procsPerMachineTable.get(hName)) ; 
+
+      if(nProcessesInt == null) { 
+        nProcessesInt = ((Integer) procsPerMachineTable.get(hAddress)) ;     
+      } 
+
+      int nProcesses = nProcessesInt.intValue();
 
       pack(nProcesses); 
 
