@@ -27,10 +27,10 @@ The latest version of this document is available <a href="http://mpj-express.org
 <ol> 
   <li> <a href="#introduction"> Introduction </a> </li>
   <li> <a href="#quickstart"> Getting started </a> </li>
-  <li> <a href="#compile">  Writing and compiling MPJE programs </a> </li>
-  <li> <a href="#rt"> Running MPJE programs with the MPJ Express runtime 
+  <li> <a href="#compile">  Writing and compiling MPJ Express programs </a> </li>
+  <li> <a href="#rt"> Running MPJ Express programs with the MPJ Express runtime 
         </a></li>
-  <li> <a href="#nrt"> Running MPJE programs without the MPJ Express runtime (manually) 
+  <li> <a href="#nrt"> Running MPJ Express programs without the MPJ Express runtime (manually) 
         </a></li>
   <li> <a href="#testsuite"> The MPJ Express test suite
       </a> </li>
@@ -89,7 +89,7 @@ The latest version of this document is available <a href="http://mpj-express.org
 </li>
 
 <p>
-This software (MPJ Express - MPJE) is a reference implementation of the 
+This software (MPJ Express) is a reference implementation of the 
 MPI bindings defined for 
 the Java language. The current version of this software is following the
 <a href="http://www.hpjava.org/reports/mpiJava-spec/mpiJava-spec/mpiJava-spec.html"> mpiJava 1.2 API specification </a>. 
@@ -116,21 +116,21 @@ has been tested on various UNIX and Windows operating systems. See the
 </p>
 <p>
 
-There are two fundamental ways of running MPJE applications.
+There are two fundamental ways of running MPJ Express applications.
 The first, and the recommended way is using the MPJ Express 
 runtime infrastructure, 
 alternatively the second way involves the 'manual' start-up of 
-MPJE processes. 
+MPJ Express processes. 
 </p>
 <p>
 The MPJ Express runtime infrastructure consists of daemons and 
 the mpjrun module. The idea is, that the users of MPJ Express first 
 start daemons on a number of compute-nodes, which in this document means the
-machines that execute MPJE processes. These can also be thought 
+machines that execute MPJ Express processes. These can also be thought 
 as the compute-nodes of a cluster. Once the daemons are running 
 on compute-nodes, then the users can use the mpjrun module 
 (using mpjrun.sh or mpjrun.bat scripts) on the cluster's head-node,
-which contacts the daemons, starting the MPJE 
+which contacts the daemons, starting the MPJ Express 
 application, and 
 transports output back to the head-node so that users can view the 
 progress of their programs during execution. The MPJ Express runtime infrastructure is able to run
@@ -152,7 +152,7 @@ that uses SSH  to execute the code. This script is able to
 run JAR or class files, but it is only possible to use 
 this script on UNIX-based operating systems. 
 For Windows, running test cases and applications manually means 
-starting each MPJE process by using the java command. 
+starting each MPJ Express process by using the java command. 
 
 </p>
 <p>
@@ -164,9 +164,9 @@ recommended that the daemons run behind a suitably configured firewall, which
 only listens to trusted machines. 
 In a normal scenario, these daemons would be running
 on the compute-nodes of a cluster, which are not accessible to outside 
-world. Alternatively, it is also possible to start MPJE processes 
+world. Alternatively, it is also possible to start MPJ Express processes 
 'manually', which could help avoid runtime daemons. In addition, 
-each MPJE process starts at least one server socket, and thus
+each MPJ Express process starts at least one server socket, and thus
 is assumed to be running on machine with configured firewall. Most MPI 
 implementations assume firewalls as protection mechanism from the outside
 world.
@@ -227,10 +227,10 @@ and unpack it. This should create a folder named "mpj-v&lt;version_number&gt;".
   </li>
 <br />
 <li>
-  Create a new working directory for MPJE programs. <em>This document 
+  Create a new working directory for MPJ Express programs. <em>This document 
   assumes that the name of this directory is</em> mpj-user. The location 
   of this directory is not important in the context of execution of
-  the code. This directory will hold users MPJE programs, machines
+  the code. This directory will hold users MPJ Express programs, machines
   file, and configuration file (for manual execution)
 </li>
 
@@ -297,10 +297,10 @@ Running test cases
  </li>    
 <br />
 <a name="qhellort"></a>
-<li> Running your first MPJE application 
+<li> Running your first MPJ Express application 
 
   <ul>
-    <li> Write a MPJE program, and save 
+    <li> Write a MPJ Express program, and save 
          it as World.java. This document is assuming that you 
          have a 'machines' file in mpj-user directory. </li>
     <li> <code> cd mpj-user </code> </li>
@@ -332,7 +332,7 @@ Running test cases
     <li>
         You may also make a JAR file 'hello.jar' that contains
         World.class (see section <a href="#compile">"Writing and
-        compiling MPJE programs"</a> for details) and execute it
+        compiling MPJ Express programs"</a> for details) and execute it
       <ul>
         <li> Linux: <code> mpjrun.sh -np 2 -jar hello.jar 
           </code></li>
@@ -347,13 +347,13 @@ Running test cases
 
 <li>
 <a name="compile"></a>
-<h2> Writing and compiling MPJE programs </h2>
+<h2> Writing and compiling MPJ Express programs </h2>
 <ul>
 
     <li> <code> cd mpj-user </code> </li>
 
   <li>
-   Write your MPJE program.  For example:
+   Write your MPJ Express program.  For example:
 
    <pre>
    import mpi.*;
@@ -434,23 +434,23 @@ Running test cases
 
 <li>
 <a name="rt"></a>
-<h2> Running MPJE programs with MPJ Express runtime </h2> 
+<h2> Running MPJ Express programs with MPJ Express runtime </h2> 
 <p>
 
 One of the challenging aspects of a Java messaging system is creating a
-portable mechanism for bootstrapping MPJE 
+portable mechanism for bootstrapping MPJ Express 
 processes across various platforms.
 If the compute-nodes are running a UNIX-based OS, it is possible to remotely 
 execute commands using RSH/SSH, but if the compute-nodes were running 
 Windows, these utilities would not be available. 
 The MPJ Express runtime provides a 
-unified way of starting MPJE processes on 
+unified way of starting MPJ Express processes on 
 compute-nodes irrespective of what operating system they may be using. 
 The runtime 
 system consists of two modules. The 'daemon' module runs on compute-nodes 
-and listens for requests to start MPJE processes. The daemon is simply 
+and listens for requests to start MPJ Express processes. The daemon is simply 
 a Java application listening on an IP port, which starts a new JVM every time 
-there is a request to run a MPJE processes. The 'mpjrun' module 
+there is a request to run a MPJ Express processes. The 'mpjrun' module 
 acts as a client to the daemon module. This module is 
 started on, for example, the cluster head-node, 
 and will contact daemons and return 
@@ -461,9 +461,9 @@ standard output for the user to view.
    With Java, it is possible to run applications using class files, or 
    class files bundled as a JAR file. The MPJ Express runtime allows the 
    execution of 
-   MPJE applications both as JAR files and class files. With MPJ Express, 
+   MPJ Express applications both as JAR files and class files. With MPJ Express, 
    the users
-   may want to load MPJE JARs and classes either remotely 
+   may want to load MPJ Express JARs and classes either remotely 
    or locally 
    on the compute-nodes. With remote loader, it is possible to load 
    all classes (application and MPJ Express code) from the head-node. This 
@@ -501,7 +501,7 @@ Feel free to <a href="#contact"> contact us </a>, if you need
 any help regarding 
 this. The rest of this section explains how to install, start, stop, and 
 uninstall MPJ Express daemons on Linux and Windows. In addition, it 
-also shows how to run your MPJE programs using mpjrun module 
+also shows how to run your MPJ Express programs using mpjrun module 
 on these platforms.
 </p>
   <ul> 
@@ -509,7 +509,7 @@ on these platforms.
     <li> This document assumes mpj-user as the working directory 
          for a user. The name mpj-user itself has no significance.
 	 We assume that the user will create a machines file in this
-	 directory. In addition, we assume that user's MPJE
+	 directory. In addition, we assume that user's MPJ Express
 	 program (World.class or hello.jar) will be present in this
 	 directory when mpjrun script is invoked.
     </li>
@@ -522,7 +522,7 @@ on these platforms.
   <ul>
     <li>
         'machines' file is simply a file stating machinename, IP addresses, 
-        or aliases of the nodes where you wish to execute MPJE processes. 
+        or aliases of the nodes where you wish to execute MPJ Express processes. 
         This file is also used by mpjboot and mpjhalt to start and stop 
         daemons on Linux machines. Suppose you want to run a process 
         each on 'machine1' and 'machine2', then your machines file would be 
@@ -738,7 +738,7 @@ on these platforms.
             </li> 
         </ul>
    <li>
-     Running your MPJE program. 
+     Running your MPJ Express program. 
    </li>
         </li>
        <ul>   
@@ -766,12 +766,12 @@ on these platforms.
             </ul>
 
                <li>
-                  Passing arguments to the JVM running MPJE program
+                  Passing arguments to the JVM running MPJ Express program
                </li>
                  <ul>
           <li> 
        mpjrun.bat or mpjrun.sh script accepts all JVM arguments and would 
-       forward these to the JVMs running MPJE processes on 
+       forward these to the JVMs running MPJ Express processes on 
        compute-nodes. For instance, if the users would like to 
        pass -Xms512M and 
        -Djava.library.path=/tmp as two arguments to World program, the 
@@ -787,7 +787,7 @@ on these platforms.
   </ul>
 
 <li>
-   Passing arguments to MPJE application.
+   Passing arguments to MPJ Express application.
 </li>
   <ul>
    <li>
@@ -808,12 +808,12 @@ on these platforms.
 <!-- end of Running MPJ programs with runtime -->
 <li>
 <a name="nrt"></a>
-<h2> Running MPJE programs without MPJ Express runtime (manually) </h2> 
+<h2> Running MPJ Express programs without MPJ Express runtime (manually) </h2> 
 </li>
 We do <em>not</em> recommand starting programs manually as normal procedure.
 This section documents the procedure for manual start-up, mainly to
 allow developers the flexibility to create their own initiation
-mechanisms for MPJE programs.  The runmpj.sh script can be considered
+mechanisms for MPJ Express programs.  The runmpj.sh script can be considered
 one example of such a mechanism.
 <ul>
   <li>
@@ -822,9 +822,9 @@ one example of such a mechanism.
   <li> This document is assuming mpj-user as the working directory 
        for users. The name mpj-user itself has no significance.
        We assume that users will create configuration file in this
-       directory. In addition, we assume that the user's MPJE
+       directory. In addition, we assume that the user's MPJ Express
        program (World.class or hello.jar) will be present in this
-       directory at the time of execution of MPJE processes
+       directory at the time of execution of MPJ Express processes
    </li>
    
 <a name="config"></a>     
@@ -833,10 +833,10 @@ one example of such a mechanism.
 
   <ul>
      <li> A typical configuration file that would be used to start two 
-          MPJE processes is as follows. Note the names 'machine1' and 
+          MPJ Express processes is as follows. Note the names 'machine1' and 
           'machine2' would be replaced by aliases/fully-qualified-names/
           IP-addresses of the machines where you want to start 
-          MPJE processes
+          MPJ Express processes
      <pre>
      # Number of processes
      2
@@ -853,13 +853,13 @@ one example of such a mechanism.
        switch limit. At this message size, MPJ Express changes its 
        communication 
        protocol from eager-send to rendezvous. There are a couple of entries,
-       one for each MPJE process, each in the form of 
+       one for each MPJ Express process, each in the form of 
        machinename(OR)IP@PORT_NUMBER@RANK. Using this, the users of 
        MPJ Express 
-       can control where each MPJE process runs, what server port it uses, 
+       can control where each MPJ Express process runs, what server port it uses, 
        and what should be the rank of each process. The rank specified here
        should exactly match the rank argument provided while manually 
-       starting MPJE processes (using java command). When the users 
+       starting MPJ Express processes (using java command). When the users 
        decide to run their code using mpjrun, this file is generated 
        programmatically.
      </li>
@@ -869,8 +869,8 @@ one example of such a mechanism.
      </li>
      <li>
          Each MPJ process uses two ports. Thus, do not use consecutive ports
-         if you are trying to execute multiple MPJE processes on same node. A sample
-         file for running two MPJE processes on same machine  would be 
+         if you are trying to execute multiple MPJ Express processes on same node. A sample
+         file for running two MPJ Express processes on same machine  would be 
     <pre>
      # Number of processes
      2
@@ -885,7 +885,7 @@ one example of such a mechanism.
 </li>
 
    <li>
-     Running your MPJE program.
+     Running your MPJ Express program.
    </li>
         </li>
        <ul>   
@@ -990,7 +990,7 @@ one example of such a mechanism.
           </ul>
 
 <li>
-Passing arguments to the JVM running MPJE program
+Passing arguments to the JVM running MPJ Express program
 </li>
   <ul>
    <li> 
@@ -1000,7 +1000,7 @@ Passing arguments to the JVM running MPJE program
   </ul> 
 
 <li>
-   Passing arguments to MPJE application.
+   Passing arguments to MPJ Express application.
 </li>
   <ul>
    <li>
@@ -1076,7 +1076,7 @@ directory.
     </li>
       <ul>
         <li> Write a machines file. More details on machines file can 
-	be found in the <a href="#machines">the section "Running MPJE 
+	be found in the <a href="#machines">the section "Running MPJ Express 
 	programs with the MPJ Express runtime" </a> </li>
 	
         <li>
@@ -1091,7 +1091,7 @@ directory.
       <ul>
      <li> Write a configuration file called 'mpj.conf'. Further details about 
          writing configuration file and its format can be found in 
-	<a href="#config">the section "Running MPJE programs without 
+	<a href="#config">the section "Running MPJ Express programs without 
 	the runtime (manually)" </a> </li>
     </li>
     <li>
@@ -1415,7 +1415,7 @@ Java-docs can be seen in $MPJ_HOME/doc/javadocs
       processes manually or using the runtime.
       <ul>
         <li>
-	  Running MPJE applications manually (without using 
+	  Running MPJ Express applications manually (without using 
           runtime): The users may edit 
 	  configuration file (for e.g. $MPJ_HOME/conf/mpj2.conf) to change
 	  protocol switch limit. Look at the comments in this configuration 
@@ -1423,7 +1423,7 @@ Java-docs can be seen in $MPJ_HOME/doc/javadocs
 	  changed it, represents protocol switch limit
 	</li>
 	<li>
-	  Running MPJE applications with the runtime: Use -psl &lt;val&gt; switch to change 
+	  Running MPJ Express applications with the runtime: Use -psl &lt;val&gt; switch to change 
 	  the protocol switch limit
 	</li>
       </ul>
@@ -1768,7 +1768,7 @@ Starting process <5> on <m3>
    Cartcomm.Dims_Create(..) is implemented with limited functionality. 
    According to the MPI specifications, non-zero elements of 'dims' 
    array argument will not be modified by this method. In this 
-   release of MPJE, all elements of 'dims' array are modified without 
+   release of MPJ Express, all elements of 'dims' array are modified without 
    taking into account if they are zero or non-zero.
 </li>
 
@@ -1823,16 +1823,16 @@ Starting process <5> on <m3>
 
 <li>
      Problem: The users may run into issues with starting daemons on Windows. 
-     The reason is that when MPJE processes are started manually, the owner
+     The reason is that when MPJ Express processes are started manually, the owner
      is the user who started them. Thus the log files produced by these
      processes are owned by the user. On the other hand, the daemon is installed
      as a SYSTEM service. Thus, while starting the daemon, it may not be able
      to write to the log file, because logs directory is owned by user,
      whereas for daemon to be able to write to this directory, it has to be 
-     globally accessible. Even when the daemon is started, MPJE
+     globally accessible. Even when the daemon is started, MPJ Express
      processes may not be able to write process log files because these
      log files are owned by the user, whereas now they are required to be 
-     globally accessible as MPJE processes started by the daemon are also 
+     globally accessible as MPJ Express processes started by the daemon are also 
      SYSTEM processes. So the problem is caused if the users switch from 
      running their code manually to the runtime, or possibly vice-versa.
 </li>
@@ -1891,14 +1891,14 @@ Starting process <5> on <m3>
 <li>
    Mixing local loading and remote loading may end up in ClassNotFoundException
    for $MPJ_HOME/src/mpi/MPI.java class. This specific class is the one 
-   shown in exception stack trace because this is the entry point to MPJE
-   classes. This can happen in scenarios when you have MPJE application 
+   shown in exception stack trace because this is the entry point to MPJ Express
+   classes. This can happen in scenarios when you have MPJ Express application 
    in your working directory, CLASSPATH contains ".", and you are
    using remote loading. Under the hoods, the application is loaded 
-   by the MPJE daemon using local loader (because working directory contains
-   applications) and this application tries to load MPJE classes though a 
+   by the MPJ Express daemon using local loader (because working directory contains
+   applications) and this application tries to load MPJ Express classes though a 
    URL. Because this application is loaded using the local loader (default), 
-   it will not be able to load MPJE classes from a URL. To avoid this error,
+   it will not be able to load MPJ Express classes from a URL. To avoid this error,
    it is necessary not to have your applications in working directory when 
    using remote loader. If your programs reads some file, then it may be 
    a good idea to separate this file from your application classes, or copy 
