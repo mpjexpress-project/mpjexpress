@@ -151,7 +151,9 @@ public class MPJRun {
 
       localaddr = InetAddress.getLocalHost();
       hostName = localaddr.getHostName();
-      hostIP = localaddr.getHostAddress(); 
+
+      if(hostIP == null)
+        hostIP = localaddr.getHostAddress(); 
 
       if(DEBUG && logger.isDebugEnabled()) {
 	logger.debug("Address: " + localaddr);
@@ -418,6 +420,7 @@ public class MPJRun {
       "\n   -wdir val          -- $MPJ_HOME/bin"+ 
       "\n   -mpjport val       -- 20000"+  
       "\n   -mxboardnum val    -- 0"+  
+      "\n   -headnodeip val    -- ..."+
       "\n   -sport val         -- 15000"+
       "\n   -psl val           -- 128Kbytes"+ 
       "\n   -machinesfile val  -- machines"+ 
@@ -457,6 +460,11 @@ public class MPJRun {
       else if (args[i].equals("-dport")) {
         D_SER_PORT = new Integer(args[i+1]).intValue();
         i++;
+      }
+
+      else if (args[i].equals("-headnodeip")) {
+	hostIP = args[i+1] ;
+	i++;
       }
       
       else if (args[i].equals("-localloader")) {
