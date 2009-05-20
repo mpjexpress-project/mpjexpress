@@ -307,14 +307,9 @@ for ($i = 0 ; $i < @ntypes ; $i++) {
   public void read(boolean[] dest, int dstOff, int numEls,
                    int bufOff, boolean revBytes) {
     buffer.position(bufOff);
-    boolean bool = false; //boolean only
+
     for (int i = 0; i < numEls; i++) {
-
-      if (buffer.get() == 1) {
-        bool = true;
-      }
-      dest[i + dstOff] = bool;
-
+     dest[i + dstOff] = (buffer.get() == 1) ;
     }
 
   }
