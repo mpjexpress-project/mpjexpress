@@ -58,14 +58,14 @@ import mpjbuf.BufferFactory ;
  * MPI can be implemented.
  * </p>
  */
-public abstract class Device {
+public interface Device {
 
   /** 
    * A wild-card that can be used with the recv methods. 
    */
   public static final int ANY_SOURCE = -2;
 
-  public String deviceName ;
+  //public String deviceName ;
   
   /**
    * A wild-card for ANY_SOURCE at xdev level. It is a {@link xdev.ProcessID
@@ -91,7 +91,7 @@ public abstract class Device {
    * @return Device An instance of an implementation of the device.
    * @throws XDevException If there is no corresponding device to the string
    *                       argument provided to this method
-   */
+   *
   public static Device newInstance(String dev) throws XDevException {
     Device device = null;
 
@@ -107,6 +107,7 @@ public abstract class Device {
 
     return device;
   }
+  */
 
   /**
    * Initialize the xdev device. Specific implementations perform
