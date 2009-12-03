@@ -129,6 +129,17 @@ public class MPJRun {
     }
 
     processInput(args);
+
+
+    if(deviceName.equals("shmdev")) {
+
+      MulticoreDaemon multicoreDaemon =
+          new MulticoreDaemon(className, null, 1, nprocs, wdir,
+                                                  jvmArgs, appArgs) ;
+      return ;
+
+    }
+
     //System.exit(0) ; 
     readMachineFile();
     machinesSanityCheck() ;
