@@ -6,14 +6,15 @@
     <property name="mpjdev.dir" value="src/mpjdev"/>	
     <property name="mpjbuf.dir" value="src/mpjbuf"/>
     <property name="xdev.dir" value="src/xdev/"/>	
-    <property name="niodev.dir" value="src/xdev/niodev"/>   
+    <property name="niodev.dir" value="src/xdev/niodev"/>
+    <property name="smpdev.dir" value="src/xdev/smpdev"/>   
     <property name="lib.dir" value="lib/"/>   
     <property name="src.dir" value="src"/>   
     <property name="mx.native.dir" value="src/xdev/mxdev/lib"/>
      
     <!-- cannot access ${java.home} ..? --> 
     <!-- <property name="java_home" 
-              value="/home/users/dsg/shafia/install/jdk1.5.0_05"/> -->
+              value="C:\Program Files\Java\jdk1.6.0"/> -->
     <property environment="env"/>
     <property name="mx_home" value="${env.MX_HOME}"/>
     <property name="java_home" value="${env.JAVA_HOME}"/>
@@ -30,8 +31,11 @@
          of Java files from templates will be skipped. -->
     
     <property name="perl.executable" value="/usr/bin/perl"/>
-    <!--
+    
+    <!-- 
     <property name="perl.executable" value="c:/Perl/bin/perl.exe"/>
+    -->    
+    <!--
     <property name="perl.executable" value="/cygwin/bin/perl.exe"/>
     -->
     
@@ -82,14 +86,75 @@
     </target> 
 
     <target name="jars" description="builds jar files ..">
-     <jar destfile="${lib.dir}/mpj.jar" basedir="src"
-          includes="mpi/*.class mpjbuf/*.class mpjdev/*.class xdev/*.class 
+
+   <jar destfile="${lib.dir}/mpj.jar" basedir="src"
+          includes="mpi/*.class mpjbuf/*.class mpjdev/*.class xdev/*.class
 	  	    xdev/niodev/*.class xdev/mxdev/*.class">
+	  <manifest>
+            <attribute name="Class-path" value="log4j-1.2.11.jar"/>
+          </manifest>
+    </jar>
+
+    <jar destfile="${lib.dir}/mpiExp.jar" basedir="src"
+          includes="mpi/MPIException.class,mpjdev/MPJDevException.class,mpjdev/Request.class,mpjdev/Request$WaitanyQue.class,mpjdev/Status.class,mpjdev/CompletionHandler.class">
+	  <manifest>
+            <attribute name="Class-path" value="log4j-1.2.11.jar"/>
+          </manifest>
+     </jar>
+ <!-- includes="mpi/MPIException.class,mpjdev/MPJDevException.class,mpjdev/Status.class,mpjdev/Group.class,mpjdev/MPJDev.class,mpjdev/Request.class,mpjdev/Comm.class,mpjdev/Request$WaitanyQue.class,mpjdev/Comm$1.class"> -->
+    <jar destfile="${lib.dir}/mpi.jar" basedir="src"
+          includes="mpi/*.class" excludes="mpi/MPIException.class">
 	  <manifest>
             <attribute name="Class-path" value="log4j-1.2.11.jar"/> 
           </manifest>  
      </jar>
      
+     <jar destfile="${lib.dir}/mpjbuf.jar" basedir="src"
+          includes="mpjbuf/*.class">
+	  <manifest>
+            <attribute name="Class-path" value="log4j-1.2.11.jar"/> 
+          </manifest>  
+     </jar>
+
+     <jar destfile="${lib.dir}/mpjdev.jar" basedir="src"
+        includes="mpjdev/*.class" excludes="mpjdev/MPJDevException.class,mpjdev/Request.class,mpjdev/Request$WaitanyQue.class,mpjdev/Status.class,mpjdev/CompletionHandler.class">
+	  <manifest>
+            <attribute name="Class-path" value="log4j-1.2.11.jar"/> 
+          </manifest>  
+     </jar>
+
+      <!--
+         includes="mpjdev/*.class" excludes="mpjdev/MPJDevException.class,mpjdev/Status.class,mpjdev/Group.class,mpjdev/MPJDev.class,mpjdev/Request.class,mpjdev/Comm.class,mpjdev/Request$WaitanyQue.class,mpjdev/Comm$1.class">
+         -->
+
+     <jar destfile="${lib.dir}/xdev.jar" basedir="src"
+          includes="xdev/*.class">
+	  <manifest>
+            <attribute name="Class-path" value="log4j-1.2.11.jar"/> 
+          </manifest>  
+     </jar>
+
+     <jar destfile="${lib.dir}/niodev.jar" basedir="src"
+          includes="xdev/niodev/*.class">
+	  <manifest>
+            <attribute name="Class-path" value="log4j-1.2.11.jar"/> 
+          </manifest>  
+     </jar>
+
+     <jar destfile="${lib.dir}/mxdev.jar" basedir="src"
+          includes="xdev/mxdev/*.class">
+	  <manifest>
+            <attribute name="Class-path" value="log4j-1.2.11.jar"/> 
+          </manifest>  
+     </jar>
+
+     <jar destfile="${lib.dir}/smpdev.jar" basedir="src"
+          includes="xdev/smpdev/*.class">
+	  <manifest>
+            <attribute name="Class-path" value="log4j-1.2.11.jar"/> 
+          </manifest>  
+     </jar>
+
      <jar destfile="${lib.dir}/daemon.jar" basedir="src"
           includes="runtime/daemon/*.class runtime/*.class">
 	  <manifest>
@@ -133,7 +198,7 @@
     <target name="mxlib" description="generates native MX code">
 
       <javah destdir="${mx.native.dir}" force="yes" 
-	     classpath="${lib.dir}/mpj.jar">
+             classpath="${src.dir}">
         <class name="xdev.mxdev.MXDevice"/>
         <class name="xdev.mxdev.MXSendRequest"/>
         <class name="xdev.mxdev.MXRecvRequest"/>
@@ -174,7 +239,7 @@
 	 <fileset dir="${mpjbuf.dir}" includes="**/*.class"/>
 	 <fileset dir="src/runtime" includes="**/*.class"/>
 	 <fileset dir="src/runtime" includes="*.class"/>
-	</delete>	 
+	</delete>
     </target>
 
     <target name="veryclean" depends="clean"/> <!-- ,cleanJava"/> -->
@@ -214,7 +279,7 @@
       </javadoc>
     </target>
 
-    <target name="all" depends="compile,jars,java-docs,clean" 
+    <target name="all" depends="compile,jars,clean"
             description="All"/>
 
 </project>
