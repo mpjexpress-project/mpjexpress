@@ -1,11 +1,11 @@
 /*
  The MIT License
 
- Copyright (c) 2005 - 2008
+ Copyright (c) 2005 - 2010
    1. Distributed Systems Group, University of Portsmouth (2005)
-   2. Aamir Shafi (2005 - 2008)
-   3. Bryan Carpenter (2005 - 2008)
-   4. Mark Baker (2005 - 2008)
+   2. Aamir Shafi (2005 - 2010)
+   3. Bryan Carpenter (2005 - 2010)
+   4. Mark Baker (2005 - 2010)
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -63,7 +63,19 @@ public class MPJDev {
     /* we want multiple threads to see the same object */
     synchronized (MPJDev.class) {
       if (dev == null) {
-        dev = Device.newInstance(args[2]);
+        //dev = Device.newInstance(args[2]);
+        String device = args[2];
+
+        if (device.equals("niodev")) {
+          dev = new xdev.niodev.NIODevice();
+        } else if (device.equals("mxdev")) {
+          dev = new xdev.mxdev.MXDevice();
+        } else if (device.equals("smpdev")) {
+          dev = new xdev.smpdev.SMPDevice();
+        } else {
+          throw new MPJDevException("No matching device found for <" 
+               + dev + ">");
+        }
       }
     }
 
