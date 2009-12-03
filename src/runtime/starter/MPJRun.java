@@ -64,6 +64,8 @@ public class MPJRun {
   private static int MPJ_SERVER_PORT = 20000 ; 
   private static int mxBoardNum = 0 ; 
   private static int D_SER_PORT = 10000 ;
+  private static int endPointID = 0 ;
+
   int S_PORT = 15000; 
   String machinesFile = "machines" ; 
   ArrayList<String> jvmArgs = new ArrayList<String>() ; 
