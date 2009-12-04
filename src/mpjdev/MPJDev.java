@@ -49,7 +49,7 @@ public class MPJDev {
 
   static Logger logger = Logger.getLogger( "mpj" );
 
-  public static void init(String args[]) throws MPJDevException {
+  public static Device init(String args[]) throws MPJDevException {
 	  
     if (args.length < 3) {
 	    
@@ -83,7 +83,7 @@ public class MPJDev {
       System.out.println("Specified device: " + args[2]);
       System.out.println("Available devices, niodev, smpdev, gmdev");
       System.out.println("Error, cant execute, correct the device first");
-      return;
+      return dev ;
     }
 
     ProcessID[] ids = dev.init(args);
@@ -96,6 +96,7 @@ public class MPJDev {
       }
     }
     WORLD = new Comm(dev, new Group(ids, myID, myRank ));
+    return dev ; 
   }
 
   /**
