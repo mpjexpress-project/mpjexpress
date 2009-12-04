@@ -48,7 +48,7 @@ import mpi.ProcTree ;
 import mpjbuf.Type;
 import java.util.HashMap ; 
 
-public class MXDevice extends Device {
+public class MXDevice implements Device {
   int rank ; 	
   int nprocs = 0; 
   int SEND_OVERHEAD ; 
@@ -63,7 +63,7 @@ public class MXDevice extends Device {
 	  new HashMap<Long, MXRequest> (); 
 
   public MXDevice() {
-    this.deviceName = "mxdev"; 	  
+    //this.deviceName = "mxdev"; 	  
   }
   
   public ProcessID[] init(String[] args) throws XDevException { 

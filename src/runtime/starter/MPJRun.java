@@ -106,7 +106,7 @@ public class MPJRun {
   ByteBuffer buffer = ByteBuffer.allocate(1000);
   String loader = "useRemoteLoader";
 
-  private static final boolean DEBUG = false ; 
+  static final boolean DEBUG = false ; 
 
   /**
    * Every thing is being inside this constructor :-)

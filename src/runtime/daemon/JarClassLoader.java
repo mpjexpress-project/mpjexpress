@@ -55,7 +55,7 @@ import java.io.*;
 /**
  * A class loader for loading jar files, both local and remote.
  */
-class JarClassLoader
+public class JarClassLoader
     extends URLClassLoader {
   private URL url;
 

@@ -210,7 +210,7 @@ import org.apache.log4j.Logger;
  *     </p>
  */
 public class NIODevice
-    extends Device {
+    implements Device {
 
   int index, root, extent, places;
 
@@ -573,7 +573,7 @@ public class NIODevice
   boolean finished = false;
 
   public NIODevice() {
-    this.deviceName = "niodev"; 
+    //this.deviceName = "niodev"; 
   }
 
   /**
