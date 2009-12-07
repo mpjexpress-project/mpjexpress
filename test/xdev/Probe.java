@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.UUID;
 import java.util.Vector;
 import mpjbuf.*;
-import mpjdev.Status;
+import mpjdev.*;
 import xdev.mxdev.*;
 
 public class Probe {
@@ -17,7 +17,8 @@ public class Probe {
 	 */
         int DATA_SIZE = 2; 
         Object[] source = new Object[100];
-        xdev.Device device = xdev.Device.newInstance("mxdev");	    
+        //xdev.Device device = xdev.Device.newInstance("mxdev");	    
+        xdev.Device device = MPJDev.init(new String[]{"","","mxdev"});
 	ProcessID[] ids = device.init(args);
         int sendOverhead = device.getSendOverhead();
         int recvOverhead = device.getRecvOverhead();

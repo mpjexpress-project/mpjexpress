@@ -5,7 +5,8 @@ import java.util.Arrays;
 
 public class init {
 	public static void main(String args[]) throws Exception{		
-		Device dev = Device.newInstance("niodev");
+		//Device dev = Device.newInstance("niodev");
+		Device dev = MPJDev.init(new String[]{"","","niodev"});
 		long t1 = System.nanoTime();
 		xdev.ProcessID [] ids = dev.init(args);		
 		xdev.ProcessID myID = dev.id();
