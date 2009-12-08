@@ -100,8 +100,6 @@ public class MulticoreStarter {
 
     arvs = new String[(nargs.length + 3)];
 
-//#######################################################
-
     Runnable[] ab = new Runnable[processes];
 
     c = new Class[processes];
@@ -113,12 +111,11 @@ public class MulticoreStarter {
       //System.out.println("x " + x);
       ab[x] = new Runnable() {
 
-        String argNew[] = new String[arvs.length];
+      String argNew[] = new String[arvs.length];
 
-        public void run() {
+      public void run() {
 
-          ///// placed /////////
-          int index = Integer.parseInt(Thread.currentThread().getName());
+        int index = Integer.parseInt(Thread.currentThread().getName());
           //String conf = wdir.substring(0, (wdir.lastIndexOf("/") + 1));
           //config = conf + "mpjdev.conf";
           // System.out.println("conf " + config);
@@ -149,87 +146,95 @@ public class MulticoreStarter {
             }
           } else {
 */
-            try {
-                String mpjHome = System.getenv("MPJ_HOME");
+        try {
+          String mpjHome = System.getenv("MPJ_HOME");
     
-                String libPath = 
-                         mpjHome+"/lib/mpi.jar"+File.pathSeparator+
-                         mpjHome+"/lib/mpjdev.jar" ; 
+          String libPath = 
+            mpjHome+"/lib/mpi.jar"+File.pathSeparator+
+            mpjHome+"/lib/mpjdev.jar" ; 
 
-                if(className.endsWith(".jar")) { 
-		  appPath = wdir + "/" + className ; 
-		} else { 
-		  appPath = wdir ; 
-                } 
+	      System.out.println("className = "+className) ; 
 
-                appPath = appPath  + File.pathSeparator+libPath;
+          if(className.endsWith(".jar")) { 
+	    if((new File(className)).isAbsolute()) { 
+	      System.out.println("AbsolutePath") ; 
+	      System.out.println("className = "+className) ; 
+              appPath = className ; 
+	    } else { 
+	      appPath = wdir + "/" + className ; 
+	    }
+          } else { 
+	    appPath = wdir ; 
+          } 
 
-                ClassLoader systemLoader = 
-                            ClassLoader.getSystemClassLoader() ; 
+          appPath = appPath  + File.pathSeparator+libPath;
 
-                System.out.println("appPath = "+appPath) ; 
+          ClassLoader systemLoader = 
+          ClassLoader.getSystemClassLoader() ; 
 
-                StringTokenizer tok = new StringTokenizer(appPath,
-                                           File.pathSeparator);
-                int count = tok.countTokens();
-                String[] tokArr = new String[count];
-                File[] f = new File[count];
-                URL[] urls = new URL[count];
+          System.out.println("appPath = "+appPath) ; 
 
-                for (int i = 0; i < count; i++) {
-                  tokArr[i] = tok.nextToken();
-                  f[i] = new File(tokArr[i]);
-                  urls[i] = f[i].toURI().toURL();
-                }
+          StringTokenizer tok = new StringTokenizer(appPath,
+                                      File.pathSeparator);
+          int count = tok.countTokens();
+          String[] tokArr = new String[count];
+          File[] f = new File[count];
+          URL[] urls = new URL[count];
 
-                URLClassLoader ucl = new URLClassLoader(urls);
-                Thread.currentThread().setContextClassLoader(ucl);
+          for (int i = 0; i < count; i++) {
+            tokArr[i] = tok.nextToken();
+            f[i] = new File(tokArr[i]);
+            urls[i] = f[i].toURI().toURL();
+          }
 
-                if(className.endsWith(".jar")) { 
-                  //System.out.println("Hello i am jar loader");
-		  //System.out.println("wdir ="+wdir) ; 
-                  String jarFileName = className ; 
-		  //System.out.println("jarFileName ="+jarFileName) ; 
-                  JarFile jarFile = new JarFile(jarFileName);
-                  Attributes attr = jarFile.getManifest().getMainAttributes();
-                  name = attr.getValue(Attributes.Name.MAIN_CLASS);
-                  c[index] = Class.forName(name, true, ucl);
-		} else { 
-                  name = className;
-                  // System.out.println("num --" + num + " Thread "
-                  // +Thread.currentThread()+" Time "+System.nanoTime());
-                  c[index] = Class.forName(name, true, ucl);
-                  //  c[num] = Class.forName(name);
-		} 
+          URLClassLoader ucl = new URLClassLoader(urls);
+          Thread.currentThread().setContextClassLoader(ucl);
 
-              //}
-             } catch (Exception exx) {
-               exx.printStackTrace() ; 
-             }
-           //}
+          if(className.endsWith(".jar")) { 
+            //System.out.println("Hello i am jar loader");
+            //System.out.println("wdir ="+wdir) ; 
+            String jarFileName = className ; 
+	    //System.out.println("jarFileName ="+jarFileName) ; 
+            JarFile jarFile = new JarFile(jarFileName);
+            Attributes attr = jarFile.getManifest().getMainAttributes();
+            name = attr.getValue(Attributes.Name.MAIN_CLASS);
+            c[index] = Class.forName(name, true, ucl);
+          } else { 
+            name = className;
+            // System.out.println("num --" + num + " Thread "
+            // +Thread.currentThread()+" Time "+System.nanoTime());
+            c[index] = Class.forName(name, true, ucl);
+            //  c[num] = Class.forName(name);
+	  } 
 
-           arvs[1] = config;
-           arvs[2] = deviceName;
+          //}
+        } catch (Exception exx) {
+          exx.printStackTrace() ; 
+        }
+        //}
 
-           for (int i = 0; i < nargs.length; i++) {
-             arvs[i + 3] = nargs[i];
-           }
+        arvs[1] = config;
+        arvs[2] = deviceName;
 
-           try {
+        for (int i = 0; i < nargs.length; i++) {
+          arvs[i + 3] = nargs[i];
+        }
 
-             if (classLoader != null && loader.equals("useRemoteLoader")) {
-               System.out.println("Remote loader invoking class");
-               classLoader.invokeClass(c[num], arvs);
-             } else {
-               //       System.out.println("getting method " + num+" Thread "+Thread.currentThread()+" Time "+System.nanoTime());
-               // System.out.println(" -- getting method "+num);
+        try {
 
-               m[index] = c[index].getMethod("main", new Class[]{arvs.getClass()});
-               m[index].setAccessible(true);
-               int mods = m[index].getModifiers();
-               if (m[index].getReturnType() != void.class 
-                            || !Modifier.isStatic(mods) ||
-                               !Modifier.isPublic(mods)) {
+          if (classLoader != null && loader.equals("useRemoteLoader")) {
+            System.out.println("Remote loader invoking class");
+            classLoader.invokeClass(c[num], arvs);
+          } else {
+            //       System.out.println("getting method " + num+" Thread "+Thread.currentThread()+" Time "+System.nanoTime());
+            // System.out.println(" -- getting method "+num);
+
+            m[index] = c[index].getMethod("main", new Class[]{arvs.getClass()});
+            m[index].setAccessible(true);
+            int mods = m[index].getModifiers();
+            if (m[index].getReturnType() != void.class 
+                  || !Modifier.isStatic(mods) ||
+                         !Modifier.isPublic(mods)) {
                  throw new NoSuchMethodException("main");
                }
                //  m.invoke(null, new Object[] {arvs});

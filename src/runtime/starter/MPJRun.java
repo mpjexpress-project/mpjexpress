@@ -1,11 +1,11 @@
 /*
  The MIT License
 
- Copyright (c) 2005 - 2008
+ Copyright (c) 2005 - 2010
    1. Distributed Systems Group, University of Portsmouth (2005)
-   2. Aamir Shafi (2005 - 2008)
-   3. Bryan Carpenter (2005 - 2008)
-   4. Mark Baker (2005 - 2008)
+   2. Aamir Shafi (2005 - 2010)
+   3. Bryan Carpenter (2005 - 2010)
+   4. Mark Baker (2005 - 2010)
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -31,9 +31,8 @@
  * Author       : Aamir Shafi, Bryan Carpenter
  * Created      : Sun Dec 12 12:22:15 BST 2004
  * Revision     : $Revision: 1.35 $
- * Updated      : $Date: 2006/10/20 17:24:47 $
+ * Updated      : $Date: Tue Dec  8 20:42:15 PKT 2009$
  */
-
 
 package runtime.starter;
 
@@ -107,6 +106,8 @@ public class MPJRun {
   String loader = "useRemoteLoader";
 
   static final boolean DEBUG = false ; 
+  private static int RUNNING_JAR_FILE = 2 ; 
+  private static int RUNNING_CLASS_FILE = 1 ; 
 
   /**
    * Every thing is being inside this constructor :-)
@@ -133,12 +134,17 @@ public class MPJRun {
 
     if(deviceName.equals("shmdev")) {
 
-      System.out.println("jarName "+jarName) ; 
-      System.out.println("className "+className) ; 
-      int jarOrClass = (className == null ? 2 : 1) ; 
+      if(DEBUG && logger.isDebugEnabled()) {
+        logger.info("jarName "+jarName) ; 
+        logger.info("className "+className) ; 
+      }
+
+      int jarOrClass = (className==null?RUNNING_JAR_FILE:RUNNING_CLASS_FILE);
+       
+      System.out.println("codeBase"+codeBase) ; 
       MulticoreDaemon multicoreDaemon =
-          new MulticoreDaemon(className, jarName, jarOrClass, nprocs, wdir,
-                                                  jvmArgs, appArgs) ;
+          new MulticoreDaemon(className, codeBase+"/"+jarName, jarOrClass, 
+	                           nprocs, wdir, jvmArgs, appArgs) ;
       return ;
 
     }

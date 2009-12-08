@@ -61,7 +61,6 @@ public class MulticoreDaemon {
 
   private BufferedReader reader = null;
   private InputStream outp = null;
-  private Thread[] workers = null;
   private String hostName = null; 
   private PrintStream out = null;
   private Semaphore outputHandlerSem = new Semaphore(1,true); 
@@ -69,7 +68,6 @@ public class MulticoreDaemon {
   private String wdir = null ; 
   private int numOfProcs = 0; 
   private int pos = 0; 
-  private String URL = null; //http:server:portclient.jar
   private String mpjURL = null; 
   private String deviceName = null;
   private String className = null ;
@@ -95,18 +93,17 @@ public class MulticoreDaemon {
     this.processes = numOfProcessors ; 
     this.deviceName = "smpdev" ;
     this.loader = "useLocalLoader" ; //don't need this
-    this.URL = workingDirectory ; 
+
+    if(workingDirectory == null) { 
+      this.wdir = System.getProperty("user.dir") ; 
+    } else { 
+      this.wdir = workingDirectory ; 
+    }
+
     this.mpjURL = "someDummympjURL" ; 
 
-    /* means we want to run the class file */ 
-    //if(classOrJar == 1) { 
-      startNewProcess(mcClassName, numOfProcessors, workingDirectory, 
-                                          mcJarName, classOrJar) ; 
-    //}
-    //else if(classOrJar == 2) { 
-     /// System.out.println("MulticoreDaemon.constructor.Can't run jar file");
-     // System.exit(0); 
-    //}
+    startNewProcess(mcClassName, numOfProcessors, workingDirectory, 
+                                             mcJarName, classOrJar) ; 
 
   }
 
@@ -121,28 +118,13 @@ public class MulticoreDaemon {
     Map<String,String> map = System.getenv() ;
     mpjHomeDir = map.get("MPJ_HOME");
 			    
-    //createLogger(mpjHomeDir); 
-
     if(MPJRun.DEBUG && MPJRun.logger.isDebugEnabled()) { 
       MPJRun.logger.debug("mpjHomeDir "+mpjHomeDir); 
-    }
-
-
-    if(MPJRun.DEBUG && MPJRun.logger.isDebugEnabled()) { 
-      MPJRun.logger.debug ("MulticoreDaemon is waiting to accept connections ... ");
-    }
-      
-    wdir = System.getProperty("user.dir");
-    if(MPJRun.DEBUG && MPJRun.logger.isDebugEnabled()) { 
+      MPJRun.logger.debug ("McDaemon is waiting to accept connections ... ");
       MPJRun.logger.debug("wdir "+wdir);
-    }
-
-    if(MPJRun.DEBUG && MPJRun.logger.isDebugEnabled()) { 
       MPJRun.logger.debug ("A client has connected");
     }
 
-    workers = new Thread[1];
-	
     if(MPJRun.DEBUG && MPJRun.logger.isDebugEnabled()) { 
       MPJRun.logger.debug ("the daemon will start <" + processes + "> threads"); 
     }
@@ -161,7 +143,6 @@ public class MulticoreDaemon {
       if(now) {
         String cp = jvmArgs.remove(e); 
  
-	//cp = "."+File.pathSeparator+""+
 	cp = 
 	  	      mpjHomeDir+"/lib/smpdev.jar"+
                       File.pathSeparator+""+mpjHomeDir+"/lib/xdev.jar"+
@@ -171,10 +152,9 @@ public class MulticoreDaemon {
                       File.pathSeparator+""+mpjHomeDir+"/lib/mpiExp.jar"+
 	  	      File.pathSeparator+cp;
 
-//        if(jarName != null) 
-  //        cp = wdir + "/" + jarName + File.pathSeparator + cp ; 	      
-
-        System.out.println("cp = "+cp) ; 
+        if(MPJRun.DEBUG && MPJRun.logger.isDebugEnabled()) { 
+          MPJRun.logger.debug("cp = "+cp) ; 
+        }
 	    
 	jvmArgs.add(e,cp);
         now = false;		  
@@ -197,18 +177,11 @@ public class MulticoreDaemon {
            File.pathSeparator+""+mpjHomeDir+"/lib/starter.jar"+
            File.pathSeparator+""+mpjHomeDir+"/lib/mpiExp.jar" ;
 
-      //jvmArgs.add("."+File.pathSeparator+""+
-   //   if(jarName != null) 
-     //     cp = wdir + "/" + jarName + File.pathSeparator + cp ; 	      
       jvmArgs.add(cp) ; 
 
-      System.out.println("cp = "+cp) ; 
-//jvmArgs.add("."+File.pathSeparator+""+
-//mpjHomeDir+"/lib/loader2.jar"+
-//File.pathSeparator+""+mpjHomeDir+"/lib/mpj.jar"+
-//File.pathSeparator+""+mpjHomeDir+"/lib/log4j-1.2.11.jar"+
- //File.pathSeparator+""+mpjHomeDir+"/lib/wrapper.jar"
-//);
+      if(MPJRun.DEBUG && MPJRun.logger.isDebugEnabled()) { 
+        MPJRun.logger.debug("cp = "+cp) ; 
+      }
     }
 
     jArgs = jvmArgs.toArray(new String[0]);
@@ -254,8 +227,6 @@ public class MulticoreDaemon {
       }
     } 
 	
-    /*... Making the command finishes here ...*/
-
     if(MPJRun.DEBUG && MPJRun.logger.isDebugEnabled()) { 
       MPJRun.logger.debug("creating process-builder object ");
     }
@@ -267,12 +238,6 @@ public class MulticoreDaemon {
     }
     
     pb.directory(new File(wdir)); 
-	//Map<String, String> m = pb.environment(); 
-	//for(String str : m.values()) {
-        //  if(MPJRun.DEBUG && MPJRun.logger.isDebugEnabled()) { 
-        //    MPJRun.logger.debug("str : "+str);		
-	//  }
-	//}
     pb.redirectErrorStream(true);
 
     if(MPJRun.DEBUG && MPJRun.logger.isDebugEnabled()) { 
@@ -293,19 +258,9 @@ public class MulticoreDaemon {
       MPJRun.logger.debug ("started the MultithreadStarter.");
     }
 
-    /*
-    synchronized (processVector) {
-      for (int i = 0; i < processVector.length; i++) {
-        processVector[i].destroy();
-      }
-      kill_signal = false;
-    }*/
-
-    workers = null;
     if(MPJRun.DEBUG && MPJRun.logger.isDebugEnabled()) { 
       MPJRun.logger.debug ("Stopping the output");
     }
-
 
     String line = "";
     InputStream outp = p.getInputStream();
@@ -322,13 +277,9 @@ public class MulticoreDaemon {
  
           synchronized (this) {
             System.out.println(line);
-            //if(MPJRun.DEBUG && MPJRun.logger.isDebugEnabled()) { 
-            //  MPJRun.logger.debug(line);
-	    //}
           } 
         }
       }  while ( (line = reader.readLine()) != null); 
-        // && !kill_signal); 
     }
     catch (Exception e) {
       if(MPJRun.DEBUG && MPJRun.logger.isDebugEnabled()) { 
@@ -337,43 +288,10 @@ public class MulticoreDaemon {
       e.printStackTrace();
     } 
   }
-  
-  private void createLogger(String homeDir) throws MPJRuntimeException {
-  
-    if(logger == null) {
-
-      DailyRollingFileAppender fileAppender = null ;
-
-      try {
-        fileAppender = new DailyRollingFileAppender(
-                            new PatternLayout(
-                            " %-5p %c %x - %m\n" ),
-                            homeDir+"/logs/daemon-"+hostName+".log",
-                            "yyyy-MM-dd-a" );
-
-        Logger rootLogger = Logger.getRootLogger() ;
-        rootLogger.addAppender( fileAppender);
-        LoggerRepository rep =  rootLogger.getLoggerRepository() ;
-        rootLogger.setLevel ((Level) Level.ALL );
-        logger = Logger.getLogger( "mpjdaemon" );
-      }
-      catch(Exception e) {
-        throw new MPJRuntimeException(e) ;
-      }
-    }
-  }
-
-  Runnable outputHandler = new Runnable() {
-
-    public void run() {
-
-
-    } //end run.
-  }; //end outputHandler.
 
   public static void main(String args[]) {
     try {
-      MulticoreDaemon dae = null ; // new MulticoreDaemon(args);
+      MulticoreDaemon dae = null ; 
     }
     catch (Exception e) {
       e.printStackTrace();
