@@ -45,6 +45,7 @@ public class TestSuite {
   }
 
   public static void main(String args[]) throws Exception {      
+   System.out.print("TestSuite has started ...") ; 
    //dacian_test a = new dacian_test(args); 	  
    //mpi.threads.SimulSend threadsafe1 = new mpi.threads.SimulSend(args);
    //WaitAnyKiller k = new WaitAnyKiller(args) ; 
@@ -154,7 +155,7 @@ public class TestSuite {
     waitnull p18 = new waitnull(args);  
     wildcard p20 = new wildcard(args); 
     buffer p21 = new buffer(args);  
-    isend p22_ = new isend(args);  
+    isend p22_ = new isend(args);  //FIXME - shmdev hangs ..
     start p23_ = new start(args); 
     startall p24 = new startall(args);  //again same test/wait problem ...
     mpi.pt2pt.BufferTest1 p25 = new mpi.pt2pt.BufferTest1(args);     
