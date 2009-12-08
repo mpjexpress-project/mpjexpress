@@ -1,9 +1,8 @@
 /*
 The MIT License
 
-Copyright (c) 2005 
-1. Distributed Systems Group, University of Portsmouth
-2. Community Grids Laboratory, Indiana University 
+Copyright (c) 2010
+1. Aamir Shafi 
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -27,7 +26,7 @@ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * File         : MulticoreStarter.java 
- * Author       : Aamir Shafi, Bryan Carpenter, Jawad Manzoor
+ * Author       : Aamir Shafi
  * Created      : Sun Dec 12 12:22:15 BST 2004
  * Revision     : $Revision: 1.17 $
  * Updated      : $Date: 2009/08/03 12:48:55 $
@@ -48,7 +47,7 @@ import runtime.daemon.JarClassLoader ;
 
 public class MulticoreStarter {
 
-    String URL = null;
+    String wdir = null;
     String config = null;
     int processes = 0;
     JarClassLoader classLoader = null;
@@ -80,7 +79,7 @@ public class MulticoreStarter {
      * method of this class, which is started by MPJDaemon. This method
      * can only start a new JVM but can't start multiple threads in one
      * JVM.
-     * @param args Arguments to this method. args[0] is URL 'String', args[1]
+     * @param args Arguments to this method. args[0] is wdir 'String', args[1]
      *             number of processes, args[2] is deviceName, and args[3]
      *             is rank started by this process. args[4] is className ...
      *             it will only be used if URL does not point to a
@@ -90,7 +89,7 @@ public class MulticoreStarter {
 
     InetAddress localaddr = InetAddress.getLocalHost();
     hostName = localaddr.getHostName();
-    URL = args[0]; //this contains working directory ...
+    wdir = args[0]; //this contains working directory ...
     processes = (new Integer(args[1])).intValue();
     deviceName = args[2];
     loader = args[3];
@@ -117,17 +116,18 @@ public class MulticoreStarter {
         String argNew[] = new String[arvs.length];
 
         public void run() {
+
           ///// placed /////////
           int index = Integer.parseInt(Thread.currentThread().getName());
-          String conf = URL.substring(0, (URL.lastIndexOf("/") + 1));
-          config = conf + "mpjdev.conf";
+          //String conf = wdir.substring(0, (wdir.lastIndexOf("/") + 1));
+          //config = conf + "mpjdev.conf";
           // System.out.println("conf " + config);
-
+/*
           if (loader.equals("useRemoteLoader")) {
             if (className.equals("dummy")) {
               try {
                 System.out.println("Hello i am remote");
-                URL[] urls = {new URL(URL), new URL(mpjURL)};
+                URL[] urls = {new URL(wdir), new URL(mpjURL)};
                 classLoader = new JarClassLoader(urls);
                 name = classLoader.getMainClassName();
                 c[index] = classLoader.loadClass(name);
@@ -140,7 +140,7 @@ public class MulticoreStarter {
               try {
                 System.out.println("Hello i am else of remote");
                 urlClassLoader = URLClassLoader.newInstance(new URL[]{
-                new URL(URL), new URL(mpjURL)});
+                                     new URL(wdir), new URL(mpjURL)});
                 name = className;
                 c[index] = urlClassLoader.loadClass(name);
               } catch (Exception e) {
@@ -148,58 +148,26 @@ public class MulticoreStarter {
               }
             }
           } else {
+*/
             try {
-              if (className.equals("dummy")) {
-                System.out.println("Hello i am jar loader");
-                String jarFileName = URL.substring(URL.lastIndexOf("/") + 1,
-                URL.length());
-                JarFile jarFile = new JarFile(jarFileName);
-                Attributes attr = jarFile.getManifest().getMainAttributes();
-                name = attr.getValue(Attributes.Name.MAIN_CLASS);
-                c[index] = Class.forName(name);
-              } else {
-                //.. what happens in the case of other devices, how do
-                //know the value of MPJ_HOME variable ..  
                 String mpjHome = System.getenv("MPJ_HOME");
-
-                // FIXME: Aamir commented out the following two lines .. 
-                // they are not relevant and I don't see a point why we need 
-                // to put these directories on the classpath.
-
-               // File dir = new File(mpjHome + "/mpj-user");
-                //visitAllDirs(dir);
     
-                String classPath = System.getProperty("java.class.path") ;
+                String libPath = 
+                         mpjHome+"/lib/mpi.jar"+File.pathSeparator+
+                         mpjHome+"/lib/mpjdev.jar" ; 
 
-                //System.out.println(" classPath = "+classPath) ; 
+                if(className.endsWith(".jar")) { 
+		  appPath = wdir + "/" + className ; 
+		} else { 
+		  appPath = wdir ; 
+                } 
 
-                classPath = classPath + ":" + mpjHome+ "/lib/smpdev.jar:"
-                                            + mpjHome+ "/lib/xdev.jar:"
-                                            + mpjHome+ "/lib/mpjbuf.jar:"
-                                            + mpjHome+ "/lib/mpiExp.jar:"
-                                            + mpjHome+ "/lib/loader2.jar" ; 
-
-                System.setProperty("java.class.path", classPath) ; 
-
-                String libPath = URL+File.pathSeparator+
-                    mpjHome+"/lib/mpi.jar"+File.pathSeparator+
-                    mpjHome+"/lib/mpjdev.jar" ; 
-
-                 //FIXME: IF we are running a JAR file, then in the 
-                 //    in the first line of libPath, we'll put URL+jarName
-                 // .... ....
-                              
-                //   System.out.println("class path "+cp);
-                //   System.out.println("App path " + appPath);
                 appPath = appPath  + File.pathSeparator+libPath;
-
-                //System.out.println(Thread.currentThread()+
-                  //                        "appPath => "+appPath) ; 
 
                 ClassLoader systemLoader = 
                             ClassLoader.getSystemClassLoader() ; 
 
-                //System.out.println("systemLoader => "+systemLoader) ; 
+                System.out.println("appPath = "+appPath) ; 
 
                 StringTokenizer tok = new StringTokenizer(appPath,
                                            File.pathSeparator);
@@ -210,30 +178,35 @@ public class MulticoreStarter {
 
                 for (int i = 0; i < count; i++) {
                   tokArr[i] = tok.nextToken();
-                  //System.out.println("App path " + tokArr[i]);
                   f[i] = new File(tokArr[i]);
-                  //System.out.println("Absolute path " + f[i]);
                   urls[i] = f[i].toURI().toURL();
                 }
 
-
                 URLClassLoader ucl = new URLClassLoader(urls);
-
-                //System.out.println("parentLoader => "+
-                  //                  ucl.getParent()) ;
                 Thread.currentThread().setContextClassLoader(ucl);
 
-                name = className;
-                // System.out.println("num --" + num + " Thread "
-                // +Thread.currentThread()+" Time "+System.nanoTime());
-                c[index] = Class.forName(name, true, ucl);
-                //  c[num] = Class.forName(name);
+                if(className.endsWith(".jar")) { 
+                  //System.out.println("Hello i am jar loader");
+		  //System.out.println("wdir ="+wdir) ; 
+                  String jarFileName = className ; 
+		  //System.out.println("jarFileName ="+jarFileName) ; 
+                  JarFile jarFile = new JarFile(jarFileName);
+                  Attributes attr = jarFile.getManifest().getMainAttributes();
+                  name = attr.getValue(Attributes.Name.MAIN_CLASS);
+                  c[index] = Class.forName(name, true, ucl);
+		} else { 
+                  name = className;
+                  // System.out.println("num --" + num + " Thread "
+                  // +Thread.currentThread()+" Time "+System.nanoTime());
+                  c[index] = Class.forName(name, true, ucl);
+                  //  c[num] = Class.forName(name);
+		} 
 
-              }
+              //}
              } catch (Exception exx) {
                exx.printStackTrace() ; 
              }
-           }
+           //}
 
            arvs[1] = config;
            arvs[2] = deviceName;

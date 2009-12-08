@@ -133,8 +133,11 @@ public class MPJRun {
 
     if(deviceName.equals("shmdev")) {
 
+      System.out.println("jarName "+jarName) ; 
+      System.out.println("className "+className) ; 
+      int jarOrClass = (className == null ? 2 : 1) ; 
       MulticoreDaemon multicoreDaemon =
-          new MulticoreDaemon(className, null, 1, nprocs, wdir,
+          new MulticoreDaemon(className, jarName, jarOrClass, nprocs, wdir,
                                                   jvmArgs, appArgs) ;
       return ;
 

@@ -99,18 +99,20 @@ public class MulticoreDaemon {
     this.mpjURL = "someDummympjURL" ; 
 
     /* means we want to run the class file */ 
-    if(classOrJar == 1) { 
-      startNewProcess(mcClassName, numOfProcessors, workingDirectory) ; 
-    }
-    else if(classOrJar == 2) { 
-      System.out.println("MulticoreDaemon.constructor.Can't run jar file");
-      System.exit(0); 
-    }
+    //if(classOrJar == 1) { 
+      startNewProcess(mcClassName, numOfProcessors, workingDirectory, 
+                                          mcJarName, classOrJar) ; 
+    //}
+    //else if(classOrJar == 2) { 
+     /// System.out.println("MulticoreDaemon.constructor.Can't run jar file");
+     // System.exit(0); 
+    //}
 
   }
 
   public void startNewProcess(String mcClassName, int numOfProcessors, 
-                              String workingDirectory) throws Exception { 
+                              String workingDirectory, String jarName,
+			                    int classOrJar) throws Exception { 
 	  
     numOfProcs = Runtime.getRuntime().availableProcessors();
     InetAddress localaddr = InetAddress.getLocalHost();
@@ -168,6 +170,11 @@ public class MulticoreDaemon {
                       File.pathSeparator+""+mpjHomeDir+"/lib/starter.jar"+
                       File.pathSeparator+""+mpjHomeDir+"/lib/mpiExp.jar"+
 	  	      File.pathSeparator+cp;
+
+//        if(jarName != null) 
+  //        cp = wdir + "/" + jarName + File.pathSeparator + cp ; 	      
+
+        System.out.println("cp = "+cp) ; 
 	    
 	jvmArgs.add(e,cp);
         now = false;		  
@@ -182,15 +189,20 @@ public class MulticoreDaemon {
 
     if(noSwitch) {
       jvmArgs.add("-cp");
+
+      String cp = mpjHomeDir+"/lib/smpdev.jar"+
+           File.pathSeparator+""+mpjHomeDir+"/lib/xdev.jar"+
+           File.pathSeparator+""+mpjHomeDir+"/lib/mpjbuf.jar"+
+           File.pathSeparator+""+mpjHomeDir+"/lib/loader2.jar"+
+           File.pathSeparator+""+mpjHomeDir+"/lib/starter.jar"+
+           File.pathSeparator+""+mpjHomeDir+"/lib/mpiExp.jar" ;
+
       //jvmArgs.add("."+File.pathSeparator+""+
-      jvmArgs.add(
-	  	      mpjHomeDir+"/lib/smpdev.jar"+
-                      File.pathSeparator+""+mpjHomeDir+"/lib/xdev.jar"+
-                      File.pathSeparator+""+mpjHomeDir+"/lib/mpjbuf.jar"+
-                      File.pathSeparator+""+mpjHomeDir+"/lib/loader2.jar"+
-                      File.pathSeparator+""+mpjHomeDir+"/lib/starter.jar"+
-                      File.pathSeparator+""+mpjHomeDir+"/lib/mpiExp.jar"
-                  );
+   //   if(jarName != null) 
+     //     cp = wdir + "/" + jarName + File.pathSeparator + cp ; 	      
+      jvmArgs.add(cp) ; 
+
+      System.out.println("cp = "+cp) ; 
 //jvmArgs.add("."+File.pathSeparator+""+
 //mpjHomeDir+"/lib/loader2.jar"+
 //File.pathSeparator+""+mpjHomeDir+"/lib/mpj.jar"+
@@ -229,8 +241,7 @@ public class MulticoreDaemon {
       ex[indx] = className;   
     }
     else {
-      ex[indx] = "dummy" ; //this is JAR case ..this arg will never 
-	                   //be used ...
+      ex[indx] = jarName ; 
     }
 	
     for(int i=0 ; i< aArgs.length ; i++) {
