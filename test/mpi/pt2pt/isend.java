@@ -58,6 +58,7 @@ public class isend {
   
   static void wstart()
   throws MPIException {
+    
     stats = Request.Waitall(req);
     
     for(i=0;i<tasks;i++)
@@ -92,7 +93,6 @@ public class isend {
     stats = new Status[2*tasks];  
 
     MPI.Buffer_attach(buf);
-
     if(me[0] == 0)  System.out.println("> Testing Isend/Irecv...");
     for(i=0;i<tasks;i++)  data[i] = -1;
     for(i=0;i<tasks;i++)  {
@@ -105,7 +105,7 @@ public class isend {
     if(me[0] == 0)  System.out.println("> Testing Issend/Irecv...");
     for(i=0;i<tasks;i++)  data[i] = -1;
 
-    for(i=0;i<tasks;i++)  {   //i=0, i=1
+    for(i=0;i<tasks;i++) { 
       req[2*i]=MPI.COMM_WORLD.Issend(me,0,1,MPI.INT,i,i);	
       req[2*i+1]=MPI.COMM_WORLD.Irecv(data,i,1,MPI.INT,i,me[0]);
     }   
@@ -113,19 +113,14 @@ public class isend {
     wstart(); 
     if(me[0] == 0)  System.out.println("> Testing Irecv/Irsend..."); 
     for(i=0;i<tasks;i++)  data[i] = -1;
-    for(i=0;i<tasks;i++) {   
-        req[2*i]=MPI.COMM_WORLD.Irsend(me,0,1,MPI.INT,i,1);	
-        req[2*i+1]=MPI.COMM_WORLD.Irecv(data,i,1,MPI.INT,i,1);
-    }
     
-    MPI.COMM_WORLD.Barrier();
+    for(i=0;i<tasks;i++)
+        req[2*i+1]=MPI.COMM_WORLD.Irecv(data,i,1,MPI.INT,i,1);
+        MPI.COMM_WORLD.Barrier();
 
-    for(i=0;i<tasks;i++)  {
-      if(i != me[0]) 	    
-        req[2*i]=MPI.COMM_WORLD.Irsend(me,0,1,MPI.INT,i,1);
-    }
-   
-    wstart();
+    for(i=0;i<tasks;i++)    
+        req[2*i]=MPI.COMM_WORLD.Irsend(me,0,1,MPI.INT,i,1);	
+        wstart();
 
     if(me[0] == 0)  System.out.println("> Testing Ibsend/Irecv...");
     for(i=0;i<tasks;i++)  data[i] = -1;
