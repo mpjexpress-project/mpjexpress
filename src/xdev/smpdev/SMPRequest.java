@@ -100,9 +100,12 @@ public class SMPRequest extends mpjdev.Request {
         //  System.out.println("-- 2 Status "+ status.srcID +"  "+status.tag);
 
 
-complete(status);
-
+        complete(status);
         completed = true;
+
+	status.numEls = this.numEls ; 
+	status.type = this.type ; 
+
 //System.out.println("Returning status from -- iwait "+ this.hashCode());
         return this.status;
 

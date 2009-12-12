@@ -33,6 +33,8 @@ import java.io.PrintStream;
  */
 public class SMPDevice implements Device {
 
+    static Logger logger = Logger.getLogger("mpj");
+
     /**
      * init
      * The question that is coming to me mind again and again is ...
@@ -49,7 +51,10 @@ public class SMPDevice implements Device {
      * args[2] conf-file may be passed if required ...
      */
     public ProcessID[] init(String[] args) throws XDevException {
-//System.out.println("Inside SMPDevice Init");      
+
+        if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
+          logger.debug("Inside SMPDevice Init");      
+        }
         ProcessID[] ids = null;
 
         try {
@@ -256,7 +261,9 @@ static   CompletedList completedList = new CompletedList() ;
 
             request.inCompletedList = false;
             size--;
-            System.out.println(" size " + size);
+            if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
+              logger.debug(" size " + size);
+	    }
         }
     }
 
@@ -286,7 +293,10 @@ static   CompletedList completedList = new CompletedList() ;
 
         oldFront.inCompletedList = false;
         size--;
-        System.out.println(" size " + size);
+
+        if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
+          logger.debug(" size " + size);
+	}
 
         return oldFront;
     }
@@ -308,7 +318,9 @@ static   CompletedList completedList = new CompletedList() ;
             back = request;
         }
         size++;
-        System.out.println(" size " + size);
+	if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
+          logger.debug(" size " + size);
+	}
         request.inCompletedList = true;
         notify();
     }

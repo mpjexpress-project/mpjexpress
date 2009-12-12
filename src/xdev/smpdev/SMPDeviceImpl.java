@@ -189,9 +189,15 @@ public class SMPDeviceImpl {
     public void send(mpjbuf.Buffer buf, ProcessID destID, int tag,
             int context) throws Exception {
         SMPRequest req = (SMPRequest) isend(buf, destID, tag, context);
-//System.out.println("After calling isend in smpdev -- calling iwait "+ req.hashCode());
+
+        if (mpi.MPI.DEBUG && SMPDevice.logger.isDebugEnabled()) {
+          logger.debug("After isend in -- calling iwait "
+	                                      + req.hashCode());
+	}
         req.iwait();
-//System.out.println("After ---- calling iwait "+ req.hashCode());
+        if (mpi.MPI.DEBUG && SMPDevice.logger.isDebugEnabled()) {
+          System.out.println("After ---- calling iwait "+ req.hashCode());
+        }
     }
 
     /**
