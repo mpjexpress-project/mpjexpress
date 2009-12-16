@@ -28,6 +28,9 @@ import xdev.*;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 
+import org.apache.log4j.Logger;
+
+
 /**
  * An abstract device
  */

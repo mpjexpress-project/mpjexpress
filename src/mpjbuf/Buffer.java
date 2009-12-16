@@ -380,6 +380,8 @@ public class Buffer {
     private byte [] dynamicBuffer ;
     private RawBuffer staticBuffer ;
 
+    private CustomObjectInputStream inn;       
+
     /**
      * Default constructor 
      */
@@ -768,7 +770,7 @@ public class Buffer {
      */
     public void write(byte [] source, int srcOff, int numEls)
             throws BufferException {
-
+        //System.out.println("Reaching in the write method");
         writeCheckArgs(source.length, srcOff, numEls) ;
 
         if(currentSectionType == Type.BYTE) {
@@ -836,7 +838,7 @@ public class Buffer {
      */
     public void write(short [] source, int srcOff, int numEls)
             throws BufferException {
-
+        //System.out.println("Reaching in the write method");
         writeCheckArgs(source.length, srcOff, numEls) ;
 
         if(currentSectionType == Type.SHORT) {
@@ -904,7 +906,7 @@ public class Buffer {
      */
     public void write(int [] source, int srcOff, int numEls)
             throws BufferException {
-
+        //System.out.println("Reaching in the write method");
         writeCheckArgs(source.length, srcOff, numEls) ;
 
         if(currentSectionType == Type.INT) {
@@ -972,7 +974,7 @@ public class Buffer {
      */
     public void write(long [] source, int srcOff, int numEls)
             throws BufferException {
-
+        //System.out.println("Reaching in the write method");
         writeCheckArgs(source.length, srcOff, numEls) ;
 
         if(currentSectionType == Type.LONG) {
@@ -1040,7 +1042,7 @@ public class Buffer {
      */
     public void write(char [] source, int srcOff, int numEls)
             throws BufferException {
-
+        //System.out.println("Reaching in the write method");
         writeCheckArgs(source.length, srcOff, numEls) ;
 
         if(currentSectionType == Type.CHAR) {
@@ -1108,7 +1110,7 @@ public class Buffer {
      */
     public void write(float [] source, int srcOff, int numEls)
             throws BufferException {
-
+        //System.out.println("Reaching in the write method");
         writeCheckArgs(source.length, srcOff, numEls) ;
 
         if(currentSectionType == Type.FLOAT) {
@@ -1176,7 +1178,7 @@ public class Buffer {
      */
     public void write(double [] source, int srcOff, int numEls)
             throws BufferException {
-
+        //System.out.println("Reaching in the write method");
         writeCheckArgs(source.length, srcOff, numEls) ;
 
         if(currentSectionType == Type.DOUBLE) {
@@ -1244,7 +1246,7 @@ public class Buffer {
      */
     public void write(boolean [] source, int srcOff, int numEls)
             throws BufferException {
-
+        //System.out.println("Reaching in the write method");
         writeCheckArgs(source.length, srcOff, numEls) ;
 
         if(currentSectionType == Type.BOOLEAN) {
@@ -1308,6 +1310,7 @@ public class Buffer {
     public void write(Object [] source, int srcOff, int numEls)
             throws BufferException {
 
+        //System.out.println("Reaching in the write method2");
         writeCheckArgs(source.length, srcOff, numEls) ;
 
         if(currentSectionType != Type.OBJECT)
@@ -3071,7 +3074,8 @@ public class Buffer {
      * @throws DynamicBufferException if there are unforseen problems
      * reading the dynamic buffer.
      */
-    public void read(byte [] dest, int dstOff, int numEls) 
+
+    public void read(byte [] dest, int dstOff, int numEls)
             throws BufferException {
 
         readCheckArgs(dest.length, dstOff, numEls) ;
@@ -3094,7 +3098,7 @@ public class Buffer {
                 }
 
                 for (int i = 0; i < numEls; i++) {
-                    dest[dstOff + i] = in.readByte();     
+                    dest[dstOff + i] = in.readByte();
                     elementsRemaining-- ;
                 }
 
@@ -3108,7 +3112,6 @@ public class Buffer {
                     "section.") ;
         }
     }
-
 
 
     /**
@@ -3134,7 +3137,8 @@ public class Buffer {
      * @throws DynamicBufferException if there are unforseen problems
      * reading the dynamic buffer.
      */
-    public void read(short [] dest, int dstOff, int numEls) 
+
+    public void read(short [] dest, int dstOff, int numEls)
             throws BufferException {
 
         readCheckArgs(dest.length, dstOff, numEls) ;
@@ -3157,7 +3161,7 @@ public class Buffer {
                 }
 
                 for (int i = 0; i < numEls; i++) {
-                    dest[dstOff + i] = in.readShort();     
+                    dest[dstOff + i] = in.readShort();
                     elementsRemaining-- ;
                 }
 
@@ -3171,7 +3175,6 @@ public class Buffer {
                     "section.") ;
         }
     }
-
 
 
     /**
@@ -3197,7 +3200,8 @@ public class Buffer {
      * @throws DynamicBufferException if there are unforseen problems
      * reading the dynamic buffer.
      */
-    public void read(int [] dest, int dstOff, int numEls) 
+
+    public void read(int [] dest, int dstOff, int numEls)
             throws BufferException {
 
         readCheckArgs(dest.length, dstOff, numEls) ;
@@ -3220,7 +3224,7 @@ public class Buffer {
                 }
 
                 for (int i = 0; i < numEls; i++) {
-                    dest[dstOff + i] = in.readInt();     
+                    dest[dstOff + i] = in.readInt();
                     elementsRemaining-- ;
                 }
 
@@ -3234,7 +3238,6 @@ public class Buffer {
                     "section.") ;
         }
     }
-
 
 
     /**
@@ -3260,7 +3263,8 @@ public class Buffer {
      * @throws DynamicBufferException if there are unforseen problems
      * reading the dynamic buffer.
      */
-    public void read(long [] dest, int dstOff, int numEls) 
+
+    public void read(long [] dest, int dstOff, int numEls)
             throws BufferException {
 
         readCheckArgs(dest.length, dstOff, numEls) ;
@@ -3283,7 +3287,7 @@ public class Buffer {
                 }
 
                 for (int i = 0; i < numEls; i++) {
-                    dest[dstOff + i] = in.readLong();     
+                    dest[dstOff + i] = in.readLong();
                     elementsRemaining-- ;
                 }
 
@@ -3297,7 +3301,6 @@ public class Buffer {
                     "section.") ;
         }
     }
-
 
 
     /**
@@ -3323,7 +3326,8 @@ public class Buffer {
      * @throws DynamicBufferException if there are unforseen problems
      * reading the dynamic buffer.
      */
-    public void read(char [] dest, int dstOff, int numEls) 
+
+    public void read(char [] dest, int dstOff, int numEls)
             throws BufferException {
 
         readCheckArgs(dest.length, dstOff, numEls) ;
@@ -3346,7 +3350,7 @@ public class Buffer {
                 }
 
                 for (int i = 0; i < numEls; i++) {
-                    dest[dstOff + i] = in.readChar();     
+                    dest[dstOff + i] = in.readChar();
                     elementsRemaining-- ;
                 }
 
@@ -3360,7 +3364,6 @@ public class Buffer {
                     "section.") ;
         }
     }
-
 
 
     /**
@@ -3386,7 +3389,8 @@ public class Buffer {
      * @throws DynamicBufferException if there are unforseen problems
      * reading the dynamic buffer.
      */
-    public void read(float [] dest, int dstOff, int numEls) 
+
+    public void read(float [] dest, int dstOff, int numEls)
             throws BufferException {
 
         readCheckArgs(dest.length, dstOff, numEls) ;
@@ -3409,7 +3413,7 @@ public class Buffer {
                 }
 
                 for (int i = 0; i < numEls; i++) {
-                    dest[dstOff + i] = in.readFloat();     
+                    dest[dstOff + i] = in.readFloat();
                     elementsRemaining-- ;
                 }
 
@@ -3423,7 +3427,6 @@ public class Buffer {
                     "section.") ;
         }
     }
-
 
 
     /**
@@ -3449,7 +3452,8 @@ public class Buffer {
      * @throws DynamicBufferException if there are unforseen problems
      * reading the dynamic buffer.
      */
-    public void read(double [] dest, int dstOff, int numEls) 
+
+    public void read(double [] dest, int dstOff, int numEls)
             throws BufferException {
 
         readCheckArgs(dest.length, dstOff, numEls) ;
@@ -3472,7 +3476,7 @@ public class Buffer {
                 }
 
                 for (int i = 0; i < numEls; i++) {
-                    dest[dstOff + i] = in.readDouble();     
+                    dest[dstOff + i] = in.readDouble();
                     elementsRemaining-- ;
                 }
 
@@ -3486,7 +3490,6 @@ public class Buffer {
                     "section.") ;
         }
     }
-
 
 
     /**
@@ -3512,7 +3515,8 @@ public class Buffer {
      * @throws DynamicBufferException if there are unforseen problems
      * reading the dynamic buffer.
      */
-    public void read(boolean [] dest, int dstOff, int numEls) 
+
+    public void read(boolean [] dest, int dstOff, int numEls)
             throws BufferException {
 
         readCheckArgs(dest.length, dstOff, numEls) ;
@@ -3535,7 +3539,7 @@ public class Buffer {
                 }
 
                 for (int i = 0; i < numEls; i++) {
-                    dest[dstOff + i] = in.readBoolean();     
+                    dest[dstOff + i] = in.readBoolean();
                     elementsRemaining-- ;
                 }
 
@@ -3549,7 +3553,6 @@ public class Buffer {
                     "section.") ;
         }
     }
-
 
 
     /**
@@ -3584,24 +3587,39 @@ public class Buffer {
                     "section, or missing call to 'getSectionHeader'") ;
 
         try {
-            if (in == null){
+            if (inn == null){
                 ByteArrayInputStream o =
                         new ByteArrayInputStream(dynamicBuffer);
                 in = new ObjectInputStream(o);
             }
-    
+            Object obj;
             for (int i = 0; i < numEls; i++) {
-                dest[dstOff + i] = in.readObject();     
+                obj = in.readObject();
+                dest[dstOff + i] = obj;     
                 elementsRemaining-- ;
             }
         }
-        catch(IOException e){
+        catch(ClassNotFoundException ce){
 
-            throw new DynamicBufferException("Problem reading " +
-                    "dynamic buffer", e) ;
+            //throw new DynamicBufferException("Problem reading " +
+              //      "dynamic buffer", e) ;
+
+             try {
+               ByteArrayInputStream o =   new ByteArrayInputStream(dynamicBuffer);
+               inn = new CustomObjectInputStream(o);
+               for (int i = 0; i < numEls; i++) {
+                 Object obj =inn.readObject();
+                 dest[dstOff + i] = obj;
+                 elementsRemaining-- ;
+                }
+                }
+              catch(Exception ioe){
+                 throw new DynamicBufferException("Problem reading " +
+                  "dynamic buffer", ioe) ;
+              }
+
         }
-        catch(ClassNotFoundException e){
-
+        catch(Exception e){
             throw new DynamicBufferException("Problem reading " +
                     "dynamic buffer", e) ;
         }
@@ -5251,7 +5269,7 @@ public class Buffer {
                     "section") ;
 
         try {
-            if (in == null){
+            if (inn == null){
                 ByteArrayInputStream o =
                         new ByteArrayInputStream(dynamicBuffer);
                 in = new ObjectInputStream(o);
@@ -5259,13 +5277,25 @@ public class Buffer {
     
             doStrScatter(dest, dstOff, rank, exts, strs, shape);
         }
-        catch(IOException e){
-
-            throw new DynamicBufferException("Problem reading " +
-                    "dynamic buffer", e) ;
-        }
         catch(ClassNotFoundException e){
 
+            //throw new DynamicBufferException("Problem reading " +
+              //      "dynamic buffer", e) ;
+            try{
+              ByteArrayInputStream o =   new ByteArrayInputStream(dynamicBuffer);
+              inn = new CustomObjectInputStream(o);
+              for (int i = 0; i < strs; i++) {
+                Object obj =inn.readObject();
+                dest[dstOff + i] = obj;
+                elementsRemaining-- ;
+              }
+              }
+              catch(Exception ioe){
+                    throw new DynamicBufferException("Problem reading " +
+                    "dynamic buffer", ioe) ;
+              }
+        }
+        catch(Exception e){
             throw new DynamicBufferException("Problem reading " +
                     "dynamic buffer", e) ;
         }

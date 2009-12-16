@@ -398,6 +398,8 @@ public class Buffer {
     private byte [] dynamicBuffer ;
     private RawBuffer staticBuffer ;
 
+    private CustomObjectInputStream inn;       
+
     /**
      * Default constructor 
      */
@@ -796,7 +798,7 @@ for ($i = 0 ; $i < @ptypes ; $i++) {
      */
     public void write($type [] source, int srcOff, int numEls)
             throws BufferException {
-
+        //System.out.println("Reaching in the write method");
         writeCheckArgs(source.length, srcOff, numEls) ;
 
         if(currentSectionType == Type.$TYPE) {
@@ -865,6 +867,7 @@ for ($i = 0 ; $i < @ptypes ; $i++) {
     public void write(Object [] source, int srcOff, int numEls)
             throws BufferException {
 
+        //System.out.println("Reaching in the write method2");
         writeCheckArgs(source.length, srcOff, numEls) ;
 
         if(currentSectionType != Type.OBJECT)
@@ -1373,7 +1376,8 @@ for ($i = 0 ; $i < @ptypes ; $i++) {
      * \@throws DynamicBufferException if there are unforseen problems
      * reading the dynamic buffer.
      */
-    public void read($type [] dest, int dstOff, int numEls) 
+
+    public void read($type [] dest, int dstOff, int numEls)
             throws BufferException {
 
         readCheckArgs(dest.length, dstOff, numEls) ;
@@ -1396,7 +1400,7 @@ for ($i = 0 ; $i < @ptypes ; $i++) {
                 }
 
                 for (int i = 0; i < numEls; i++) {
-                    dest[dstOff + i] = in.read${Type}();     
+                    dest[dstOff + i] = in.read${Type}();
                     elementsRemaining-- ;
                 }
 
@@ -1410,7 +1414,6 @@ for ($i = 0 ; $i < @ptypes ; $i++) {
                     "section.") ;
         }
     }
-
 
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -1450,24 +1453,39 @@ for ($i = 0 ; $i < @ptypes ; $i++) {
                     "section, or missing call to \'getSectionHeader\'") ;
 
         try {
-            if (in == null){
+            if (inn == null){
                 ByteArrayInputStream o =
                         new ByteArrayInputStream(dynamicBuffer);
                 in = new ObjectInputStream(o);
             }
-    
+            Object obj;
             for (int i = 0; i < numEls; i++) {
-                dest[dstOff + i] = in.readObject();     
+                obj = in.readObject();
+                dest[dstOff + i] = obj;     
                 elementsRemaining-- ;
             }
         }
-        catch(IOException e){
+        catch(ClassNotFoundException ce){
 
-            throw new DynamicBufferException("Problem reading " +
-                    "dynamic buffer", e) ;
+            //throw new DynamicBufferException("Problem reading " +
+              //      "dynamic buffer", e) ;
+
+             try {
+               ByteArrayInputStream o =   new ByteArrayInputStream(dynamicBuffer);
+               inn = new CustomObjectInputStream(o);
+               for (int i = 0; i < numEls; i++) {
+                 Object obj =inn.readObject();
+                 dest[dstOff + i] = obj;
+                 elementsRemaining-- ;
+                }
+                }
+              catch(Exception ioe){
+                 throw new DynamicBufferException("Problem reading " +
+                  "dynamic buffer", ioe) ;
+              }
+
         }
-        catch(ClassNotFoundException e){
-
+        catch(Exception e){
             throw new DynamicBufferException("Problem reading " +
                     "dynamic buffer", e) ;
         }
@@ -1866,7 +1884,7 @@ for ($i = 0 ; $i < @ptypes ; $i++) {
                     "section") ;
 
         try {
-            if (in == null){
+            if (inn == null){
                 ByteArrayInputStream o =
                         new ByteArrayInputStream(dynamicBuffer);
                 in = new ObjectInputStream(o);
@@ -1874,13 +1892,25 @@ for ($i = 0 ; $i < @ptypes ; $i++) {
     
             doStrScatter(dest, dstOff, rank, exts, strs, shape);
         }
-        catch(IOException e){
-
-            throw new DynamicBufferException("Problem reading " +
-                    "dynamic buffer", e) ;
-        }
         catch(ClassNotFoundException e){
 
+            //throw new DynamicBufferException("Problem reading " +
+              //      "dynamic buffer", e) ;
+            try{
+              ByteArrayInputStream o =   new ByteArrayInputStream(dynamicBuffer);
+              inn = new CustomObjectInputStream(o);
+              for (int i = 0; i < strs; i++) {
+                Object obj =inn.readObject();
+                dest[dstOff + i] = obj;
+                elementsRemaining-- ;
+              }
+              }
+              catch(Exception ioe){
+                    throw new DynamicBufferException("Problem reading " +
+                    "dynamic buffer", ioe) ;
+              }
+        }
+        catch(Exception e){
             throw new DynamicBufferException("Problem reading " +
                     "dynamic buffer", e) ;
         }

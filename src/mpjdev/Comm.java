@@ -121,10 +121,14 @@ public class Comm {
    * to explain it in words.
    */
 
+    //if (peergroup.ids[localleader].uuid().equals(
+    //    peergroup.myID.uuid())) {
   Comm(xdev.Device device, Group localgroup, Group peergroup,
        int localleader, int remoteleader, int tag,
        int peercontext, int context) throws MPJDevException {
-
+	
+    mpjdev.Request req = null; // added by me
+    int value = 5 ;  
     int me = peergroup.rank();
     //System.out.println("--- intercomm constructor ---"+me );
     //System.out.println(" peercontext (comm_world) "+peercontext);
@@ -138,27 +142,31 @@ public class Comm {
     Buffer sbuf = new Buffer(BufferFactory.create(capacity), 
 		    sendOverhead ,capacity  );
     Buffer rbuf = new Buffer(BufferFactory.create(capacity),
+
 		    recvOverhead , 16+recvOverhead );
     int[] intdata = new int[1];
-    
+
     if (localgroup.ids[localleader].uuid().equals( 
         localgroup.myID.uuid())) { 
-    //if (peergroup.ids[localleader].uuid().equals(
-    //    peergroup.myID.uuid())) {
+
       //System.out.println("local leader ..."+me);
       intdata[0] = localgroup.size();
       //System.out.println(me +"sending size of localgrp to remoteleader "
-      //                     +intdata[0]);
+        //                   +intdata[0]);
       try { 
         sbuf.putSectionHeader(Type.INT);
         sbuf.write(intdata, 0, 1);
         sbuf.commit();
-        device.send(sbuf, peergroup.ids[remoteleader],
-			tag, peercontext);
-        sbuf.clear();
+        System.out.println("sending ..") ; 
+        req = device.isend(sbuf, peergroup.ids[remoteleader],
+			   tag, peercontext); // added by me
       } catch(Exception e ) {
         throw new MPJDevException ( e );	      
       }
+
+      mpjdev.Request []localgroupreq = new mpjdev.Request[localgroup.size()] ;
+      mpjbuf.Buffer wBuffer [] = new mpjbuf.Buffer[localgroup.size()] ;
+
 
       for (int i = 0; i < localgroup.size(); i++) {
 
@@ -170,41 +178,59 @@ public class Comm {
               peergroup.ids[j].uuid())) {
             prank = j; //peergroup.ids[j].rank();
           }
-
         }
 
         //System.out.println("sending the rank(WORLD) of process"+me
-	//		+" to remote leader"+prank);
+		//	+" to remote leader"+prank);
         intdata[0] = prank;
-
+	
 	try { 
-          sbuf.putSectionHeader(Type.INT);
-          sbuf.write(intdata, 0, 1);
-          sbuf.commit();
-          device.send(sbuf, peergroup.ids[remoteleader],
-			  tag, peercontext);
-          sbuf.clear();
+          wBuffer[i] = new mpjbuf.Buffer(
+            BufferFactory.create(capacity), sendOverhead, capacity);
+
+          wBuffer[i].putSectionHeader(Type.INT);
+          wBuffer[i].write(intdata, 0, 1);
+          wBuffer[i].commit();
+         // System.out.println("sending ..") ; 
+          localgroupreq[i]= device.isend(wBuffer[i], 
+                                    peergroup.ids[remoteleader],
+			            tag, peercontext); // added by me
 	}
 	catch(Exception e ){ 
           throw new MPJDevException( e );
 	}
       }
 
+
       //System.out.println("now the local leader is receiving ..."+me );
       device.recv(rbuf, peergroup.ids[remoteleader],
                   tag, peercontext);
+      
       //System.out.println(me + "now the local leader has received ..."
-      //	           +peercontext );
+      	//           +peercontext );
+     
       try { 
         rbuf.commit();
         rbuf.getSectionHeader();
 	rbuf.getSectionSize() ;
-        rbuf.read(intdata, 0, 1);
+        rbuf.read(intdata, 0, 1); // commented by me
         rbuf.clear();
       }
       catch(Exception e ) {
+        System.out.println(me +"has failed ..") ;  
         throw new MPJDevException( e );	      
       }
+
+      req.iwait(); //Kamran: Completing isend of localleader to remote 
+                   //leader 
+      
+      
+      try {
+        sbuf.clear() ; 
+      } catch(Exception e ) {
+        throw new MPJDevException( e );	      
+      }
+
       int rgroupsize = intdata[0];
       ProcessID[] rids = new ProcessID[rgroupsize];
       int[] rranks = new int[rgroupsize];
@@ -225,17 +251,26 @@ public class Comm {
 	}
         rranks[i] = intdata[0];
         rids[i] = new ProcessID(peergroup.ids[rranks[i]].uuid()); //, -1);
-        //System.out.println("localleader received rank"+rranks[i]);
 
       }
 
+      for (int i = 0; i < localgroup.size(); i++) {
+        localgroupreq[i].iwait() ;
+        try { 
+          wBuffer[i].clear() ; 
+        } catch(Exception e ) {
+          throw new MPJDevException( e );	      
+        }
+        BufferFactory.destroy(wBuffer[i].getStaticBuffer()) ;
+      }
+
+      // done by Aamir //
+
       this.group = peergroup.incl(rranks); //check ?
-      //System.out.println("localleader built the remote group"+group);
 
       for (int i = 0; i < localgroup.size(); i++) {
 
         /* dont send recv to myself */
-        //if (peergroup.ids[localleader].uuid().equals(
         if (localgroup.ids[localleader].uuid().equals(
 	    localgroup.ids[i].uuid())) {
           continue;
@@ -254,11 +289,9 @@ public class Comm {
 	catch(Exception e) {
           throw new MPJDevException( e );
 	}
-
+        
         for (int j = 0; j < rgroupsize; j++) {
 
-          //System.out.println("localleader sending group rank of process "+i+
-	  //		  "which is"+rranks[j]);
           intdata[0] = rranks[j];
 	  try { 
             sbuf.putSectionHeader(Type.INT);
@@ -271,15 +304,13 @@ public class Comm {
 	  catch(Exception e) {
             throw new MPJDevException( e ); 		  
 	  }
-
         }
-
       }
     }
+    
     else {
 	    
       //System.out.println("not localleader"+ me);
-      //device.recv(rbuf, peergroup.ids[localleader],
       try { 
         device.recv(rbuf, localgroup.ids[localleader],
 			tag, context);
@@ -297,7 +328,7 @@ public class Comm {
       //	 	      +rgroupsize);
       ProcessID[] rids = new ProcessID[rgroupsize];
       int[] rranks = new int[rgroupsize];
-
+      
       for (int i = 0; i < rgroupsize; i++) {
 
         //device.recv(rbuf, peergroup.ids[localleader],
@@ -333,7 +364,7 @@ public class Comm {
     //System.out.println(" called calculateContext"+me);
 
     //if (peergroup.ids[localleader].uuid().equals(
-    //    peergroup.myID.uuid())) {
+    //    peergroup.myID.uuid()))
     if (localgroup.ids[localleader].uuid().equals(
         localgroup.myID.uuid())) {
 
@@ -343,9 +374,9 @@ public class Comm {
         sbuf.putSectionHeader(Type.INT);
         sbuf.write(intdata, 0, 1);
         sbuf.commit();
-        device.send(sbuf, peergroup.ids[remoteleader],
+        req = device.isend(sbuf, peergroup.ids[remoteleader],
                   tag, peercontext);
-        sbuf.clear();
+        
 	
         device.recv(rbuf, peergroup.ids[remoteleader],
                   tag, peercontext);
@@ -354,6 +385,9 @@ public class Comm {
 	rbuf.getSectionSize() ;
         rbuf.read(intdata, 0, 1);
         rbuf.clear();
+    
+        req.iwait() ;  
+        sbuf.clear();
       }
       catch(Exception e) {
         throw new MPJDevException( e );
@@ -372,9 +406,9 @@ public class Comm {
 	  intdata[0] = remoteleader ; 
           sbuf.write(intdata, 0, 1);
           sbuf.commit();
-          device.send(sbuf, peergroup.ids[remoteleader],
+          req = device.isend(sbuf, peergroup.ids[remoteleader],
                     tag, peercontext);
-          sbuf.clear();
+          
 	
           device.recv(rbuf, peergroup.ids[remoteleader],
                     tag, peercontext);
@@ -383,6 +417,9 @@ public class Comm {
 	  rbuf.getSectionSize() ;
           rbuf.read(intdata, 0, 1);
           rbuf.clear();
+
+          req.iwait() ; 
+          sbuf.clear();
 	  peersRemoteLeader = intdata[0] ; 
         }
         catch(Exception e) {
@@ -416,7 +453,7 @@ public class Comm {
       for (int i = 0; i < localgroup.size(); i++) {
         /* dont send recv to myself */
         //if (peergroup.ids[localleader].uuid().equals(
-	//			localgroup.ids[i].uuid())) {
+	//			localgroup.ids[i].uuid()))
         if (localgroup.ids[localleader].uuid().equals(
 				localgroup.ids[i].uuid())) {
           continue;
@@ -452,6 +489,7 @@ public class Comm {
 
     }
     else {
+      
       //device.recv(rbuf, peergroup.ids[localleader],
       try { 
         device.recv(rbuf, localgroup.ids[localleader],
@@ -460,8 +498,10 @@ public class Comm {
         rbuf.getSectionHeader();
 	rbuf.getSectionSize() ;
         rbuf.read(intdata, 0, 1);
+        
         rbuf.clear();	      
         sendctxt = intdata[0];
+        
         //device.recv(rbuf, peergroup.ids[localleader],
         device.recv(rbuf, localgroup.ids[localleader],
                   tag, context);
@@ -487,6 +527,11 @@ public class Comm {
     //System.out.println(" recvctxt "+recvctxt); 
     BufferFactory.destroy(rbuf.getStaticBuffer()) ;
     BufferFactory.destroy(sbuf.getStaticBuffer()) ;
+    
+    //for(i =0 ; i<localgroup.size() ;i++) {
+    //  BufferFactory.destroy(wBuffer[i].getStaticBuffer());
+    //}
+
   }
 
   /**
@@ -563,38 +608,34 @@ public class Comm {
     mpjdev.Request[] req = new mpjdev.Request[mySize];
     int sendOverhead = MPJDev.getSendOverhead () ;
     int recvOverhead = MPJDev.getRecvOverhead () ;
-    int cap = sendOverhead+23;
-    mpjbuf.Buffer wBuffer = new mpjbuf.Buffer(
-	    BufferFactory.create(cap), sendOverhead, cap);
-    try { 
-      wBuffer.putSectionHeader(mpjbuf.Type.INT);
-      wBuffer.write(contextArray, 0, 1);
-      wBuffer.commit();
-    }
-    catch(Exception e) {
-      throw new MPJDevException(e); 	    
-    }
+    int cap = sendOverhead+23; //FIXME: What's this magic number?
+
+    mpjbuf.Buffer wBuffer [] = new mpjbuf.Buffer[mySize] ; 
 
     for (i = 0; i < mySize; i++) {
       if (i == myRank) {
         continue;
       }
-      //System.out.println("process <"+group.rank()+"> sending" );
+      //System.out.println("process <"+group.rank()+"> sending to <"+i );
       try { 
-        req[i] = device.isend(wBuffer, ids[i], (calContextTag+i), context);
-	//wBuffer.clear();
+        wBuffer[i] = new mpjbuf.Buffer(
+	    BufferFactory.create(cap), sendOverhead, cap);
+        wBuffer[i].putSectionHeader(mpjbuf.Type.INT);
+        wBuffer[i].write(contextArray, 0, 1);
+        wBuffer[i].commit();
+        req[i] = device.isend(wBuffer[i], ids[i], (calContextTag+i), context);
       }
       catch(Exception e) {
         throw new MPJDevException( e );
       }
-      //System.out.println("process <"+group.rank()+"> sent" );
+      //System.out.println("process <"+group.rank()+"> sent to "+i );
     }
 
     mpjbuf.Buffer rBuffer = new mpjbuf.Buffer(
 		    BufferFactory.create(recvOverhead+16), 
-		    recvOverhead , recvOverhead+16);
+		    recvOverhead , recvOverhead+16); 
+    //FIXME: What's this magic number? 
     int highestContext = contextArray[0];
-    //System.out.println("rank<"+myRank+"> starting to recv");
 
     for (i = 0; i < mySize; i++) {
       if (i == myRank) {
@@ -602,7 +643,9 @@ public class Comm {
       }
 
       try {
+        //System.out.println("rank<"+myRank+"> recving from"+i);
         device.recv(rBuffer, ids[i], (calContextTag+myRank), context);
+        //System.out.println("rank<"+myRank+"> recved from"+i);
         rBuffer.commit();
         Type type = rBuffer.getSectionHeader();
 	rBuffer.getSectionSize() ;
@@ -627,9 +670,19 @@ public class Comm {
         continue;
       }
       req[i].iwait();
+      try { 
+        wBuffer[i].clear();
+      } catch(Exception e) { 
+        e.printStackTrace() ; 
+      } 
     }
     
-    BufferFactory.destroy(wBuffer.getStaticBuffer());
+    for(i =0 ; i<mySize ;i++) { 
+      if (i == myRank)
+        continue;
+      BufferFactory.destroy(wBuffer[i].getStaticBuffer());
+    }
+
     BufferFactory.destroy(rBuffer.getStaticBuffer());
     return highestContext;
   }

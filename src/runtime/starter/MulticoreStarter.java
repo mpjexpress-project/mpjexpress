@@ -153,12 +153,12 @@ public class MulticoreStarter {
             mpjHome+"/lib/mpi.jar"+File.pathSeparator+
             mpjHome+"/lib/mpjdev.jar" ; 
 
-	      System.out.println("className = "+className) ; 
+	  //System.out.println("className = "+className) ; 
 
           if(className.endsWith(".jar")) { 
 	    if((new File(className)).isAbsolute()) { 
-	      System.out.println("AbsolutePath") ; 
-	      System.out.println("className = "+className) ; 
+	      //System.out.println("AbsolutePath") ; 
+	      //System.out.println("className = "+className) ; 
               appPath = className ; 
 	    } else { 
 	      appPath = wdir + "/" + className ; 
@@ -172,7 +172,7 @@ public class MulticoreStarter {
           ClassLoader systemLoader = 
           ClassLoader.getSystemClassLoader() ; 
 
-          System.out.println("appPath = "+appPath) ; 
+          //System.out.println("appPath = "+appPath) ; 
 
           StringTokenizer tok = new StringTokenizer(appPath,
                                       File.pathSeparator);

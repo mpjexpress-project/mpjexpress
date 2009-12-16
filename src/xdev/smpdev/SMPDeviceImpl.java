@@ -191,7 +191,7 @@ public class SMPDeviceImpl {
         SMPRequest req = (SMPRequest) isend(buf, destID, tag, context);
 
         if (mpi.MPI.DEBUG && SMPDevice.logger.isDebugEnabled()) {
-          logger.debug("After isend in -- calling iwait "
+          SMPDevice.logger.debug("After isend in -- calling iwait "
 	                                      + req.hashCode());
 	}
         req.iwait();
