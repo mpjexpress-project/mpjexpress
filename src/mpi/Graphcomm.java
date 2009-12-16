@@ -43,9 +43,12 @@ public class Graphcomm
 
   Graphcomm(int[] index, int[] edges, boolean reorder,
             mpjdev.Comm mpjdevComm, mpjdev.Group group) throws MPIException {
+
+    super(mpjdevComm,group) ;
+
     int rank = group.rank();
-    this.mpjdevComm = mpjdevComm;
-    this.group = new Group(group);
+    //this.mpjdevComm = mpjdevComm;
+    //this.group = new Group(group);
     graphParms = new GraphParms();
 
     graphParms.index = new int[index.length];
