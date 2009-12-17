@@ -223,7 +223,7 @@ public class MulticoreStarter {
         try {
 
           if (classLoader != null && loader.equals("useRemoteLoader")) {
-            System.out.println("Remote loader invoking class");
+            //System.out.println("Remote loader invoking class");
             classLoader.invokeClass(c[num], arvs);
           } else {
             //       System.out.println("getting method " + num+" Thread "+Thread.currentThread()+" Time "+System.nanoTime());

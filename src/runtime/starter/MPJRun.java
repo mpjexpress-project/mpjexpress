@@ -141,7 +141,7 @@ public class MPJRun {
 
       int jarOrClass = (className==null?RUNNING_JAR_FILE:RUNNING_CLASS_FILE);
        
-      System.out.println("codeBase"+codeBase) ; 
+      //System.out.println("codeBase"+codeBase) ; 
       MulticoreDaemon multicoreDaemon =
           new MulticoreDaemon(className, codeBase+"/"+jarName, jarOrClass, 
 	                           nprocs, wdir, jvmArgs, appArgs) ;
