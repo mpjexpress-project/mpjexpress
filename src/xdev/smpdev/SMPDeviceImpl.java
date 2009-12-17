@@ -73,7 +73,8 @@ public class SMPDeviceImpl {
      * Equivalent to MPI_COMM_RANK.
      */
     public xdev.ProcessID id() throws XDevException {
-        ProcessID value = (ProcessID) ids.get(Thread.currentThread());
+        //System.out.println("ids.get(Thread.currentThread has thread value = "+Thread.currentThread().getId());
+        ProcessID value = (ProcessID) ids.get(Thread.currentThread().getContextClassLoader());
         if (value == null) {
             throw new XDevException("SMPDeviceImpl.id() invoked by thread " +
                     "outside communicator group");
@@ -547,7 +548,6 @@ public class SMPDeviceImpl {
         "world size, " + WORLD.size) ;
         }
          */
-
         Thread thread = Thread.currentThread();
 
         if (WORLD.threads[rank] != null) {
@@ -566,7 +566,8 @@ public class SMPDeviceImpl {
             WORLD.pids[rank] = WORLD.id;
             WORLD.threads[rank] = thread;
             //WORLD.ids.put(thread, new Integer(myId)) ;
-            WORLD.ids.put(thread, WORLD.id);
+            //System.out.println("ids.put(thread) has thread value = "+thread.getId()+" and thread.getContextClassLoader() = "+thread.getContextClassLoader().toString());
+            WORLD.ids.put(thread.getContextClassLoader(), WORLD.id);
 
 
             /*      out.println("SMPDeviceImpl  "+Thread.currentThread() +"time"+
@@ -574,7 +575,8 @@ public class SMPDeviceImpl {
             numRegisteredThreads);
              */
 
-            numRegisteredThreads++;
+            numRegisteredThreads++; 
+
           //  System.out.println(" numRegThreads "+numRegisteredThreads+" World size "+WORLD.size);
 
             /*          out.println("SMPDeviceImpl  "+Thread.currentThread() +"time"+
@@ -619,7 +621,9 @@ public class SMPDeviceImpl {
 
         // Check current thread belongs to this communicator
 
-        if (WORLD.ids.get(Thread.currentThread()) == null) {
+        //if (WORLD.ids.get(Thread.currentThread()) == null) {
+        if (WORLD.ids.get(Thread.currentThread().getContextClassLoader()) 
+                                                                  == null) {
             throw new XDevException("SMPDeviceImpl.finish() invoked by thread " +
                     "outside MPJ world");
         }
