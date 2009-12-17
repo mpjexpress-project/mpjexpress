@@ -44,9 +44,13 @@ public class Cartcomm
 
   Cartcomm(int[] dims, boolean[] periods, boolean reorder,
            mpjdev.Comm mpjdevComm, mpjdev.Group group) throws MPIException {
+    super(mpjdevComm,group) ;
+
     int rank = group.rank();
-    this.mpjdevComm = mpjdevComm;
-    this.group = new Group(group);
+
+    //this.mpjdevComm = mpjdevComm;
+    //this.group = new Group(group);
+
     cartParms = new CartParms();
 
     /* 
