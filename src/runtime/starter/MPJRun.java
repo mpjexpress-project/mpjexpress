@@ -453,6 +453,7 @@ public class MPJRun {
  "\n Note: 'MPJ_HOME' variable must be set"+
       "\n\n #########################################################" );  
   }
+  
 
   /**
    * Parses the input ...
@@ -463,7 +464,7 @@ public class MPJRun {
       printUsage() ;
       System.exit(0);  
     }
-    
+ 
     boolean append = false;
     boolean beforeJar = true ; 
     
@@ -523,7 +524,7 @@ public class MPJRun {
         i++;
       }
       
-      else if (args[i].equals("-cp")) {
+      else if (args[i].equals("-cp") | args[i].equals("-classpath")) {
         jvmArgs.add("-cp");
 	jvmArgs.add(args[i+1]);
         i++;
