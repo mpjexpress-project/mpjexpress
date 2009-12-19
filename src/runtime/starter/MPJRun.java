@@ -88,7 +88,7 @@ public class MPJRun {
   int nprocs = 1;
   String spmdClass = null;
   String mpjURL = null;
-  String deviceName = "niodev";
+  String deviceName = "multicore";
   String applicationArgs = "default_app_arg" ;
   String mpjHomeDir = null;
   byte[] urlArray = null;
@@ -132,7 +132,7 @@ public class MPJRun {
     processInput(args);
 
 
-    if(deviceName.equals("shmdev")) {
+    if(deviceName.equals("multicore")) {
 
       if(DEBUG && logger.isDebugEnabled()) {
         logger.info("jarName "+jarName) ; 
@@ -437,7 +437,7 @@ public class MPJRun {
       "\n                 [application arguments]"+
       "\n OPTIONS "+
       "\n   -np val            -- 1"+ 
-      "\n   -dev val           -- niodev"+
+      "\n   -dev val           -- multicore"+
       "\n   -dport val         -- 10000"+ 
       "\n   -wdir val          -- $MPJ_HOME/bin"+ 
       "\n   -mpjport val       -- 20000"+  
@@ -497,6 +497,15 @@ public class MPJRun {
       else if (args[i].equals("-dev")) {
         deviceName = args[i+1];
         i++;
+	if(!(deviceName.equals("niodev") || deviceName.equals("mxdev") ||
+	                    deviceName.equals("multicore"))){
+	  System.out.println("MPJ Express currently does not support the <"+
+	                                   deviceName+"> device.");
+          System.out.println("Possible options are niodev, mxdev, and "+
+	                               "multicore devices.");
+	  System.out.println("exiting ...");
+	  System.exit(0); 
+	}
       } 
 
       else if (args[i].equals("-machinesfile")) {
@@ -677,7 +686,8 @@ public class MPJRun {
 	} else if(deviceName.equals("mxdev")) { 
           cout.println(name + "@" + mxBoardNum+
                        "@" + (rank++));
-	}
+	} 
+	
 	
         if(DEBUG && logger.isDebugEnabled()) { 
           logger.debug("procPerMachineTable==>" + procsPerMachineTable);
