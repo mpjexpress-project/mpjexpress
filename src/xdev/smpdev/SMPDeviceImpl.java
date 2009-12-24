@@ -51,6 +51,8 @@ public class SMPDeviceImpl {
     private HashMap ids;          //Map from Thread to node id.
     xdev.ProcessID id = null;
     xdev.ProcessID[] pids = null;
+    static SMPDevProcess smpProcess = null;
+
     private int context;
     private int barrierCount;
     private SMPDeviceImpl newSMPDeviceImpl;
@@ -73,13 +75,18 @@ public class SMPDeviceImpl {
      * Equivalent to MPI_COMM_RANK.
      */
     public xdev.ProcessID id() throws XDevException {
-        //System.out.println("ids.get(Thread.currentThread has thread value = "+Thread.currentThread().getId());
-        ProcessID value = (ProcessID) ids.get(Thread.currentThread().getContextClassLoader());
+
+        Thread thisThread = Thread.currentThread();
+        ProcessID value = null ; 
+
+	if(thisThread.getThreadGroup() instanceof SMPDevProcess) {
+	  value = ((SMPDevProcess)(thisThread.getThreadGroup())).getID();
+	} 
+	 
         if (value == null) {
             throw new XDevException("SMPDeviceImpl.id() invoked by thread " +
                     "outside communicator group");
         }
-        //return value.intValue() ;	
         return value;
     }
     /**
@@ -564,10 +571,13 @@ public class SMPDeviceImpl {
             //FIXME: is there any effect of not having `rank' 
             WORLD.id = new ProcessID(myuuid);
             WORLD.pids[rank] = WORLD.id;
+	    smpProcess = (SMPDevProcess)thread.getThreadGroup();
+	    smpProcess.setProcessID(WORLD.id);
+
             WORLD.threads[rank] = thread;
             //WORLD.ids.put(thread, new Integer(myId)) ;
             //System.out.println("ids.put(thread) has thread value = "+thread.getId()+" and thread.getContextClassLoader() = "+thread.getContextClassLoader().toString());
-            WORLD.ids.put(thread.getContextClassLoader(), WORLD.id);
+            //WORLD.ids.put(thread.getContextClassLoader(), WORLD.id);
 
 
             /*      out.println("SMPDeviceImpl  "+Thread.currentThread() +"time"+
@@ -622,9 +632,11 @@ public class SMPDeviceImpl {
         // Check current thread belongs to this communicator
 
         //if (WORLD.ids.get(Thread.currentThread()) == null) {
-        if (WORLD.ids.get(Thread.currentThread().getContextClassLoader()) 
-                                                                  == null) {
-            throw new XDevException("SMPDeviceImpl.finish() invoked by thread " +
+	if(!(Thread.currentThread().getThreadGroup()
+                                       instanceof SMPDevProcess)) {
+          //if (WORLD.ids.get(Thread.currentThread().getContextClassLoader()) 
+            //                                                      == null) {
+          throw new XDevException("SMPDeviceImpl.finish() invoked by thread " +
                     "outside MPJ world");
         }
 

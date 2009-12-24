@@ -44,6 +44,7 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.lang.Integer;
 import runtime.daemon.JarClassLoader ; 
+import xdev.smpdev.SMPDevProcess;
 
 public class MulticoreStarter {
 
@@ -68,6 +69,7 @@ public class MulticoreStarter {
     Class[] c;
     int num;
     static final Object monitor = new Object();
+    SMPDevProcess []smpProcess;
     Integer rank = new Integer(-1);
     static String appPath ="" ;
 
@@ -102,6 +104,7 @@ public class MulticoreStarter {
 
     Runnable[] ab = new Runnable[processes];
 
+    smpProcess = new SMPDevProcess[processes];
     c = new Class[processes];
     m = new Method[processes];
     method = new Method[processes];
@@ -292,7 +295,9 @@ public class MulticoreStarter {
      //System.out.println("nprocs " + nprocs);
      for (num = 0; num < nprocs; num++) {
 
-       procs[num] = new Thread(ab[num]);
+       //procs[num] = new Thread(ab[num]);
+       smpProcess[num] = new SMPDevProcess("smp-threadgroup"+num); 
+       procs[num] = new Thread(smpProcess[num],ab[num],""+nprocs); 
        String name = String.valueOf(num);
        procs[num].setName(name);
        procs[num].start();

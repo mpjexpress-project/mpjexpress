@@ -85,7 +85,7 @@ public class MPJRun {
   private String hostIP = null;
   private Thread selectorThreadStarter = null;
   private Vector machineVector = new Vector();
-  int nprocs = 1;
+  int nprocs = Runtime.getRuntime().availableProcessors() ; 
   String spmdClass = null;
   String mpjURL = null;
   String deviceName = "multicore";
@@ -471,7 +471,14 @@ public class MPJRun {
     for (int i = 0; i < args.length; i++) {
 
       if(args[i].equals("-np")) {
-        nprocs = new Integer(args[i+1]).intValue();
+
+        try {  
+          nprocs = new Integer(args[i+1]).intValue();
+	} 
+	catch(NumberFormatException e) {
+	  nprocs = Runtime.getRuntime().availableProcessors();
+	}
+
         i++;
       }
 
