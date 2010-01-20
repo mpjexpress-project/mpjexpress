@@ -6,6 +6,49 @@ if [ $# -ne 1 ]; then
    exit 127
 fi 
 
+
+cat > portscan.java <<END
+import java.net.*;
+import java.io.*;
+public class portscan {
+  public static void main(String [] args) {
+    try {
+      InetAddress address = InetAddress.getByName(args[0]);
+      System.exit(isBusy(address,Integer.parseInt(args[1])) ? 0 : 1) ;
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+  
+  static boolean isBusy(final InetAddress remote,int port) {
+    try {
+      Socket s = new Socket(remote,port);
+      s.close();
+      return true;
+    }
+    catch (Exception e) {
+      return false;
+    }
+  }
+}
+END
+
+port=`grep wrapper.app.parameter.2 $MPJ_HOME/conf/wrapper.conf |cut -d = -f2`
+javac -cp . portscan.java
+hosts=`cat $1`
+
+for i in `echo $hosts`; do
+  host=`echo $i`
+
+  if java -cp "." portscan $host $port ; then
+      echo "mpjboot found port $port busy on $host machine. There are two possibilities:";
+      echo "    (1) The daemon might already be running...";
+      echo "    (2) If the daemon is not running, then set a different port by modifying the wrapper.app.parameter.2 property in the $MPJ_HOME/conf/wrapper.conf file.";
+      exit 128;
+  fi
+done
+
 lines=`cat $1`
 count=0
 
