@@ -287,27 +287,55 @@ public class MPJRun {
   }
   private void startHttpServer() throws Exception {
 
-    server = new HttpServer();
-    SocketListener listener = new SocketListener();
-    listener.setPort(S_PORT);
-    server.addListener(listener);
-    HttpContext context = new HttpContext();
-    context.setContextPath("/");
-    context.setResourceBase(codeBase);
-    context.addHandler(new ResourceHandler());
-    server.addContext(context);
-    server.start();
+    boolean isOK = false;
+    boolean isError = false;
+
+    while(isOK != true) {
+
+      isOK = false;
+      isError = false;
+      
+      try { 
+        server = new HttpServer();
+        SocketListener listener = new SocketListener();
+        listener.setPort(S_PORT);
+        server.addListener(listener);
+        HttpContext context = new HttpContext();
+        context.setContextPath("/");
+        context.setResourceBase(codeBase);
+        context.addHandler(new ResourceHandler());
+        server.addContext(context);
+        server.start();
     
-    mpjServer = new HttpServer();
-    SocketListener listener2 = new SocketListener();
-    listener2.setPort(S_PORT+1);
-    mpjServer.addListener(listener2);
-    HttpContext context2 = new HttpContext();
-    context2.setContextPath("/");
-    context2.setResourceBase(mpjCodeBase);
-    context2.addHandler(new ResourceHandler());
-    mpjServer.addContext(context2);
-    mpjServer.start();
+        mpjServer = new HttpServer();
+        SocketListener listener2 = new SocketListener();
+        listener2.setPort(S_PORT+1);
+        mpjServer.addListener(listener2);
+        HttpContext context2 = new HttpContext();
+        context2.setContextPath("/");
+        context2.setResourceBase(mpjCodeBase);
+        context2.addHandler(new ResourceHandler());
+        mpjServer.addContext(context2);
+        mpjServer.start();
+      }
+      catch(org.mortbay.util.MultiException e) { 
+        if(DEBUG && logger.isDebugEnabled()) {
+          logger.debug("startHttp server method threw an exception "+
+             "while starting the server on ports "+S_PORT+" or "+(S_PORT+1)+
+             ". We try starting servers on next two consecutive ports") ;
+        }
+        isError = true;
+      }
+      finally {
+
+        if(isError == false)
+          isOK=true;
+        else if(isError == true) {
+          isOK = false;
+          S_PORT+=2;
+        }
+      }
+    }
   }
 	  
   /* 
@@ -431,27 +459,26 @@ public class MPJRun {
 
   private void printUsage() { 
     System.out.println(   
-      "\n\n #########################################################"+     
-      "\n mpirun.[bat/sh] [options] -jar file.jar"+
-      "\n                 <package>className"+
-      "\n                 [application arguments]"+
-      "\n OPTIONS "+
-      "\n   -np val            -- 1"+ 
+      "\nmpjrun.[bat/sh] [options] class [args...]"+
+      "\n                (to execute a class)"+
+      "\nmpjrun.[bat/sh] [options] -jar jarfile [args...]"+
+      "\n                (to execute a jar file)"+
+      "\n\nwhere options include:"+
+      "\n   -np val            -- <# of cores>"+ 
       "\n   -dev val           -- multicore"+
-      "\n   -dport val         -- 10000"+ 
+      "\n   -dport val         -- <read from wrapper.conf>"+ 
       "\n   -wdir val          -- $MPJ_HOME/bin"+ 
       "\n   -mpjport val       -- 20000"+  
       "\n   -mxboardnum val    -- 0"+  
       "\n   -headnodeip val    -- ..."+
-      "\n   -sport val         -- 15000"+
       "\n   -psl val           -- 128Kbytes"+ 
       "\n   -machinesfile val  -- machines"+ 
       "\n   -localloader"+ 
       "\n   -h                 -- print this usage information"+ 
       "\n   ...any JVM arguments..."+
  "\n Note: Value on the right in front of each option is the default value"+ 
- "\n Note: 'MPJ_HOME' variable must be set"+
-      "\n\n #########################################################" );  
+ "\n Note: 'MPJ_HOME' variable must be set");
+
   }
   
 
@@ -460,7 +487,7 @@ public class MPJRun {
    */
   private void processInput(String args[]) {
 
-    if (args.length < 2) {
+    if (args.length < 1) {
       printUsage() ;
       System.exit(0);  
     }
