@@ -6,13 +6,103 @@ if [ $# -ne 1 ]; then
    exit 127
 fi 
 
-lines=`cat $1`
+get_os() 
+{
+returncode=0;
+DIST_OS=`uname -s | tr [:upper:] [:lower:] | tr -d [:blank:]`
+case "$DIST_OS" in
+    'sunos')
+        DIST_OS="solaris"
+	returncode=4;
+        ;;
+    'hp-ux' | 'hp-ux64')
+        DIST_OS="hpux"
+	returncode=3;
+        ;;
+    'darwin')
+        DIST_OS="macosx"
+	returncode=2;
+        ;;
+    'unix_sv' | 'linux')
+        DIST_OS="unixware"
+	returncode=1;
+        ;;
+esac
 
+  return $returncode;
+}
+
+get_arch()
+{
+  returncode=0;
+  DIST_ARCH=`uname -m | tr [:upper:] [:lower:] | tr -d [:blank:]`
+
+  case "$DIST_ARCH" in
+    'amd64' | 'athlon' | 'ia32' | 'ia64' | 'i386' | 'i486' | 'i586' | 'i686')
+        DIST_ARCH="x86"
+	returncode=1;
+        ;;
+     'x86_64')
+        DIST_ARCH="x86_64"
+	returncode=19;
+        ;;
+    'ip27')
+        DIST_ARCH="mips"
+	returncode=5;
+        ;;
+    'power' | 'powerpc' | 'power_pc' | 'ppc64')
+        DIST_ARCH="ppc"
+	returncode=2;
+        ;;
+    'pa_risc' | 'pa-risc')
+        DIST_ARCH="parisc"
+	returncode=6;
+        ;;
+    'sun4u' | 'sparcv9')
+        DIST_ARCH="sparc"
+	returncode=4;
+        ;;
+    '9000/800')
+        DIST_ARCH="parisc"
+	returncode=3;
+        ;;
+esac
+
+return $returncode;
+
+}
+
+get_arch
+arch=`echo $?`;
+get_os
+os=`echo $?`;
+eArch=`uname -m | tr [:upper:] [:lower:] | tr -d [:blank:]`;
+eOs=`uname -s | tr [:upper:] [:lower:] | tr -d [:blank:]`;
+lines=`cat $1`
 for i in `echo $lines`; do 
   host=`echo $i`    
-  ssh $host 'cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_32 stop;'
-  #ssh $host 'cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_64 stop;'
-  #ssh $host 'cd $MPJ_HOME/bin;./mpjdaemon_linux_ppc_64 stop;' 
-  #ssh $host 'cd $MPJ_HOME/bin;./mpjdaemon_macosx_ppc_32 stop;'
-  #ssh $host 'cd $MPJ_HOME/bin;./mpjdaemon_solaris_sparc_64 stop;' 
+
+  # This means when Os = linux and Architecure = x86 32 Or 64 Or AMD Or i386 etc
+  if [ $os -eq 1 ] && [ $arch -eq 1 ]; then
+    ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_32 stop;"
+# This means when Os = linux and Architecure = x86_64
+  elif [ $os -eq 1 ] && [ $arch -eq 19 ]; then
+    ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_64 stop;"
+
+  # This means when Os = linux and Architecure = ppc
+  elif [ $os -eq 1 ] && [ $arch -eq 2 ]; then
+    ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_ppc_64 stop;" 
+  # This means when Os =Solaris and Architecure = x86 32 Or 64 Or AMD Or i386 etc
+  elif [ $os -eq 4 ] && [ $arch -eq 1 ]; then
+    ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_32 stop;"
+  # This means when Os = Solaris and Architecure = Sparc
+  elif [ $os -eq 4 ] && [ $arch -eq 4 ]; then
+    ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_solaris_sparc_64 stop;" 
+  # This means when Os = Mac and Architecure = x86 32 Or 64
+  elif [ $os -eq 2 ] && [ $arch -eq 1 ]; then
+    ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_32 stop;"
+  # This means when Os = Mac and Architecure = ppc
+  elif [ $os -eq 2 ] && [ $arch -eq 2 ]; then
+    ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_macosx_ppc_32 stop;"
+  fi
 done

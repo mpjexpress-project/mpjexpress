@@ -2,10 +2,75 @@
 #set -x
 
 if [ $# -ne 1 ]; then
-   echo "Usage: mpjboot <machines_file>";
-   exit 127
+  echo "Usage: mpjboot <machines_file>";
+  exit 127
 fi 
 
+get_os()
+{
+returncode=0;
+DIST_OS=`uname -s | tr [:upper:] [:lower:] | tr -d [:blank:]`
+case "$DIST_OS" in
+    'sunos')
+        DIST_OS="solaris"
+        returncode=4;
+        ;;
+    'hp-ux' | 'hp-ux64')
+        DIST_OS="hpux"
+        returncode=3;
+        ;;
+    'darwin')
+        DIST_OS="macosx"
+        returncode=2;
+        ;;
+    'unix_sv' | 'linux')
+        DIST_OS="unixware"
+        returncode=1;
+        ;;
+esac
+
+  return $returncode;
+}
+
+get_arch()
+{
+  returncode=0;
+  DIST_ARCH=`uname -m | tr [:upper:] [:lower:] | tr -d [:blank:]`
+
+  case "$DIST_ARCH" in
+    'amd64' | 'athlon' | 'ia32' | 'ia64' | 'i386' | 'i486' | 'i586' | 'i686' )
+        DIST_ARCH="x86"
+        returncode=1;
+        ;;
+    'x86_64')
+        DIST_ARCH="x86_64"
+        returncode=19;
+        ;;
+    'ip27')
+        DIST_ARCH="mips"
+        returncode=5;
+        ;;
+    'power' | 'powerpc' | 'power_pc' | 'ppc64')
+        DIST_ARCH="ppc"
+        returncode=2;
+        ;;
+    'pa_risc' | 'pa-risc')
+        DIST_ARCH="parisc"
+        returncode=6;
+        ;;
+    'sun4u' | 'sparcv9')
+        DIST_ARCH="sparc"
+        returncode=4;
+        ;;
+    '9000/800')
+        DIST_ARCH="parisc"
+        returncode=3;
+        ;;
+esac
+
+return $returncode;
+
+}
 
 cat > portscan.java <<END
 import java.net.*;
@@ -45,19 +110,65 @@ for i in `echo $hosts`; do
       echo "mpjboot found port $port busy on $host machine. There are two possibilities:";
       echo "    (1) The daemon might already be running...";
       echo "    (2) If the daemon is not running, then set a different port by modifying the wrapper.app.parameter.2 property in the $MPJ_HOME/conf/wrapper.conf file.";
+      rm portscan.java portscan.class
       exit 128;
   fi
 done
 
+rm portscan.java portscan.class
+
+get_arch
+arch=`echo $?`;
+get_os
+os=`echo $?`;
+eArch=`uname -m | tr [:upper:] [:lower:] | tr -d [:blank:]`;
+eOs=`uname -s | tr [:upper:] [:lower:] | tr -d [:blank:]`;
 lines=`cat $1`
 count=0
 
-for i in `echo $lines`; do 
-  host=`echo $i`    
-  ssh $host 'cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_32 start;'
-  #ssh $host 'cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_64 start;'
-  #ssh $host 'cd $MPJ_HOME/bin;./mpjdaemon_linux_ppc_64 start;' 
-  #ssh $host 'cd $MPJ_HOME/bin;./mpjdaemon_macosx_ppc_32 start;'
-  #ssh $host 'cd $MPJ_HOME/bin;./mpjdaemon_solaris_sparc_64 start;' 
+for i in `echo $lines`; do
+  host=`echo $i`
+
+  # This means when Os = linux and Architecure = x86 32 Or AMD Or i386 etc
+  if [ $os -eq 1 ] && [ $arch -eq 1 ]; then
+    cd $MPJ_HOME/lib
+    cp libwrapper.so_linux_x86_32 libwrapper.so
+    ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_32 start;"
+  # This means when Os = linux and Architecure = x86_64
+  elif [ $os -eq 1 ] && [ $arch -eq 19 ]; then
+    cd $MPJ_HOME/lib
+    cp libwrapper.so_linux_x86_64 libwrapper.so
+    ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_64 start;"
+  # This means when Os = linux and Architecure = ppc
+  elif [ $os -eq 1 ] && [ $arch -eq 2 ]; then
+    cd $MPJ_HOME/lib
+    cp libwrapper.so_linux_ppc_64 libwrapper.so
+    ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_ppc_64 start;"
+  # This means when Os =Solaris and Architecure = x86 32 Or 64 Or AMD Or i386 etc
+  elif [ $os -eq 4 ] && [ $arch -eq 1 ]; then
+    cd $MPJ_HOME/lib
+    cp libwrapper.so_linux_x86_32 libwrapper.so
+    ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_32 start;"
+  # This means when Os = Solaris and Architecure = Sparc
+  elif [ $os -eq 4 ] && [ $arch -eq 4 ]; then
+   cd $MPJ_HOME/lib
+   cp libwrapper.so_solaris_sparc_64 libwrapper.so
+    ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_solaris_sparc_64 start;"
+  # This means when Os = Mac and Architecure = x86 32 Or 64
+  elif [ $os -eq 2 ] && [ $arch -eq 1 ]; then
+     cd $MPJ_HOME/lib
+    cp libwrapper.so_linux_x86_32 libwrapper.so
+    ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_32 start;"
+  # This means when Os = Mac and Architecure = ppc
+elif [ $os -eq 2 ] && [ $arch -eq 2 ]; then
+     cd $MPJ_HOME/lib
+    cp libwrapper.jnilib_macosx_ppc_32 libwrapper.jnilib
+    ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_macosx_ppc_32 start;"
+  elif [ $os -eq 0 ] || [ $arch -eq 0 ]; then
+    echo -e "MPJ Express runtime is not supported on your platform. Please contact \e[4maamir.shafi@seecs.edu.pk\e[0m how to execute MPJ Express on \e[4m$eArch\e[0m running \e[4m$eOs\e[0m";
+    break;
+  fi
   count=`expr $count + 1`
 done
+
+
