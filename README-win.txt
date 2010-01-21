@@ -40,9 +40,9 @@ Running MPJ Express Programs in the Multicore Configuration
 	  If you want to set variables in cygwin shell
           export MPJ_HOME="c:\\mpj"
           export PATH=$PATH:"$MPJ_HOME\\bin" 
-3. Write your MPJ Express program (World.java) and save it. 
-4. Compile: javac -cp .;%MPJ_HOME%/lib/mpj.jar World.java
-5. Execute: mpjrun.bat -np 4 World.java
+3. Write your MPJ Express program (HelloWorld.java) and save it. 
+4. Compile: javac -cp .;%MPJ_HOME%/lib/mpj.jar HelloWorld.java
+5. Execute: mpjrun.bat -np 4 HelloWorld.java
 
 Running MPJ Express Programs in the Cluster Configuration 
 =========================================================
@@ -59,7 +59,7 @@ Running MPJ Express Programs in the Cluster Configuration
 	  If you want to set variables in cygwin shell
           export MPJ_HOME="c:\\mpj"
           export PATH=$PATH:"$MPJ_HOME\\bin" 
-3. Write your MPJ Express program (World.java) and save it. 
+3. Write your MPJ Express program (HelloWorld.java) and save it. 
 4. Write a machines file (name it "machines") stating host names or IP addresses of all 
    machines involved in the parallel execution.
 5. Start daemons:
@@ -70,8 +70,8 @@ Running MPJ Express Programs in the Cluster Configuration
 	  right-Click MPJ Daemon ->Properties, click "Log On" tab, For the option "Log on as:",
 	  select This account and put in the user name and password of this account, and start 
 	  the service. 
-6. Compile: javac -cp .;%MPJ_HOME%/lib/mpj.jar World.java 
-7. Execute: mpjrun.bat -np 4 -dev niodev World
+6. Compile: javac -cp .;%MPJ_HOME%/lib/mpj.jar HelloWorld.java 
+7. Execute: mpjrun.bat -np 4 -dev niodev HelloWorld
 8. Stop daemons: Go-to Control-Panel->Administrative Tools->Services-> MPJ Daemon 
    and stop the service.
 
