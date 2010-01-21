@@ -708,40 +708,61 @@ public class NIODevice
 
     /* Create server socket */
     SocketChannel[] rChannels = new SocketChannel[nodeList.length - 1];
-    try {
-      writableServerChannel = ServerSocketChannel.open();
-      writableServerChannel.configureBlocking(false);
-      writableServerChannel.socket().bind(new InetSocketAddress(pList[rank]));
-
-      if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
-        logger.debug("created writableServerChannel on port " + pList[rank]);
-      }
-      writableServerChannel.register(selector, SelectionKey.OP_ACCEPT);
-    }
-    catch (IOException ioe) {
-      throw new XDevException(ioe);
-    }
-
-    my_server_port = pList[rank];
-
     /* Create control server socket */
     SocketChannel[] wChannels = new SocketChannel[nodeList.length - 1];
 
-    try {
-      readableServerChannel = ServerSocketChannel.open();
-      readableServerChannel.configureBlocking(false);
-      readableServerChannel.socket().bind(
-          new InetSocketAddress( (pList[rank] + 1)));
-      readableServerChannel.register(selector, SelectionKey.OP_ACCEPT);
+    
+    /* Checking for the java.net.BindException. This
+     * Exception is thrown when the port on which
+     * we want to bind is already in use */
+    boolean isOK = false; 
+    boolean isError = false ;
 
-      if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
-        logger.debug("created readableServerChannel on port " +
-                     (pList[rank] + 1));
+    while(isOK != true) { 
+
+      isOK = false ; 
+      isError = false;
+
+      try {
+        writableServerChannel = ServerSocketChannel.open();
+        writableServerChannel.configureBlocking(false);
+        writableServerChannel.socket().bind(new InetSocketAddress(pList[rank]));
+
+        if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
+          logger.debug("created writableServerChannel on port " + pList[rank]);
+        }
+        writableServerChannel.register(selector, SelectionKey.OP_ACCEPT);
+
+        my_server_port = pList[rank];
+
+        readableServerChannel = ServerSocketChannel.open();
+        readableServerChannel.configureBlocking(false);
+        readableServerChannel.socket().bind(
+            new InetSocketAddress( (pList[rank] + 1)));
+        readableServerChannel.register(selector, SelectionKey.OP_ACCEPT);
+
+        if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
+          logger.debug("created readableServerChannel on port " +
+                       (pList[rank] + 1));
+        }
+
       }
-
-    }
-    catch (IOException ioe) {
-      throw new XDevException(ioe);
+      catch (IOException ioe) {
+        isError = true;
+        if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
+          logger.debug("NIODevice threw an exception "+
+             "while starting the server on ports "+pList[rank]+
+             " or "+(pList[rank]+1)+ 
+             ". We'll try starting servers on next two consecutive ports") ;
+        }
+        try { Thread.sleep(500); } catch(Exception e){}
+      }
+      finally {
+        if(isError == true)
+          isOK = false;
+        else if(isError == false)
+          isOK = true;
+      }
     }
 
     /* This is connection-code for data-channels. */

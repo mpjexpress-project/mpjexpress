@@ -322,7 +322,7 @@ public class MPJRun {
         if(DEBUG && logger.isDebugEnabled()) {
           logger.debug("startHttp server method threw an exception "+
              "while starting the server on ports "+S_PORT+" or "+(S_PORT+1)+
-             ". We try starting servers on next two consecutive ports") ;
+             ". We'll try starting servers on next two consecutive ports") ;
         }
         isError = true;
       }
