@@ -62,7 +62,7 @@ public class MPJRun {
 
   private static int MPJ_SERVER_PORT = 20000 ; 
   private static int mxBoardNum = 0 ; 
-  private static int D_SER_PORT = 10000 ;
+  private static int D_SER_PORT = getPortFromWrapper() ;
   private static int endPointID = 0 ;
 
   int S_PORT = 15000; 
@@ -914,6 +914,39 @@ public class MPJRun {
 
     }//end while.
   
+  }
+
+  private static int getPortFromWrapper() {
+
+    int port = 0;
+    FileInputStream in = null;
+    DataInputStream din = null;
+    BufferedReader reader = null;
+    String line = "";
+
+    try {
+
+      String path = System.getenv("MPJ_HOME")+"/conf/wrapper.conf";
+      in = new FileInputStream(path);
+      din = new DataInputStream(in);
+      reader = new BufferedReader(new InputStreamReader(din));
+
+      while ((line = reader.readLine()) != null)   {
+        if(line.startsWith("wrapper.app.parameter.2")) {
+          String trimmedLine=line.replaceAll("\\s+", "");
+          port = Integer.parseInt(trimmedLine.substring(24));
+          break;
+        }
+      }
+
+      in.close();
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    return port;
+
   }
 
   private void clientSocketInit() throws Exception {
