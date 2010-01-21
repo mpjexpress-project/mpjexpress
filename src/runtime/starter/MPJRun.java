@@ -459,7 +459,7 @@ public class MPJRun {
 
   private void printUsage() { 
     System.out.println(   
-      "\nmpjrun.[bat/sh] [options] class [args...]"+
+      "mpjrun.[bat/sh] [options] class [args...]"+
       "\n                (to execute a class)"+
       "\nmpjrun.[bat/sh] [options] -jar jarfile [args...]"+
       "\n                (to execute a jar file)"+
