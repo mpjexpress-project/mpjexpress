@@ -57,6 +57,7 @@ public class MulticoreStarter {
     String className = null;
     String deviceName = null;
     String packageName = null;
+    String cmdClassPath = null ;
     String mpjHomeDir = null;
     String[] nargs = null;
     String loader = null;
@@ -96,9 +97,10 @@ public class MulticoreStarter {
     deviceName = args[2];
     loader = args[3];
     mpjURL = args[4];
-    className = args[5];
-    nargs = new String[(args.length - 6)];
-    System.arraycopy(args, 6, nargs, 0, nargs.length);
+    cmdClassPath = args[5];
+    className = args[6];
+    nargs = new String[(args.length - 7)];
+    System.arraycopy(args, 7, nargs, 0, nargs.length);
 
     arvs = new String[(nargs.length + 3)];
 
@@ -152,9 +154,16 @@ public class MulticoreStarter {
         try {
           String mpjHome = System.getenv("MPJ_HOME");
     
-          String libPath = 
-            mpjHome+"/lib/mpi.jar"+File.pathSeparator+
-            mpjHome+"/lib/mpjdev.jar" ; 
+          String libPath = null ; 
+
+          if(!cmdClassPath.equals("EMPTY")) {
+            libPath = cmdClassPath + File.pathSeparator+
+                      mpjHome+"/lib/mpi.jar"+File.pathSeparator+
+                      mpjHome+"/lib/mpjdev.jar";
+	  } else {
+            libPath = mpjHome+"/lib/mpi.jar"+File.pathSeparator+
+                      mpjHome+"/lib/mpjdev.jar";
+          }
 
 	  //System.out.println("className = "+className) ; 
 
@@ -175,7 +184,7 @@ public class MulticoreStarter {
           ClassLoader systemLoader = 
           ClassLoader.getSystemClassLoader() ; 
 
-          //System.out.println("appPath = "+appPath) ; 
+          System.out.println("appPath = "+appPath) ; 
 
           StringTokenizer tok = new StringTokenizer(appPath,
                                       File.pathSeparator);
@@ -204,8 +213,8 @@ public class MulticoreStarter {
             c[index] = Class.forName(name, true, ucl);
           } else { 
             name = className;
-            // System.out.println("num --" + num + " Thread "
-            // +Thread.currentThread()+" Time "+System.nanoTime());
+             //System.out.println("num --" + num + " Thread "
+               // +Thread.currentThread()+" Time "+System.nanoTime());
             c[index] = Class.forName(name, true, ucl);
             //  c[num] = Class.forName(name);
 	  } 

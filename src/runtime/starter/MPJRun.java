@@ -105,7 +105,7 @@ public class MPJRun {
   ByteBuffer buffer = ByteBuffer.allocate(1000);
   String loader = "useRemoteLoader";
 
-  static final boolean DEBUG = false ; 
+  static final boolean DEBUG = true ; 
   private static int RUNNING_JAR_FILE = 2 ; 
   private static int RUNNING_CLASS_FILE = 1 ; 
 

@@ -111,6 +111,8 @@ public class MulticoreDaemon {
                               String workingDirectory, String jarName,
 			                    int classOrJar) throws Exception { 
 	  
+    String cmdClassPath = "EMPTY";
+
     numOfProcs = Runtime.getRuntime().availableProcessors();
     InetAddress localaddr = InetAddress.getLocalHost();
     hostName = localaddr.getHostName();
@@ -126,7 +128,8 @@ public class MulticoreDaemon {
     }
 
     if(MPJRun.DEBUG && MPJRun.logger.isDebugEnabled()) { 
-      MPJRun.logger.debug ("the daemon will start <" + processes + "> threads"); 
+      MPJRun.logger.debug ("the daemon will start <" + processes + 
+                                                            "> threads"); 
     }
 
     String[] jArgs = jvmArgs.toArray(new String[0]);
@@ -141,16 +144,15 @@ public class MulticoreDaemon {
       }
 	  
       if(now) {
-        String cp = jvmArgs.remove(e); 
+        cmdClassPath = jvmArgs.remove(e); 
  
-	cp = 
+	String cp = 
 	  	      mpjHomeDir+"/lib/smpdev.jar"+
                       File.pathSeparator+""+mpjHomeDir+"/lib/xdev.jar"+
                       File.pathSeparator+""+mpjHomeDir+"/lib/mpjbuf.jar"+
                       File.pathSeparator+""+mpjHomeDir+"/lib/loader2.jar"+
                       File.pathSeparator+""+mpjHomeDir+"/lib/starter.jar"+
-                      File.pathSeparator+""+mpjHomeDir+"/lib/mpiExp.jar"+
-	  	      File.pathSeparator+cp;
+                      File.pathSeparator+""+mpjHomeDir+"/lib/mpiExp.jar" ;
 
         if(MPJRun.DEBUG && MPJRun.logger.isDebugEnabled()) { 
           MPJRun.logger.debug("cp = "+cp) ; 
@@ -194,7 +196,7 @@ public class MulticoreDaemon {
 	
     String[] aArgs = appArgs.toArray(new String[0]);
     String[] ex =
-            new String[ (8+jArgs.length+aArgs.length) ];
+            new String[ (9+jArgs.length+aArgs.length) ];
     ex[0] = "java";
 	
     for(int i=0 ; i< jArgs.length ; i++) {
@@ -209,6 +211,7 @@ public class MulticoreDaemon {
     ex[indx] = deviceName; indx++;
     ex[indx] = loader; indx++;
     ex[indx] = mpjURL ; indx++;
+    ex[indx] = cmdClassPath ; indx++;
 	
     if(className != null) {
       ex[indx] = className;   
@@ -218,7 +221,7 @@ public class MulticoreDaemon {
     }
 	
     for(int i=0 ; i< aArgs.length ; i++) {
-      ex[i+8+jArgs.length] = aArgs[i];
+      ex[i+9+jArgs.length] = aArgs[i];
     }
 		  
     for (int i = 0; i < ex.length; i++) {
