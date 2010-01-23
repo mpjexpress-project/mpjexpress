@@ -149,7 +149,7 @@ public class Wrapper {
 
     try {
 
-      System.out.println("Starting process <"+rank+"> on <"+hostName+">"); 	    
+      //System.out.println("Starting process <"+rank+"> on <"+hostName+">"); 	    
       if(classLoader != null &&
                    loader.equals("useRemoteLoader") ) {
         classLoader.invokeClass(c, arvs);
@@ -165,7 +165,7 @@ public class Wrapper {
         m.invoke(null, new Object[] {arvs});
       }
 
-      System.out.println("Stopping process <"+rank+"> on <"+hostName+">");
+      //System.out.println("Stopping process <"+rank+"> on <"+hostName+">");
       
 
     }

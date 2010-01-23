@@ -249,9 +249,8 @@ public class MPJDaemon {
                        File.pathSeparator+""+mpjHomeDir+"/lib/wrapper.jar"+
                        File.pathSeparator+cp;
 	      }
-	      
 	      else if(loader.equals("useRemoteLoader")) {
-                cp = "."+File.pathSeparator+""+
+                cp = //"."+File.pathSeparator+""+
                   mpjHomeDir+"/lib/loader1.jar"+
 	          File.pathSeparator+""+mpjHomeDir+"/lib/log4j-1.2.11.jar"+
                   File.pathSeparator+""+mpjHomeDir+"/lib/wrapper.jar"+
@@ -274,14 +273,13 @@ public class MPJDaemon {
 
 	    if(loader.equals("useLocalLoader")) {
 	      jvmArgs.add("."+File.pathSeparator+""
-  	        +mpjHomeDir+"/lib/loader1.jar"+
-                File.pathSeparator+""+mpjHomeDir+"/lib/mpj.jar"+
-                File.pathSeparator+""+mpjHomeDir+"/lib/log4j-1.2.11.jar"+
-                File.pathSeparator+""+mpjHomeDir+"/lib/wrapper.jar" );
+  	          +mpjHomeDir+"/lib/loader1.jar"+
+                  File.pathSeparator+""+mpjHomeDir+"/lib/mpj.jar"+
+                  File.pathSeparator+""+mpjHomeDir+"/lib/log4j-1.2.11.jar"+
+                  File.pathSeparator+""+mpjHomeDir+"/lib/wrapper.jar" );
 	    }
-
 	    else if(loader.equals("useRemoteLoader")) {
-              jvmArgs.add("."+File.pathSeparator+""+
+              jvmArgs.add(//"."+File.pathSeparator+""+
  	        mpjHomeDir+"/lib/loader1.jar"+
 		File.pathSeparator+""+mpjHomeDir+"/lib/log4j-1.2.11.jar"+
 		File.pathSeparator+""+mpjHomeDir+"/lib/wrapper.jar" );
@@ -403,7 +401,7 @@ public class MPJDaemon {
 	  	      File.pathSeparator+cp;
 	    }
 	    else if(loader.equals("useRemoteLoader")) { 
-	      cp = "."+File.pathSeparator+""+
+	      cp = //"."+File.pathSeparator+""+
 	  	mpjHomeDir+"/lib/loader2.jar"+
                 File.pathSeparator+""+mpjHomeDir+"/lib/log4j-1.2.11.jar"+
                 File.pathSeparator+""+mpjHomeDir+"/lib/wrapper.jar"+
@@ -432,9 +430,8 @@ public class MPJDaemon {
                       File.pathSeparator+""+mpjHomeDir+"/lib/wrapper.jar"
 		  	  );
 	  }
-
 	  else if(loader.equals("useRemoteLoader")) {
-	    jvmArgs.add("."+File.pathSeparator+""+
+	    jvmArgs.add(//"."+File.pathSeparator+""+
 	      mpjHomeDir+"/lib/loader2.jar"+
               File.pathSeparator+""+mpjHomeDir+"/lib/log4j-1.2.11.jar"+
               File.pathSeparator+""+mpjHomeDir+"/lib/wrapper.jar"

@@ -113,6 +113,15 @@ public class MPJRun {
    * Every thing is being inside this constructor :-)
    */
   public MPJRun(String args[]) throws Exception {
+
+    java.util.logging.Logger logger1 = 
+    java.util.logging.Logger.getLogger("");
+
+
+    //remove all existing log handlers: remove the ERR handler
+    for (java.util.logging.Handler h : logger1.getHandlers()) {
+      logger1.removeHandler(h);
+    }
 		  
     Map<String,String> map = System.getenv() ;
 	    mpjHomeDir = map.get("MPJ_HOME");
@@ -393,11 +402,13 @@ public class MPJRun {
       buffer.put(jArgs[j].getBytes(), 0, jArgs[j].getBytes().length);
     }
 
-    if(wdir != null) {
-      buffer.put("wdr-".getBytes());
-      buffer.putInt(wdir.getBytes().length);
-      buffer.put(wdir.getBytes(), 0, wdir.getBytes().length); 
+    if(wdir == null) { 
+      wdir = System.getProperty("user.dir") ;
     }
+
+    buffer.put("wdr-".getBytes());
+    buffer.putInt(wdir.getBytes().length);
+    buffer.put(wdir.getBytes(), 0, wdir.getBytes().length); 
     
     if(className != null) {
       buffer.put("cls-".getBytes());
@@ -1215,7 +1226,6 @@ public class MPJRun {
               //RECEIVED
               //logger.debug("line <" + line + ">");
 
-              System.out.print(line);
               //logger.debug("Does it endup with EXIT ? ==>" +
               //            line.endsWith("EXIT"));
 
@@ -1228,6 +1238,9 @@ public class MPJRun {
                   logger.debug("Notify and exit"); 
                   Notify();
                 }
+              } 
+	      else {
+                System.out.print(line);
               }
 
             } //end if key.isReadable()

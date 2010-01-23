@@ -233,7 +233,7 @@ public class ThreadedWrapper {
 
         } //end sync.
 
-        System.out.println("Starting process <"+rank+"> on <"+hostName+">");
+        //System.out.println("Starting process <"+rank+"> on <"+hostName+">");
 
 	if(ThreadedWrapper.this.classLoader != null && 
 			loader.equals("useRemoteLoader") ) { 
@@ -251,7 +251,7 @@ public class ThreadedWrapper {
 	  m.invoke(null, new Object[] {arvs});
 	}
 
-        System.out.println("Stopping process <"+rank+"> on <"+hostName+">");
+        //System.out.println("Stopping process <"+rank+"> on <"+hostName+">");
       }
       catch (Exception ioe) {
         //System.out.println("multi-threaded starter: exception"
