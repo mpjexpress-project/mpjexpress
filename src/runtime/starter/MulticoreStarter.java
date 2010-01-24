@@ -99,8 +99,9 @@ public class MulticoreStarter {
     mpjURL = args[4];
     cmdClassPath = args[5];
     className = args[6];
-    nargs = new String[(args.length - 7)];
-    System.arraycopy(args, 7, nargs, 0, nargs.length);
+    int ARGS_USED_HERE = 7 ; 
+    nargs = new String[(args.length - ARGS_USED_HERE)];
+    System.arraycopy(args, ARGS_USED_HERE, nargs, 0, nargs.length);
 
     arvs = new String[(nargs.length + 3)];
 
@@ -184,7 +185,7 @@ public class MulticoreStarter {
           ClassLoader systemLoader = 
           ClassLoader.getSystemClassLoader() ; 
 
-          System.out.println("appPath = "+appPath) ; 
+          //System.out.println("appPath = "+appPath) ; 
 
           StringTokenizer tok = new StringTokenizer(appPath,
                                       File.pathSeparator);
@@ -251,9 +252,9 @@ public class MulticoreStarter {
                }
                //  m.invoke(null, new Object[] {arvs});
                method[index] = m[index];
-             }
-           } catch (Exception exp) {
-         }
+          }
+        } catch (Exception exp) {
+        }
          ////// placed end //////
 
          synchronized (monitor) {
@@ -281,7 +282,11 @@ public class MulticoreStarter {
 
          try {
            // System.out.println(" num " + index);
+	   System.out.println("Starting process <"+index+"> on <"
+	     					        +hostName+">"); 
            method[index].invoke(null, new Object[]{argNew});
+	   System.out.println("Stopping process <"+index+"> on <"
+	   						+hostName+">"); 
          } catch (Exception e) {
 
            System.out.println(" exception while invoking in " +

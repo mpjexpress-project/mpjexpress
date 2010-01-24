@@ -56,6 +56,7 @@ import org.apache.log4j.spi.LoggerRepository ;
 import runtime.MPJRuntimeException ;  
 import runtime.daemon.*;
 import java.util.concurrent.Semaphore ; 
+import java.util.regex.* ;
 
 public class MulticoreDaemon {
 
@@ -145,6 +146,16 @@ public class MulticoreDaemon {
 	  
       if(now) {
         cmdClassPath = jvmArgs.remove(e); 
+
+	if(cmdClassPath.matches("(?i).*mpj.jar.*")) {
+	  //System.out.println("before <"+cmdClassPath+">");
+	  //System.out.println("mpj.jar is present ...") ;
+	  cmdClassPath = cmdClassPath.replaceAll("mpj\\.jar","mpi.jar") ; 
+	  //cmdClassPath.replaceAll(Pattern.quote("mpj.jar"), 
+	    //           Matcher.quoteReplacement("mpi.jar")) ;
+	  //System.out.println("after <"+cmdClassPath+">");
+	  //System.exit(0) ; 
+	}
  
 	String cp = 
 	  	      mpjHomeDir+"/lib/smpdev.jar"+
@@ -193,10 +204,12 @@ public class MulticoreDaemon {
         MPJRun.logger.debug("modified: jArgs["+e+"]="+jArgs[e]);		
       }
     }
+
+    int CMD_WORDS = 9 ; 
 	
     String[] aArgs = appArgs.toArray(new String[0]);
     String[] ex =
-            new String[ (9+jArgs.length+aArgs.length) ];
+            new String[ (CMD_WORDS+jArgs.length+aArgs.length) ];
     ex[0] = "java";
 	
     for(int i=0 ; i< jArgs.length ; i++) {
@@ -221,7 +234,7 @@ public class MulticoreDaemon {
     }
 	
     for(int i=0 ; i< aArgs.length ; i++) {
-      ex[i+9+jArgs.length] = aArgs[i];
+      ex[i+CMD_WORDS+jArgs.length] = aArgs[i];
     }
 		  
     for (int i = 0; i < ex.length; i++) {
