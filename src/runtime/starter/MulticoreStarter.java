@@ -182,8 +182,7 @@ public class MulticoreStarter {
 
           appPath = appPath  + File.pathSeparator+libPath;
 
-          ClassLoader systemLoader = 
-          ClassLoader.getSystemClassLoader() ; 
+          ClassLoader systemLoader =  ClassLoader.getSystemClassLoader() ; 
 
           //System.out.println("appPath = "+appPath) ; 
 
@@ -220,11 +219,9 @@ public class MulticoreStarter {
             //  c[num] = Class.forName(name);
 	  } 
 
-          //}
         } catch (Exception exx) {
           exx.printStackTrace() ; 
         }
-        //}
 
         arvs[1] = config;
         arvs[2] = deviceName;
@@ -280,20 +277,31 @@ public class MulticoreStarter {
          // don't like it ..but atleast works now!
          argNew[1] = (new Integer(processes)).toString() ; 
 
-         try {
-           // System.out.println(" num " + index);
-	   System.out.println("Starting process <"+index+"> on <"
-	     					        +hostName+">"); 
-           method[index].invoke(null, new Object[]{argNew});
-	   System.out.println("Stopping process <"+index+"> on <"
-	   						+hostName+">"); 
-         } catch (Exception e) {
+         boolean tryAgain = true;
 
-           System.out.println(" exception while invoking in " +
-                              Thread.currentThread());
-           e.printStackTrace();
-           // This should not happen, as we have disabled access checks
+	 while(tryAgain) { 
+
+             try {
+               // System.out.println(" num " + index);
+	       System.out.println("Starting process <"+index+"> on <"
+	     					        +hostName+">"); 
+               method[index].invoke(null, new Object[]{argNew});
+	       tryAgain = false;
+	       System.out.println("Stopping process <"+index+"> on <"
+	   						+hostName+">"); 
+             } catch (Exception e) {
+	       System.out.println("please try running the code again ..");
+               e.printStackTrace();
+	       tryAgain = false;
+	       System.exit(0);
+	       //tryAgain = true;
+               //System.out.println(" exception while invoking in " +
+               //                 Thread.currentThread());
+	       //goto TRY_AGAIN ; 
+               // This should not happen, as we have disabled access checks
+	     }
          }
+
        }
      };
    }
