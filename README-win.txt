@@ -84,12 +84,12 @@ the MPJ Daemon as service and running MPJ Express programs.
 Additional Documentation
 ========================
 
-For more details, see $MPJ_HOME/docs/windowsguide.pdf
+For more details, see $MPJ_HOME/doc/windowsguide.pdf
 
 Contact and Support
 ===================
 
-In case you run into issues please consult $MPJ_HOME/docs/windowsguide.pdf. If 
+In case you run into issues please consult $MPJ_HOME/doc/windowsguide.pdf. If 
 your query/problem is still not resolved, contact us by emailing: 
 
 1. MPJ mailing list: http://www.lists.rdg.ac.uk/mailman/listinfo/mpj-user
