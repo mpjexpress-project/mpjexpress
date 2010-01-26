@@ -283,14 +283,14 @@ public class MulticoreStarter {
 
              try {
                // System.out.println(" num " + index);
-	       System.out.println("Starting process <"+index+"> on <"
-	     					        +hostName+">"); 
+	       //System.out.println("Starting process <"+index+"> on <"
+	     	//				        +hostName+">"); 
                method[index].invoke(null, new Object[]{argNew});
 	       tryAgain = false;
-	       System.out.println("Stopping process <"+index+"> on <"
-	   						+hostName+">"); 
+	       //System.out.println("Stopping process <"+index+"> on <"
+	   	//					+hostName+">"); 
              } catch (Exception e) {
-	       System.out.println("please try running the code again ..");
+	       //System.out.println("please try running the code again ..");
                e.printStackTrace();
 	       tryAgain = false;
 	       System.exit(0);

@@ -106,6 +106,7 @@ public class MPJRun {
   String loader = "useRemoteLoader";
 
   static final boolean DEBUG = true ; 
+  static final String VERSION = "0.35" ; 
   private static int RUNNING_JAR_FILE = 2 ; 
   private static int RUNNING_CLASS_FILE = 1 ; 
 
@@ -113,7 +114,6 @@ public class MPJRun {
    * Every thing is being inside this constructor :-)
    */
   public MPJRun(String args[]) throws Exception {
-
     java.util.logging.Logger logger1 = 
     java.util.logging.Logger.getLogger("");
 
@@ -142,6 +142,9 @@ public class MPJRun {
 
 
     if(deviceName.equals("multicore")) {
+       
+      System.out.println("MPJ Express ("+VERSION+") is started in the "+
+                                              "multicore configuration"); 
 
       if(DEBUG && logger.isDebugEnabled()) {
         logger.info("jarName "+jarName) ; 
@@ -156,6 +159,10 @@ public class MPJRun {
 	                           nprocs, wdir, jvmArgs, appArgs) ;
       return ;
 
+    }
+    else { 
+      System.out.println("MPJ Express ("+VERSION+") is started in the "+
+                                              "cluster configuration"); 
     }
 
     //System.exit(0) ; 
