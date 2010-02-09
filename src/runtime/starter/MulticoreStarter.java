@@ -152,6 +152,9 @@ public class MulticoreStarter {
             }
           } else {
 */
+
+synchronized(monitor) { 
+
         try {
           String mpjHome = System.getenv("MPJ_HOME");
     
@@ -253,7 +256,7 @@ public class MulticoreStarter {
         } catch (Exception exp) {
         }
          ////// placed end //////
-
+}
          synchronized (monitor) {
 
            int val = rank.intValue();
