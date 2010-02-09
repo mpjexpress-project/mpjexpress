@@ -274,8 +274,26 @@
       <javadoc
         destdir="${doc.dir}/javadocs"
 	classpath="${lib.dir}/org.mortbay.jetty.jar:${lib.dir}/javax.servlet.jar:${lib.dir}/wrapper.jar:${lib.dir}/log4j-1.2.11.jar">
-          <packageset dir="${src.dir}">
-          </packageset>
+        <fileset dir="${mpi.dir}" defaultexcludes="yes">
+          <include name="**/Cartcomm.java"/>
+          <include name="**/CartParms.java"/>
+          <include name="**/Comm.java"/>
+          <include name="**/Datatype.java"/>
+          <include name="**/Errhandler.java"/>
+          <include name="**/Graphcomm.java"/>
+          <include name="**/GraphParms.java"/>
+          <include name="**/Group.java"/>
+          <include name="**/Intercomm.java"/>
+          <include name="**/Intracomm.java"/>
+          <include name="**/MPI.java"/>
+          <include name="**/MPIException.java"/>
+          <include name="**/Op.java"/>
+          <include name="**/Prequest.java"/>
+          <include name="**/Request.java"/>
+          <include name="**/ShiftParms.java"/>
+          <include name="**/Status.java"/>
+          <include name="**/User_function.java"/>
+        </fileset>
       </javadoc>
     </target>
 
