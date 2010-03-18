@@ -213,7 +213,10 @@ public class MPJDaemon {
             }
             else {
               iter++;
-              if (iter > (processes + 100)) {
+// Credit: Guillermo Lopez Taboada,  http://www.des.udc.es/~gltaboada/
+//         for identifying and proposing a fix for this. In future, 
+//         we need some more sophisticated solution.     
+              if (iter > (processes + 2048)) {
                 if(DEBUG && logger.isDebugEnabled()) { 
                   logger.debug (" read all entries from config file");
 		}
