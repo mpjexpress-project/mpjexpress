@@ -124,16 +124,13 @@ for i in `echo $lines`; do
    cd $MPJ_HOME/lib
    cp libwrapper.so_solaris_sparc_64 libwrapper.so
     ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_solaris_sparc_64 start;"
-  # This means when Os = Mac and Architecure = x86 32 Or 64
-  elif [ $os -eq 2 ] && [ $arch -eq 1 ]; then
-     cd $MPJ_HOME/lib
-    cp libwrapper.so_linux_x86_32 libwrapper.so
-    ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_linux_x86_32 start;"
-  # This means when Os = Mac and Architecure = ppc
-elif [ $os -eq 2 ] && [ $arch -eq 2 ]; then
-     cd $MPJ_HOME/lib
-    cp libwrapper.jnilib_macosx_ppc_32 libwrapper.jnilib
-    ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_macosx_ppc_32 start;"
+  # This means when Os = Mac (works for both darwin-x86 and darwin-ppc
+  # Credit: Ed Baskerville (ebaskerv@umich.edu) for identifying and proposing
+  # a fix for this elif
+  elif [ $os -eq 2 ]; then
+    cd $MPJ_HOME/lib
+    cp libwrapper.jnilib_macosx libwrapper.jnilib
+    ssh $host "cd $MPJ_HOME/bin;./mpjdaemon_macosx start;"
   elif [ $os -eq 0 ] || [ $arch -eq 0 ]; then
     echo -e "MPJ Express runtime is not supported on your platform. Please contact \e[4maamir.shafi@seecs.edu.pk\e[0m how to execute MPJ Express on \e[4m$eArch\e[0m running \e[4m$eOs\e[0m";
     break;
