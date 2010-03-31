@@ -61,7 +61,6 @@ public class MulticoreStarter {
     String mpjHomeDir = null;
     String[] nargs = null;
     String loader = null;
-    String mpjURL = null;
     String hostName = null;
     String[] arvs = null;
     Method[] m;
@@ -96,10 +95,9 @@ public class MulticoreStarter {
     processes = (new Integer(args[1])).intValue();
     deviceName = args[2];
     loader = args[3];
-    mpjURL = args[4];
-    cmdClassPath = args[5];
-    className = args[6];
-    int ARGS_USED_HERE = 7 ; 
+    cmdClassPath = args[4];
+    className = args[5];
+    int ARGS_USED_HERE = 6 ; 
     nargs = new String[(args.length - ARGS_USED_HERE)];
     System.arraycopy(args, ARGS_USED_HERE, nargs, 0, nargs.length);
 

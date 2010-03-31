@@ -69,7 +69,6 @@ public class MulticoreDaemon {
   private String wdir = null ; 
   private int numOfProcs = 0; 
   private int pos = 0; 
-  private String mpjURL = null; 
   private String deviceName = null;
   private String className = null ;
   private String mpjHome = null ;
@@ -90,7 +89,13 @@ public class MulticoreDaemon {
 
     this.jvmArgs = jvmArgs ; 
     this.appArgs = appArgs ; 
-    this.className = mcClassName ; 
+
+    /* FIXME: It's a dirty hack .. */ 
+    if(mcJarName.endsWith(".jar")) 
+      this.className = mcJarName ; 
+    else 
+      this.className = mcClassName; 
+
     this.processes = numOfProcessors ; 
     this.deviceName = "smpdev" ;
     this.loader = "useLocalLoader" ; //don't need this
@@ -100,8 +105,6 @@ public class MulticoreDaemon {
     } else { 
       this.wdir = workingDirectory ; 
     }
-
-    this.mpjURL = "someDummympjURL" ; 
 
     startNewProcess(mcClassName, numOfProcessors, workingDirectory, 
                                              mcJarName, classOrJar) ; 
@@ -223,7 +226,6 @@ public class MulticoreDaemon {
     ex[indx] = Integer.toString(processes); indx++ ; 
     ex[indx] = deviceName; indx++;
     ex[indx] = loader; indx++;
-    ex[indx] = mpjURL ; indx++;
     ex[indx] = cmdClassPath ; indx++;
 	
     if(className != null) {

@@ -31,7 +31,7 @@
  * Author       : Aamir Shafi, Bryan Carpenter
  * Created      : Sun Dec 12 12:22:15 BST 2004
  * Revision     : $Revision: 1.35 $
- * Updated      : $Date: Tue Dec  8 20:42:15 PKT 2009$
+ * Updated      : $Date: Wed Mar 31 15:33:18 PKT 2010$
  */
 
 package runtime.starter;
@@ -42,12 +42,6 @@ import java.net.*;
 import java.io.*;
 import java.util.*;
 
-import org.mortbay.http.HttpServer;
-import org.mortbay.http.SocketListener;
-import org.mortbay.http.HttpListener;
-import org.mortbay.http.HttpContext;
-import org.mortbay.http.handler.ResourceHandler;
-
 import org.apache.log4j.Logger ;
 import org.apache.log4j.PropertyConfigurator ;
 import org.apache.log4j.PatternLayout ;
@@ -56,9 +50,17 @@ import org.apache.log4j.Level ;
 import org.apache.log4j.DailyRollingFileAppender ;
 import org.apache.log4j.spi.LoggerRepository ;
 
+import java.util.jar.Attributes ;
+import java.util.jar.JarFile ;
+
 import runtime.MPJRuntimeException ;
 
 public class MPJRun {
+
+  public static String CONF_FILE_NAME = "mpjdev.conf" ;
+  public static String MPJ_DIR_NAME = ".mpj" ;
+
+  String configFileName = null ; 
 
   private static int MPJ_SERVER_PORT = 20000 ; 
   private static int mxBoardNum = 0 ; 
@@ -87,7 +89,6 @@ public class MPJRun {
   private Vector machineVector = new Vector();
   int nprocs = Runtime.getRuntime().availableProcessors() ; 
   String spmdClass = null;
-  String mpjURL = null;
   String deviceName = "multicore";
   String applicationArgs = "default_app_arg" ;
   String mpjHomeDir = null;
@@ -96,17 +97,14 @@ public class MPJRun {
   int endCount = 0; 
   int streamEndedCount = 0 ;
   String wdir;
-  String jarName = null;
   String className = null ; 
+  String applicationClassPathEntry = null ; 
   String codeBase = null;
   String mpjCodeBase = null ; 
-  HttpServer server = null;
-  HttpServer mpjServer = null; 
   ByteBuffer buffer = ByteBuffer.allocate(1000);
-  String loader = "useRemoteLoader";
 
-  static final boolean DEBUG = true ; 
-  static final String VERSION = "0.35" ; 
+  static final boolean DEBUG = false ; 
+  static final String VERSION = "0.36" ; 
   private static int RUNNING_JAR_FILE = 2 ; 
   private static int RUNNING_CLASS_FILE = 1 ; 
 
@@ -114,6 +112,7 @@ public class MPJRun {
    * Every thing is being inside this constructor :-)
    */
   public MPJRun(String args[]) throws Exception {
+
     java.util.logging.Logger logger1 = 
     java.util.logging.Logger.getLogger("");
 
@@ -124,7 +123,7 @@ public class MPJRun {
     }
 		  
     Map<String,String> map = System.getenv() ;
-	    mpjHomeDir = map.get("MPJ_HOME");
+    mpjHomeDir = map.get("MPJ_HOME");
 
     createLogger(args) ; 
 
@@ -140,22 +139,23 @@ public class MPJRun {
 
     processInput(args);
 
-
     if(deviceName.equals("multicore")) {
        
       System.out.println("MPJ Express ("+VERSION+") is started in the "+
                                               "multicore configuration"); 
-
       if(DEBUG && logger.isDebugEnabled()) {
-        logger.info("jarName "+jarName) ; 
         logger.info("className "+className) ; 
       }
 
-      int jarOrClass = (className==null?RUNNING_JAR_FILE:RUNNING_CLASS_FILE);
+//applicationClassPathEntry 
+//className 
+
+      int jarOrClass = (applicationClassPathEntry.endsWith(".jar")?
+                                  RUNNING_JAR_FILE:RUNNING_CLASS_FILE);
        
       //System.out.println("codeBase"+codeBase) ; 
       MulticoreDaemon multicoreDaemon =
-          new MulticoreDaemon(className, codeBase+"/"+jarName, jarOrClass, 
+          new MulticoreDaemon(className, applicationClassPathEntry, jarOrClass, 
 	                           nprocs, wdir, jvmArgs, appArgs) ;
       return ;
 
@@ -169,20 +169,30 @@ public class MPJRun {
     readMachineFile();
     machinesSanityCheck() ;
 	    
-    CONF_FILE = new File( codeBase+"/mpjdev.conf");
-    mpjCodeBase = mpjHomeDir+"/lib"; 
-/*
-    if(CONF_FILE.exists()) {
-      throw new RuntimeException("Another mpjrun module is already running "+
-		      "on this machine"); 
+    File mpjDirectory = new File ( System.getProperty("user.home")
+                                               + File.separator
+                                               + MPJ_DIR_NAME ) ;
+
+    if(!mpjDirectory.isDirectory() && !mpjDirectory.exists()) {
+      mpjDirectory.mkdir();
     }
-*/    
-	    
+
+    configFileName =  System.getProperty("user.home")
+                                     + File.separator
+                                     + MPJ_DIR_NAME
+                                     + File.separator
+                                     + CONF_FILE_NAME  ;
+
+    CONF_FILE = new File(configFileName) ; 
+
+    CONF_FILE.createNewFile() ; 
+
     CONF_FILE.deleteOnExit() ;
 
     if(DEBUG && logger.isDebugEnabled()) { 
       logger.debug("CONF_FILE_PATH <"+CONF_FILE.getAbsolutePath()+">");
     }
+
     assignTasks();
 
     try {
@@ -195,7 +205,7 @@ public class MPJRun {
 
       if(DEBUG && logger.isDebugEnabled()) {
 	logger.debug("Address: " + localaddr);
-	logger.debug("Name :" + hostName);
+	logger.debug("Name   : " + hostName );
       }
 
     }
@@ -203,21 +213,7 @@ public class MPJRun {
       throw new MPJRuntimeException(unkhe);  
     }
 
-
-    if(jarName != null) {
-      spmdClass = "http://"+hostIP+":"+S_PORT+"/"+jarName;
-    }
-    else {
-      spmdClass = "http://"+hostIP+":"+S_PORT+"/";
-    }
-
-    mpjURL = "http://"+hostIP+":"+(S_PORT+1)+"/mpj.jar";
-	    
-    if(DEBUG && logger.isDebugEnabled()) {
-      logger.debug("spmdClass<"+spmdClass+">");
-    }
-
-    urlArray = spmdClass.getBytes();
+    urlArray = applicationClassPathEntry.getBytes();
 
     peerChannels = new Vector<SocketChannel>();
 
@@ -225,7 +221,12 @@ public class MPJRun {
 
     clientSocketInit();
 
-    startHttpServer();
+    //System.out.println("going to sleep") ; 
+    //try { Thread.currentThread().sleep(10000) ; } catch(Exception e) {}
+    //System.out.println("sleep over") ; 
+    //System.exit(0) ; 
+
+    //startHttpServer();
 
     selectorThreadStarter = new Thread(selectorThread);
 
@@ -301,72 +302,31 @@ public class MPJRun {
     this.finish();
 
   }
-  private void startHttpServer() throws Exception {
-
-    boolean isOK = false;
-    boolean isError = false;
-
-    while(isOK != true) {
-
-      isOK = false;
-      isError = false;
-      
-      try { 
-        server = new HttpServer();
-        SocketListener listener = new SocketListener();
-        listener.setPort(S_PORT);
-        server.addListener(listener);
-        HttpContext context = new HttpContext();
-        context.setContextPath("/");
-        context.setResourceBase(codeBase);
-        context.addHandler(new ResourceHandler());
-        server.addContext(context);
-        server.start();
-    
-        mpjServer = new HttpServer();
-        SocketListener listener2 = new SocketListener();
-        listener2.setPort(S_PORT+1);
-        mpjServer.addListener(listener2);
-        HttpContext context2 = new HttpContext();
-        context2.setContextPath("/");
-        context2.setResourceBase(mpjCodeBase);
-        context2.addHandler(new ResourceHandler());
-        mpjServer.addContext(context2);
-        mpjServer.start();
-      }
-      catch(org.mortbay.util.MultiException e) { 
-        if(DEBUG && logger.isDebugEnabled()) {
-          logger.debug("startHttp server method threw an exception "+
-             "while starting the server on ports "+S_PORT+" or "+(S_PORT+1)+
-             ". We'll try starting servers on next two consecutive ports") ;
-        }
-        isError = true;
-      }
-      finally {
-
-        if(isError == false)
-          isOK=true;
-        else if(isError == true) {
-          isOK = false;
-          S_PORT+=2;
-        }
-      }
-    }
-  }
 	  
   /* 
-   * 1. URL [http://holly:port/codebase/test.jar]
-   * 2. NP  [# of processes]
-   * 3. args to JVM
-   * 4. device to use 
-   * 5. application arguments ..
-   * 6. GO_FOR_IT_SIGNAL 
+   * 1. Application Classpath Entry (-cpe). This is a String classpath entry 
+        which will be appended by the MPJ Express daemon before starting
+        a user process (JVM). In the case of JAR file, it's the absolute
+        path and name. In the case of a class file, its the name of the 
+        working directory where mpjrun command was launched. 
+   * 2. num- [# of processes] to be started by a particular MPJ Express
+        daemon.
+   * 3. arg- args to JVM
+   * 4. wdr- Working Directory 
+   * 5. cls- Classname to be executed. In the case of JAR file, this 
+        name is taken from the manifest file. In the case of class file, 
+        the class name is specified on the command line by the user.
+   * 6. cfn- Configuration File name. This points to "System.getProperty
+        ("user.home")+/+.mpj+/+mpjdev.conf
+   * 7. dev-: what device to use?
+   * 8. app-: Application arguments ..
+   * 9. GO_FOR_IT_SIGNAL
    */ 
   private void pack(int nProcesses) {
     if(DEBUG && logger.isDebugEnabled()) {
       logger.debug("buffer (initial)" + buffer);
     }
-    buffer.put("url-".getBytes());
+    buffer.put("cpe-".getBytes());
 
     if(DEBUG && logger.isDebugEnabled()) {
       logger.debug("buffer (after putting url-) " + buffer);
@@ -417,24 +377,18 @@ public class MPJRun {
     buffer.putInt(wdir.getBytes().length);
     buffer.put(wdir.getBytes(), 0, wdir.getBytes().length); 
     
-    if(className != null) {
-      buffer.put("cls-".getBytes());
-      buffer.putInt(className.getBytes().length);
-      buffer.put(className.getBytes(), 0, className.getBytes().length); 
-    }
+    buffer.put("cls-".getBytes());
+    buffer.putInt(className.getBytes().length);
+    buffer.put(className.getBytes(), 0, className.getBytes().length); 
 
-    buffer.put("mul-".getBytes()); //mpj URL ..
-    buffer.putInt(mpjURL.getBytes().length);
-    buffer.put(mpjURL.getBytes(), 0, 
-		    mpjURL.getBytes().length); 
-    
+    //configFileName 
+    buffer.put("cfn-".getBytes());
+    buffer.putInt(configFileName.getBytes().length);
+    buffer.put(configFileName.getBytes(), 0, configFileName.getBytes().length); 
+
     buffer.put("dev-".getBytes());
     buffer.putInt(deviceName.getBytes().length);
     buffer.put(deviceName.getBytes(), 0, deviceName.getBytes().length); 
-
-    buffer.put("ldr-".getBytes());
-    buffer.putInt(loader.getBytes().length);
-    buffer.put(loader.getBytes(), 0, loader.getBytes().length); 
 	    
     buffer.put("app-".getBytes());
     buffer.putInt(aArgs.length); 
@@ -451,7 +405,7 @@ public class MPJRun {
 
   private void createLogger(String[] args) throws MPJRuntimeException {
   
-    if(logger == null) {
+    if(DEBUG && logger == null) {
 
       DailyRollingFileAppender fileAppender = null ;
 
@@ -491,7 +445,6 @@ public class MPJRun {
       "\n   -headnodeip val    -- ..."+
       "\n   -psl val           -- 128Kbytes"+ 
       "\n   -machinesfile val  -- machines"+ 
-      "\n   -localloader"+ 
       "\n   -h                 -- print this usage information"+ 
       "\n   ...any JVM arguments..."+
  "\n Note: Value on the right in front of each option is the default value"+ 
@@ -511,7 +464,7 @@ public class MPJRun {
     }
  
     boolean append = false;
-    boolean beforeJar = true ; 
+    boolean parallelProgramNotYetEncountered = true ; 
     
     for (int i = 0; i < args.length; i++) {
 
@@ -540,10 +493,6 @@ public class MPJRun {
       else if (args[i].equals("-headnodeip")) {
 	hostIP = args[i+1] ;
 	i++;
-      }
-      
-      else if (args[i].equals("-localloader")) {
-        loader = "useLocalLoader" ; 	      
       }
       
       else if (args[i].equals("-dev")) {
@@ -596,21 +545,21 @@ public class MPJRun {
         i++;
       }
       
-      else if(args[i].equals("-class")) {
-        codeBase = System.getProperty("user.dir");	      
-	className = args[i+1];
-	beforeJar = false ; 
-	i++;
-      }
-      
       else if(args[i].equals("-jar")) {
-        File tFile = new File( args[i+1] );
-	File absFile = tFile.getAbsoluteFile();
+        File tFile = new File(args[i+1]);
+	String absJarPath = tFile.getAbsolutePath();
 	
-	if(tFile.exists() || loader.equals("useLocalLoader")) {
-          jarName = tFile.getName() ;
-	  codeBase = absFile.getParent();
-	  beforeJar = false ; 
+	if(tFile.exists()) {
+          applicationClassPathEntry = new String(absJarPath) ; 
+
+          try { 
+            JarFile jarFile = new JarFile(absJarPath) ;
+            Attributes attr = jarFile.getManifest().getMainAttributes();
+            className = attr.getValue(Attributes.Name.MAIN_CLASS);
+          } catch(IOException ioe) { 
+            ioe.printStackTrace() ; 
+          } 
+	  parallelProgramNotYetEncountered = false ; 
 	  i++;
 	}
 	else {
@@ -622,15 +571,17 @@ public class MPJRun {
 
       else {
 	      
-        //these have to be jvm options ...  		
-        if(beforeJar) {
+        //these are JVM options .. 
+        if(parallelProgramNotYetEncountered) {
           if(args[i].startsWith("-")) { 		
 	    jvmArgs.add(args[i]); 
 	  }
           else {
-            codeBase = System.getProperty("user.dir");	      
+            //This code takes care of executing class files directly ....
+            //although does not look like it ....
+            applicationClassPathEntry = System.getProperty("user.dir");	      
  	    className = args[i];
-	    beforeJar = false ; 
+	    parallelProgramNotYetEncountered = false ; 
           }
 	}
 	
@@ -658,11 +609,9 @@ public class MPJRun {
       logger.debug("-dir: <"+codeBase+">"); 
       logger.debug("-dev: <"+deviceName+">");
       logger.debug("-psl: <"+psl+">");
-      logger.debug("-jarName: <"+jarName+">");
       logger.debug("jvmArgs.length: <"+jArgs.length+">");
-      logger.debug("jarName : <"+jarName+">");
       logger.debug("className : <"+className+">");
-      logger.debug("codeBase : <"+codeBase+">");
+      logger.debug("applicationClassPathEntry : <"+applicationClassPathEntry+">");
       
 
       for(int i=0; i<jArgs.length ; i++) {
@@ -831,6 +780,9 @@ public class MPJRun {
       }
 
     }
+
+    cout.close(); 
+    cfos.close(); 
 
   }
 
@@ -1022,18 +974,7 @@ public class MPJRun {
     logger.debug("\n---finish---");
 
     try {
-      cfos.close();
       
-      if(server != null) {
-        server.stop();
-        server.destroy();
-      }
-      
-      if(mpjServer != null) {
-        mpjServer.stop();
-        mpjServer.destroy();
-      }
-
       logger.debug("Waking up the selector");
       selector.wakeup();
       selectorFlag = false;
@@ -1122,16 +1063,6 @@ public class MPJRun {
             buffer.clear();
           }
 
-          if(server != null) {
-            server.stop();
-            server.destroy();
-	  }
-
-          if(mpjServer != null) {
-            mpjServer.stop();
-            mpjServer.destroy();
-          }
-	  
           cfos.close();
         }
         catch(Exception e){
