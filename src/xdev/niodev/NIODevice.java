@@ -47,6 +47,7 @@ import mpjdev.*;
 import java.util.concurrent.Semaphore;
 import xdev.*;
 import java.io.IOException;
+import java.io.File; 
 import mpi.ProcTree;
 
 import org.apache.log4j.Logger;
@@ -648,7 +649,7 @@ public class NIODevice
     ConfigReader reader = null;
 
     try {
-      reader = new ConfigReader(args[1]);
+      reader = new ConfigReader(args[1]); 
       nprocs = (new Integer(reader.readNoOfProc())).intValue();
       psl = (new Integer(reader.readIntAsString())).intValue();
       if(psl < 12) {

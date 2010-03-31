@@ -1578,7 +1578,7 @@ public class Intracomm
 
   }
 
-  static boolean EXOTIC_ALLREDUCE = true ; 
+  static boolean EXOTIC_ALLREDUCE = false ; 
 
 
   /**

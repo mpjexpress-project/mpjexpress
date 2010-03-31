@@ -204,7 +204,7 @@ public class SMPDeviceImpl {
 	}
         req.iwait();
         if (mpi.MPI.DEBUG && SMPDevice.logger.isDebugEnabled()) {
-          System.out.println("After ---- calling iwait "+ req.hashCode());
+          SMPDevice.logger.debug("After ---- calling iwait "+ req.hashCode());
         }
     }
 

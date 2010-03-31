@@ -66,8 +66,9 @@ public class ConfigReader {
    */
   public ConfigReader(String fileName) throws IOException,
       FileNotFoundException, MalformedURLException {
+
     this.fileName = fileName;
-//System.out.println(fileName);
+
     if (fileName.startsWith("http://")) {
 
       try {
