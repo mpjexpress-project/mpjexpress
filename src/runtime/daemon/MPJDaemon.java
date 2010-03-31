@@ -53,6 +53,9 @@ import org.apache.log4j.Level ;
 import org.apache.log4j.DailyRollingFileAppender ;
 import org.apache.log4j.spi.LoggerRepository ;
 
+import java.util.jar.Attributes ; 
+import java.util.jar.JarFile ;
+
 import runtime.MPJRuntimeException ;  
 
 import java.util.concurrent.Semaphore ; 
@@ -67,19 +70,14 @@ public class MPJDaemon {
   private Selector selector = null;
   private volatile boolean selectorAcceptConnect = true;
   private volatile boolean kill_signal = false;
-  private Thread[] workers = null;
   private volatile boolean wait = true;
   private volatile boolean waitToStartExecution = true;
-  private String hostName = null; 
   private PrintStream out = null;
   private Semaphore outputHandlerSem = new Semaphore(1,true); 
-  private static final boolean DEBUG = false ; 
+  static final boolean DEBUG = false ; 
   
   private String wdir = null ; 
-  private int numOfProcs = 0; 
-  private int pos = 0; 
-  private String URL = null; //http:server:portclient.jar
-  private String mpjURL = null; 
+  private String applicationClassPathEntry = null; 
   private String deviceName = null;
   private String className = null ;
   private String mpjHome = null ;
@@ -87,24 +85,20 @@ public class MPJDaemon {
   private ArrayList<String> appArgs = new ArrayList<String>();
   private int processes = 0;
   private String cmd = null;
-  private Process[] processVector = null;
-  private static Logger logger = null ; 
+  private Process p[] = null ; 
+  static Logger logger = null ; 
   private String mpjHomeDir = null ;  
-  private String loader = null; 
+  String configFileName = null ;
 
-  /** 
-   * The constructor which does everything ...
-   */
   public MPJDaemon(String args[]) throws Exception {
 	  
-    numOfProcs = Runtime.getRuntime().availableProcessors();
     InetAddress localaddr = InetAddress.getLocalHost();
-    hostName = localaddr.getHostName();
+    String hostName = localaddr.getHostName();
     
     Map<String,String> map = System.getenv() ;
     mpjHomeDir = map.get("MPJ_HOME");
 			    
-    createLogger(mpjHomeDir); 
+    createLogger(mpjHomeDir, hostName); 
 
     if(DEBUG && logger.isDebugEnabled()) { 
       logger.debug("mpjHomeDir "+mpjHomeDir); 
@@ -121,9 +115,7 @@ public class MPJDaemon {
 
     }
     else {
-	    
       throw new MPJRuntimeException("Usage: java MPJDaemon daemonServerPort");
-
     }
 
     serverSocketInit();
@@ -156,392 +148,184 @@ public class MPJDaemon {
                        new PrintStream(System.out),
                        new PrintStream(System.err));
 
-      /* 
-       *  The client request more than one processes ..and we dont wanne 
-       *  use  smpdev ...it means start two separate JVMs ... 
-       */
-      if (!deviceName.equals("smpdev") && processes > 1) { 
-  
-        workers = new Thread[processes];
-        synchronized (this) {
-          processVector = new Process[processes];
-        }
-        BufferedReader bufferedReader = null;
-        InputStream in = null;
-        URL aURL = null;
-        String conf = URL.substring(0, (URL.lastIndexOf("/") + 1));
-        String config = conf + "mpjdev.conf";
-        String rank_ = null;
+      BufferedReader bufferedReader = null;
+      InputStream in = null;
 
-        try {
-          aURL = new URL(new String(config));
-          in = aURL.openStream();
-        }
-        catch (Exception e) {
-          e.printStackTrace();
-        }
+      File configFile = new File(configFileName) ; 
+      configFile.createNewFile();
 
-        bufferedReader = new BufferedReader(new InputStreamReader(in));
+      try {
+        in = new FileInputStream(configFile);
+      }
+      catch (Exception e) {
+        e.printStackTrace();
+      }
 
-        int iter = 0;
+      bufferedReader = new BufferedReader(new InputStreamReader(in));
 
-        for (int j = 0; j < processes; j++) {
-          String line = null;
-          boolean loop = true;
+      OutputHandler [] outputThreads = new OutputHandler[processes] ;  
+      p = new Process[processes] ;  
 
-          while (loop) {
-            line = bufferedReader.readLine();
-	    
-            if(DEBUG && logger.isDebugEnabled()) { 
-              logger.debug ("line read <" + line + ">");
-	    }
-	    
-            if ( (line != null) &&
-                (matchMe(line))) {  
+      for (int j = 0; j < processes; j++) {
 
-              StringTokenizer tokenizer = new StringTokenizer(line, "@");
-              tokenizer.nextToken();
-              tokenizer.nextToken();
-              rank_ = tokenizer.nextToken();
+        /* Step 1: Read from the config file - basically need to know
+                   rank of processes */ 
+        String line = null;
+        String rank = null; 
 
-              if(DEBUG && logger.isDebugEnabled()) { 
-                logger.debug ("rank_ " + rank_);
-	      }
-	      
-              loop = false;
+        while((line = bufferedReader.readLine()) != null) {
 
-            }
-            else {
-              iter++;
-// Credit: Guillermo Lopez Taboada,  http://www.des.udc.es/~gltaboada/
-//         for identifying and proposing a fix for this. In future, 
-//         we need some more sophisticated solution.     
-              if (iter > (processes + 2048)) {
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug (" read all entries from config file");
-		}
-                loop = false;
-              }
-              else {
-                continue;
-	      }
-            } //end else
-
-
-          } //end while
-
-	  String[] jArgs = jvmArgs.toArray(new String[0]); 
-          boolean now = false;
-          boolean noSwitch = true ;
-
-          for(int e=0 ; e<jArgs.length; e++) {
-
-            if(DEBUG && logger.isDebugEnabled()) { 
-              logger.debug("jArgs["+e+"]="+jArgs[e]);
-	    }
-
-            if(now) {
-		    
-              String cp = jvmArgs.remove(e);
-	      
-	      if(loader.equals("useLocalLoader")) {
-                cp = "."+File.pathSeparator+""+
-                       mpjHomeDir+"/lib/loader1.jar"+
-                       File.pathSeparator+""+mpjHomeDir+"/lib/mpj.jar"+
-                       File.pathSeparator+""+mpjHomeDir+"/lib/log4j-1.2.11.jar"+
-                       File.pathSeparator+""+mpjHomeDir+"/lib/wrapper.jar"+
-                       File.pathSeparator+cp;
-	      }
-	      else if(loader.equals("useRemoteLoader")) {
-                cp = //"."+File.pathSeparator+""+
-                  mpjHomeDir+"/lib/loader1.jar"+
-	          File.pathSeparator+""+mpjHomeDir+"/lib/log4j-1.2.11.jar"+
-                  File.pathSeparator+""+mpjHomeDir+"/lib/wrapper.jar"+
-                  File.pathSeparator+cp;
-	      }
-	      
-              jvmArgs.add(e,cp);
-              now = false;
-            }
-
-            if(jArgs[e].equals("-cp")) {
-              now = true;
-              noSwitch = false;
-            }
-
+          if(DEBUG && logger.isDebugEnabled()) { 
+            logger.debug ("line ="+line);
           }
 
-          if(noSwitch) {
-            jvmArgs.add("-cp");
+          if(MPJDaemon.matchMe(line) ) {
+            StringTokenizer tokenizer = new StringTokenizer(line, "@");
+            tokenizer.nextToken();
+            tokenizer.nextToken();
+            rank = tokenizer.nextToken();
+            break ;
+          }
 
-	    if(loader.equals("useLocalLoader")) {
-	      jvmArgs.add("."+File.pathSeparator+""
-  	          +mpjHomeDir+"/lib/loader1.jar"+
+        } //end while
+
+        if(DEBUG && logger.isDebugEnabled()) { 
+          logger.debug("out of while loop");
+        }
+
+        /* Step 2: Argument Processing */ 
+
+        String[] jArgs = jvmArgs.toArray(new String[0]); 
+        boolean now = false;
+        boolean noSwitch = true ;
+
+        for(int e=0 ; e<jArgs.length; e++) {
+
+          if(DEBUG && logger.isDebugEnabled()) { 
+            logger.debug("jArgs["+e+"]="+jArgs[e]);
+	  }
+
+          if(now) {
+            String cp = jvmArgs.remove(e);
+	      
+            cp = "."+File.pathSeparator+""+
+                  mpjHomeDir+"/lib/loader1.jar"+
                   File.pathSeparator+""+mpjHomeDir+"/lib/mpj.jar"+
                   File.pathSeparator+""+mpjHomeDir+"/lib/log4j-1.2.11.jar"+
-                  File.pathSeparator+""+mpjHomeDir+"/lib/wrapper.jar" );
-	    }
-	    else if(loader.equals("useRemoteLoader")) {
-              jvmArgs.add(//"."+File.pathSeparator+""+
- 	        mpjHomeDir+"/lib/loader1.jar"+
-		File.pathSeparator+""+mpjHomeDir+"/lib/log4j-1.2.11.jar"+
-		File.pathSeparator+""+mpjHomeDir+"/lib/wrapper.jar" );
-	    }
-	  }
-
-          jArgs = jvmArgs.toArray(new String[0]);
-
-          for(int e=0 ; e<jArgs.length; e++) {
-		  
-            if(DEBUG && logger.isDebugEnabled()) { 
-              logger.debug("modified: jArgs["+e+"]="+jArgs[e]);
-	    }
-
-          }
-	  
-	  String[] aArgs = appArgs.toArray(new String[0]); 
-	  
-          String[] ex = new String[ (9+jArgs.length+aArgs.length) ]; 
-	  ex[0] = "java";
-
-	  //System.arraycopy ... can be used ..here ...
-	  for(int i=0 ; i<jArgs.length ; i++) { 
-	    ex[i+1] = jArgs[i]; 	
-	  }
-
-	  int indx = jArgs.length+1; 
-	
-	  ex[indx] = "runtime.daemon.Wrapper" ; indx++ ;
-	  ex[indx] = URL; indx++ ; 
-	  ex[indx] = Integer.toString(processes); indx++ ; 
-	  ex[indx] = deviceName; indx++ ; 
-	  ex[indx] = rank_ ; indx++ ;
-	  ex[indx] = loader ; indx++ ;
-	  ex[indx] = mpjURL; indx++ ;
-	  
-	  if(className != null) {
-	    ex[indx] = className ; 
-	  }
-	  else {
-	    ex[indx] = "dummy" ; //this is JAR case ..this arg will never 
-	                               //be used ...
-	  }
-
-	  //System.arraycopy ... can be used ..here ...
-	  for(int i=0 ; i< aArgs.length ; i++) { 
-	    ex[i+9+jArgs.length] = aArgs[i]; 	
-	  }
-
-	  if(DEBUG && logger.isDebugEnabled()) { 
-            for (int i = 0; i < ex.length; i++) {
-              logger.debug(i+": "+ ex[i]);
-            }  
-	  }
-	
-	  /*... Making the command finishes here ...*/
-          ProcessBuilder pb = new ProcessBuilder(ex);
-	  pb.directory(new File(wdir)) ;
-          pb.redirectErrorStream(true); 
-          if(DEBUG && logger.isDebugEnabled()) { 
-            logger.debug("starting the process ");
-	  }
-          Process p = pb.start();
-	  
-          synchronized (processVector) {
-            processVector[j] = p;
-          }
-	  
-          if(DEBUG && logger.isDebugEnabled()) { 
-            logger.debug("started the process "); 
-	  }
-
-        } //end for loop.
-
-        for (int j = 0; j < processes; j++) {
-          outputHandlerSem.acquireUninterruptibly() ; 
-          pos = j;
-          workers[j] = new Thread(outputHandler);
-          workers[j].start();
-        }
-
-        for (int j = 0; j < processes; j++) {
-          workers[j].join();
-        }
-
-      }
-      else {
+                  File.pathSeparator+""+mpjHomeDir+"/lib/wrapper.jar"+
+                  File.pathSeparator+applicationClassPathEntry+
+                  File.pathSeparator+cp;
 	      
-        workers = new Thread[1];
-	
-        synchronized (this) {
-          processVector = new Process[1];
+            jvmArgs.add(e,cp);
+            now = false;
+          }
+
+          if(jArgs[e].equals("-cp")) {
+            now = true;
+            noSwitch = false;
+          }
         }
 
-        if(DEBUG && logger.isDebugEnabled()) { 
-          logger.debug ("the daemon will start <" + processes + "> threads"); 
-	}
-
-        String[] jArgs = jvmArgs.toArray(new String[0]);
-	
-	boolean now = false;
-	boolean noSwitch = true ; 
-
-	for(int e=0 ; e<jArgs.length; e++) {
-		
-          if(DEBUG && logger.isDebugEnabled()) { 
-            logger.debug("jArgs["+e+"]="+jArgs[e]);		
-	  }
-	  
-	  if(now) {
-            String cp = jvmArgs.remove(e); 
-
-	    if(loader.equals("useLocalLoader")) { 
-	      cp = "."+File.pathSeparator+""+
-	  	      mpjHomeDir+"/lib/loader2.jar"+
-                      File.pathSeparator+""+mpjHomeDir+"/lib/mpj.jar"+
-                      File.pathSeparator+""+mpjHomeDir+"/lib/log4j-1.2.11.jar"+
-                      File.pathSeparator+""+mpjHomeDir+"/lib/wrapper.jar"+
-	  	      File.pathSeparator+cp;
-	    }
-	    else if(loader.equals("useRemoteLoader")) { 
-	      cp = //"."+File.pathSeparator+""+
-	  	mpjHomeDir+"/lib/loader2.jar"+
+        if(noSwitch) {
+          jvmArgs.add("-cp");
+	  jvmArgs.add("."+File.pathSeparator+""
+  	        +mpjHomeDir+"/lib/loader1.jar"+
+                File.pathSeparator+""+mpjHomeDir+"/lib/mpj.jar"+
                 File.pathSeparator+""+mpjHomeDir+"/lib/log4j-1.2.11.jar"+
                 File.pathSeparator+""+mpjHomeDir+"/lib/wrapper.jar"+
-	  	File.pathSeparator+cp;
-	    }
-	    
-	    jvmArgs.add(e,cp);
-            now = false;		  
-	  }
-	  
-	  if(jArgs[e].equals("-cp")) {
-            now = true;
-	    noSwitch = false;
-	  }
-	  
-	}
+                File.pathSeparator+applicationClassPathEntry) ; 
+        }
 
-	if(noSwitch) {
-	  jvmArgs.add("-cp");
-
-	  if(loader.equals("useLocalLoader")) {
-	    jvmArgs.add("."+File.pathSeparator+""+
-	              mpjHomeDir+"/lib/loader2.jar"+
-                      File.pathSeparator+""+mpjHomeDir+"/lib/mpj.jar"+
-                      File.pathSeparator+""+mpjHomeDir+"/lib/log4j-1.2.11.jar"+
-                      File.pathSeparator+""+mpjHomeDir+"/lib/wrapper.jar"
-		  	  );
-	  }
-	  else if(loader.equals("useRemoteLoader")) {
-	    jvmArgs.add(//"."+File.pathSeparator+""+
-	      mpjHomeDir+"/lib/loader2.jar"+
-              File.pathSeparator+""+mpjHomeDir+"/lib/log4j-1.2.11.jar"+
-              File.pathSeparator+""+mpjHomeDir+"/lib/wrapper.jar"
-	    );
-	  }
-	}
-
-	jArgs = jvmArgs.toArray(new String[0]);
-
-	for(int e=0 ; e<jArgs.length; e++) {
+        jArgs = jvmArgs.toArray(new String[0]);
+ 
+        for(int e=0 ; e<jArgs.length; e++) {
           if(DEBUG && logger.isDebugEnabled()) { 
-            logger.debug("modified: jArgs["+e+"]="+jArgs[e]);		
+            logger.debug("modified: jArgs["+e+"]="+jArgs[e]);
 	  }
-	}
-	
-	String[] aArgs = appArgs.toArray(new String[0]);
-        String[] ex =
-		new String[ (8+jArgs.length+aArgs.length) ];
-	ex[0] = "java";
-	
-	for(int i=0 ; i< jArgs.length ; i++) {
-	  ex[i+1] = jArgs[i];
-	}
+        }
+	  
+        String[] aArgs = appArgs.toArray(new String[0]); 
 
-	int indx = jArgs.length+1;
+        int N_ARG_COUNT = 7 ; 
+	  
+        String[] ex = new String[(N_ARG_COUNT+jArgs.length+aArgs.length)]; 
+        ex[0] = "java";
+
+        //System.arraycopy ... can be used ..here ...
+        for(int i=0 ; i<jArgs.length ; i++) { 
+          ex[i+1] = jArgs[i]; 	
+        }
+
+        int indx = jArgs.length+1; 
 	
-	ex[indx] = "runtime.daemon.ThreadedWrapper" ; indx++ ; 
-	ex[indx] = URL; indx++ ; 
-	ex[indx] = Integer.toString(processes); indx++ ; 
-	ex[indx] = deviceName; indx++;
-	ex[indx] = loader; indx++;
-	ex[indx] = mpjURL ; indx++;
-	
-	if(className != null) {
-	  ex[indx] = className;   
-	}
-	else {
-	  ex[indx] = "dummy" ; //this is JAR case ..this arg will never 
-	                               //be used ...
-	}
-	
-	for(int i=0 ; i< aArgs.length ; i++) {
-	  ex[i+8+jArgs.length] = aArgs[i];
-	}
-		  
-        for (int i = 0; i < ex.length; i++) {
-          if(DEBUG && logger.isDebugEnabled()) { 
+        ex[indx] = "runtime.daemon.Wrapper" ; indx++ ;
+        ex[indx] = configFileName; indx++ ; 
+        ex[indx] = Integer.toString(processes); indx++ ; 
+        ex[indx] = deviceName; indx++ ; 
+        ex[indx] = rank; indx++ ; 
+        ex[indx] = className ; 
+	  
+        //System.arraycopy ... can be used ..here ...
+        for(int i=0 ; i< aArgs.length ; i++) { 
+          ex[i+N_ARG_COUNT+jArgs.length] = aArgs[i]; 	
+        }
+
+        if(DEBUG && logger.isDebugEnabled()) { 
+          for (int i = 0; i < ex.length; i++) {
             logger.debug(i+": "+ ex[i]);
-	  }
-        } 
+          }  
+        }
 	
-	/*... Making the command finishes here ...*/
-
-        if(DEBUG && logger.isDebugEnabled()) { 
-          logger.debug("creating process-builder object ");
-	}
+        /* Step 3: Now start a new JVM */ 
         ProcessBuilder pb = new ProcessBuilder(ex);
-	pb.directory(new File(wdir)); 
-	//Map<String, String> m = pb.environment(); 
-	//for(String str : m.values()) {
-        //  if(DEBUG && logger.isDebugEnabled()) { 
-        //    logger.debug("str : "+str);		
-	//  }
-	//}
-        pb.redirectErrorStream(true);
-        if(DEBUG && logger.isDebugEnabled()) { 
-          logger.debug("starting the ThreadedWrapper.");
-	}
-        Process p = null;
-
-        try {
-          p = pb.start();
-        }
-        catch (Exception e) {
-          e.printStackTrace();
-        }
-
-        synchronized (processVector) {
-          processVector[0] = p;
-        }
+        pb.directory(new File(wdir)) ;
+        pb.redirectErrorStream(true); 
 
         if(DEBUG && logger.isDebugEnabled()) { 
-          logger.debug ("started the ThreadedWrapper.");
-	}
-        outputHandlerSem.acquireUninterruptibly() ; 
-        pos = 0;
-        workers[0] = new Thread(outputHandler);
-        workers[0].start();
-        
-        //System.out.println("calling join" + hostName);
-        workers[0].join();
-        //System.out.println("called join" + hostName);
+          logger.debug("starting the process ");
+        }
 
-      } //end else (ThreadedWrapper case)
+        p[j] = pb.start();
+
+        /* Step 4: Start a new thread to handle output from this particular
+                   JVM. 
+                   FIXME: Now this seems like a good amount of overhead. If
+                   we start 4 JVMs on a quad-core CPU, we also start 4 
+                   additional threads to handle I/O. Is it possible to 
+                   get rid of this overhead?
+                   */ 
+        outputThreads[j] = new OutputHandler(p[j]) ; 
+        outputThreads[j].start();
+	  
+        if(DEBUG && logger.isDebugEnabled()) { 
+          logger.debug("started the process "); 
+        }
+      } //end for loop.
+
+      try { 
+        bufferedReader.close() ; 
+        in.close() ; 
+      } catch(Exception e) { 
+        e.printStackTrace() ; 
+      } 
+
+      //Wait for the I/O threads to finish. They finish when 
+      // their corresponding JVMs finish. 
+      for (int j = 0; j < processes; j++) {
+        outputThreads[j].join();
+      }
+
+      if(DEBUG && logger.isDebugEnabled()) { 
+        logger.debug ("Stopping the output");
+      }
 
       MPJProcessPrintStream.stop();
 
-      synchronized (processVector) {
-        for (int i = 0; i < processVector.length; i++) {
-          processVector[i].destroy();
-        }
+      // Its important to kill all JVMs that we started ... 
+      synchronized (p) {
+        for(int i=0 ; i<processes ; i++) 
+          p[i].destroy();
         kill_signal = false;
-      }
-
-      workers = null;
-      if(DEBUG && logger.isDebugEnabled()) { 
-        logger.debug ("Stopping the output");
       }
 
       try {
@@ -563,7 +347,7 @@ public class MPJDaemon {
       }
       catch (Exception e) { 
         e.printStackTrace() ; 
-        continue;
+        //continue;
       }
 
       restoreVariables() ; 
@@ -576,17 +360,14 @@ public class MPJDaemon {
   }
 
   private void restoreVariables() {
-    pos = 0; 
     jvmArgs.clear();
     appArgs.clear(); 
     wdir = null ; 
-    URL = null;
-    mpjURL = null; 
+    applicationClassPathEntry = null;
     deviceName = null;
     className = null ;
     processes = 0;
-    processVector = null;
-    loader = null; 
+    p = null ; 
   }
 
    private synchronized void waitToStartExecution () {
@@ -604,47 +385,64 @@ public class MPJDaemon {
 
   }
 
-  static boolean matchMe(String line) throws Exception {
+  static boolean matchMe(String line) throws Exception { 
 
-    if(!line.contains("@") || line.startsWith("#") ) {
+    if (!line.contains("@") || line.startsWith("#")) {
       return false;
     }
 
-    StringTokenizer token = new StringTokenizer(line, "@");	  
-    boolean found = false; 
-    String hostName = token.nextToken() ;
-    InetAddress host = null ;
-    
-    try {    
-      host = InetAddress.getByName(hostName) ;
+    StringTokenizer token = new StringTokenizer(line, "@");
+    String hostName = token.nextToken();
+    InetAddress host=null, myHost=null;
+
+    try {
+      host = InetAddress.getByName(hostName);
+      myHost = InetAddress.getLocalHost() ; 
+    } catch (Exception e) {
+      return false;
     }
-    catch(Exception e){
-      return false;   	    
+
+    if(host.getHostName().equals(myHost.getHostName()) || 
+       host.getHostAddress().equals(myHost.getHostAddress())) {
+      return true;
     }
 
-    Enumeration<NetworkInterface> cards =
-            NetworkInterface.getNetworkInterfaces() ;
-    
-    foundIt: 
+    return false;
+  }
 
-    while(cards.hasMoreElements()) {
+  static boolean matchMeOld(String line) throws Exception { 
 
-      NetworkInterface card = cards.nextElement() ;
+    if (!line.contains("@") || line.startsWith("#")) {
+      return false;
+    }
+
+    StringTokenizer token = new StringTokenizer(line, "@");
+    String hostName = token.nextToken();
+    InetAddress host = null;
+
+    try {
+      host = InetAddress.getByName(hostName);
+    } catch (Exception e) {
+      return false;
+    }
+
+    Enumeration<NetworkInterface> cards = 
+                               NetworkInterface.getNetworkInterfaces();
+               
+
+    while (cards.hasMoreElements()) {
+      NetworkInterface card = cards.nextElement();
       Enumeration<InetAddress> addresses = card.getInetAddresses();
 
-      while(addresses.hasMoreElements()) {
-        InetAddress address = addresses.nextElement() ;
-        if(host.getHostName().equals(address.getHostName()) || 
-           host.getHostAddress().equals(address.getHostAddress())) {
-          found = true;
-          break foundIt;
+      while (addresses.hasMoreElements()) {
+        InetAddress address = addresses.nextElement();
+        if(host.getHostAddress().equals(address.getHostAddress())) {
+          return true;
         }
-
       }
-
     }
 
-    return found; 
+    return false;
   }
 
   private synchronized void startExecution () {
@@ -652,7 +450,8 @@ public class MPJDaemon {
     this.notify();
   }
   
-  private void createLogger(String homeDir) throws MPJRuntimeException {
+  private void createLogger(String homeDir, String hostName) 
+                                              throws MPJRuntimeException {
   
     if(logger == null) {
 
@@ -886,13 +685,13 @@ public class MPJDaemon {
                 logger.debug ("READ_EVENT (String)<" + read + ">");
 	      }
 
-              if (read.equals("url-")) {
+              if (read.equals("cpe-")) {
  	        if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("url-");
+                  logger.debug ("cpe-");
 		}
                 int length = lilBuffer.getInt();
                 if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("URL Length -->" + length);
+                  logger.debug ("App CP Entry Length -->" + length);
 		}
                 lilBuffer.clear();
                 buffer.limit(length);
@@ -900,36 +699,12 @@ public class MPJDaemon {
                 byte[] byteArray = new byte[length];
                 buffer.flip();
                 buffer.get(byteArray, 0, length);
-                URL = new String(byteArray);
+                applicationClassPathEntry = new String(byteArray);
                 if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("URL:<" + URL + ">");
+                  logger.debug ("applicationClassPathEntry:<"+ 
+                                       applicationClassPathEntry+">");
 		}
 		
-		if(URL.endsWith(".jar")) {
-                  className = null ;  			
-		}
-		
-                buffer.clear();
-              }
-	      
-              if (read.equals("mul-")) {
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("mul-");
-		}
-                int length = lilBuffer.getInt();
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("URL Length -->" + length);
-		}
-                lilBuffer.clear();
-                buffer.limit(length);
-                socketChannel.read(buffer);
-                byte[] byteArray = new byte[length];
-                buffer.flip();
-                buffer.get(byteArray, 0, length);
-                mpjURL = new String(byteArray);
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("mpjURL:<" + mpjURL + ">");
-		}
                 buffer.clear();
               }
 	      
@@ -950,6 +725,28 @@ public class MPJDaemon {
                 className = new String(byteArray);
                 if(DEBUG && logger.isDebugEnabled()) { 
                   logger.debug ("className :<" + className + ">");
+		}
+                buffer.clear();
+              }
+
+              if (read.equals("cfn-")) {
+                if(DEBUG && logger.isDebugEnabled()) { 
+                  logger.debug ("cfn-");
+		}
+                int length = lilBuffer.getInt();
+                if(DEBUG && logger.isDebugEnabled()) { 
+                  logger.debug ("className length -->" + length);
+		}
+                lilBuffer.clear();
+                buffer.limit(length);
+                socketChannel.read(buffer);
+                byte[] byteArray = new byte[length];
+                buffer.flip();
+                buffer.get(byteArray, 0, length);
+                configFileName = new String(byteArray);
+                if(DEBUG && logger.isDebugEnabled()) { 
+                  logger.debug ("configFileName :<"+ 
+                                           configFileName + ">");
 		}
                 buffer.clear();
               }
@@ -1052,27 +849,6 @@ public class MPJDaemon {
 		}
                 buffer.clear();
               }
-	      
-              else if (read.equals("ldr-")) {
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("ldr-");
-		}
-                int length = lilBuffer.getInt();
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("ldr-Length -->" + length);
-		}
-                lilBuffer.clear();
-                buffer.limit(length);
-                socketChannel.read(buffer);
-                byte[] byteArray = new byte[length];
-                buffer.flip();
-                buffer.get(byteArray, 0, length);
-                loader = new String(byteArray);
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("ldr:<"+loader+">");
-		}
-                buffer.clear();
-              }
 
               else if (read.equals("wdr-")) {
                 if(DEBUG && logger.isDebugEnabled()) { 
@@ -1132,19 +908,18 @@ public class MPJDaemon {
 		  }
                 try {
                   synchronized (MPJDaemon.this) {
-                    if (processVector != null) {
-                      synchronized (processVector) {
+                    if (p != null) {
+                      synchronized (p) {
 
-                        for (int i = 0; i < processVector.length; i++) {
-                          processVector[i].destroy();
-                        }
+                        for(int i=0 ; i<processes ; i++) 
+                         p[i].destroy() ; 
 
                         kill_signal = true;
                       }
                     }
                   }
                 }
-                catch (Exception e) {} 
+                catch (Exception e) {e.printStackTrace(); } 
 //no matter what happens, we cant let this thread
 //die, coz otherwise, the daemon will die as well..
 //maybe you wanne stop the output handler threads as well.
@@ -1182,49 +957,6 @@ public class MPJDaemon {
     } //end run()
   }; //end selectorThread which is an inner class 
 
-  Runnable outputHandler = new Runnable() {
-
-    public void run() {
-
-      Process p = null;
-
-      synchronized (processVector) {
-        p = processVector[pos];
-      }
-
-      outputHandlerSem.release() ; 
-      String line = "";
-      InputStream outp = p.getInputStream();
-      BufferedReader reader = new BufferedReader(new InputStreamReader(outp));
-       
-      if(DEBUG && logger.isDebugEnabled()) { 
-        logger.debug( "outputting ...");
-      }
-
-      try {
-        do {
-          if (!line.equals("")) {
-            line.trim(); 
- 
-            synchronized (this) {
-              System.out.println(line);
-              //if(DEBUG && logger.isDebugEnabled()) { 
-              //  logger.debug(line);
-	      //}
-            } 
-          }
-        }  while ( (line = reader.readLine()) != null); 
-        // && !kill_signal); 
-      }
-      catch (Exception e) {
-        if(DEBUG && logger.isDebugEnabled()) { 
-          logger.debug ("outputHandler =>" + e.getMessage());
-	}
-        e.printStackTrace();
-      } 
-    } //end run.
-  }; //end outputHandler.
-
   public static void main(String args[]) {
     try {
       MPJDaemon dae = new MPJDaemon(args);
@@ -1234,16 +966,58 @@ public class MPJDaemon {
     }
   }
 
-            //"-Xloggc:" + hostName + ".gc",
-            //"-XX:+PrintGCDetails",
-            //"-XX:+PrintGCTimeStamps",
-            //"-XX:+PrintGCApplicationConcurrentTime",
-            //"-XX:+PrintGCApplicationStoppedTime",
-            //"-Xnoclassgc",
-            //"-XX:MinHeapFreeRatio=5",
-            //"-XX:MaxHeapFreeRatio=5",
-            //"-Xms512M", "-Xmx512M",
-            //"-DSIZE=1000", "-DITERATIONS=100",
-            //"-Xdebug",
-            //"-Xrunjdwp:transport=dt_socket,address=11000,server=y,suspend=n",
+  //"-Xloggc:" + hostName + ".gc",
+  //"-XX:+PrintGCDetails",
+  //"-XX:+PrintGCTimeStamps",
+  //"-XX:+PrintGCApplicationConcurrentTime",
+  //"-XX:+PrintGCApplicationStoppedTime",
+  //"-Xnoclassgc",
+  //"-XX:MinHeapFreeRatio=5",
+  //"-XX:MaxHeapFreeRatio=5",
+  //"-Xms512M", "-Xmx512M",
+  //"-DSIZE=1000", "-DITERATIONS=100",
+  //"-Xdebug",
+  //"-Xrunjdwp:transport=dt_socket,address=11000,server=y,suspend=n",
 }
+
+class OutputHandler extends Thread { 
+
+  Process p = null ; 
+
+  public OutputHandler(Process p) { 
+    this.p = p; 
+  } 
+
+  public void run() {
+
+    InputStream outp = p.getInputStream() ;
+    String line = "";
+    BufferedReader reader = new BufferedReader(new InputStreamReader(outp));
+       
+    if(MPJDaemon.DEBUG && MPJDaemon.logger.isDebugEnabled()) { 
+      MPJDaemon.logger.debug( "outputting ...");
+    }
+
+    try {
+      do {
+        if (!line.equals("")) {
+          line.trim(); 
+ 
+          synchronized (this) {
+            System.out.println(line);
+            //if(DEBUG && logger.isDebugEnabled()) { 
+            //  logger.debug(line);
+	    //}
+          } 
+        }
+      }  while ( (line = reader.readLine()) != null); 
+        // && !kill_signal); 
+    }
+    catch (Exception e) {
+      if(MPJDaemon.DEBUG && MPJDaemon.logger.isDebugEnabled()) { 
+        MPJDaemon.logger.debug ("outputHandler =>" + e.getMessage());
+      }
+      e.printStackTrace();
+    } 
+  } //end run.
+} 
