@@ -1,0 +1,17 @@
+Version 0.36
+------------
+
+1. Fixed the mpjboot error for Mac OS X reported by Ed Baskerville. The
+   mpjboot script used x86 binaries on Mac OS X, which obviously was incorrect.
+   18/3/2010
+2. The MPJ Express runtime could not start more than 100 processes. 
+   Guillermo Lopez Taboada identified and proposed and a fix for this.  
+   18/3/2010
+3. Fixed the bug which broke test cases when executed with odd number of
+   processes. Many thanks to Guillermo Lopez Taboada for discovering 
+   this bug. 18/3/2010 
+4. Made changes to the MPJ Express runtime system and got rid of a couple 
+   of internal classes. 
+5. On some clusters, users complained that MPJ Express took abnormally 
+   long amount of time to bootstrap. We have fixed this bug in this release.
+   1/4/2010
