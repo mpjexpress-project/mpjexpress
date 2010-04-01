@@ -208,7 +208,7 @@ public class MulticoreDaemon {
       }
     }
 
-    int CMD_WORDS = 9 ; 
+    int CMD_WORDS = 8 ; 
 	
     String[] aArgs = appArgs.toArray(new String[0]);
     String[] ex =
