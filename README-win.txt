@@ -1,7 +1,7 @@
            QuickStart Guide: Running MPJ Express on Windows Platform 
                    Aamir Shafi, Bryan Carpenter, Mark Baker
-                  Last Updated: Thu Jan 21 10:33:45 PKT 2010
-                                Version 0.35
+                  Last Updated: Wed Mar 31 23:31:20 PKT 2010
+                                Version 0.36
 
 Introduction
 ============

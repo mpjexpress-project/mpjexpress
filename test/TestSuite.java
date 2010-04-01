@@ -45,6 +45,7 @@ public class TestSuite {
   }
 
   public static void main(String args[]) throws Exception {      
+   
    System.out.print("TestSuite has started ...") ; 
    //dacian_test a = new dacian_test(args); 	  
    //mpi.threads.SimulSend threadsafe1 = new mpi.threads.SimulSend(args);
@@ -97,15 +98,23 @@ public class TestSuite {
     ErrStreamPrinter printer = new ErrStreamPrinter(args) ; 
     
     for(int y=0 ; y<10 ; y++) {	  
-      System.out.println("init<"+me+">y<"+y+">");
+      //System.out.println("init<"+me+">y<"+y+">");
       MPI.Init(args); 
       me = MPI.COMM_WORLD.Rank(); 
       size = MPI.COMM_WORLD.Size(); 
       MPI.COMM_WORLD.Barrier() ; 
-      System.out.println("mid<"+me+">y<"+y+">");
+      //System.out.println("mid<"+me+">y<"+y+">");
       MPI.Finalize();
-      System.out.println("end<"+me+">y<"+y+">");
+      //System.out.println("end<"+me+">y<"+y+">");
     }
+
+    if(size == 1) { 
+      System.out.println("please run the MPJ Express test suite with more"+
+                      "number of processes .."); 
+      return ; 
+
+    }
+
     
     for(int i =0 ; i< 1 ; i++) {
     //*****TWO PROCESSESES TESTS *****
