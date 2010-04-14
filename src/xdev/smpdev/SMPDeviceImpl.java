@@ -438,15 +438,10 @@ public class SMPDeviceImpl {
             status = new mpjdev.Status(request.srcID.uuid(),
                    request.tag, -1, request.type,
                     request.numEls); //jd
-            
-          
                     
         }
 
-       
-
          return status;
-
        // return null;
     }
 

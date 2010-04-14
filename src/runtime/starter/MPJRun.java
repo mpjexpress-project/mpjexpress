@@ -296,7 +296,7 @@ public class MPJRun {
      * waiting to get the answer from the daemons that the job has finished.
      */ 
     Wait();
-
+if(DEBUG && logger.isDebugEnabled())
     logger.debug("Calling the finish method now");
 
     this.finish();
@@ -615,16 +615,18 @@ public class MPJRun {
       
 
       for(int i=0; i<jArgs.length ; i++) {
+	  if(DEBUG && logger.isDebugEnabled())
         logger.debug(" jvmArgs["+i+"]: <"+jArgs[i]+">");	      
       }
-      
+      if(DEBUG && logger.isDebugEnabled())
       logger.debug("appArgs.length: <"+aArgs.length+">");
 
       for(int i=0; i<aArgs.length ; i++) {
+	  if(DEBUG && logger.isDebugEnabled())
         logger.debug(" appArgs["+i+"]: <"+aArgs[i]+">");	      
       }
       
-      
+      if(DEBUG && logger.isDebugEnabled())
       logger.debug("###########################"); 	    
     }
 
@@ -632,8 +634,10 @@ public class MPJRun {
 
   private synchronized void Wait() throws Exception {
     if (wait) {
+	if(DEBUG && logger.isDebugEnabled())
       logger.debug("Waiting ...");
       this.wait();
+	  if(DEBUG && logger.isDebugEnabled())
       logger.debug("Unwaiting ...");
     }
 
@@ -641,7 +645,8 @@ public class MPJRun {
   }
 
   private synchronized void Notify() {
-    logger.debug("Notifying ...");
+  if(DEBUG && logger.isDebugEnabled())
+    logger.debug("Notifying ..."); 				///////////////////////////////
     this.notify();
     wait = false;
   }
@@ -698,14 +703,23 @@ public class MPJRun {
 
     }
     else if (nprocs > noOfMachines) {
-
+	//System.out.println(nprocs);
+	//System.out.println();
+     if(DEBUG && logger.isDebugEnabled())
+	 {
       logger.debug("Processes Requested " + nprocs +
                   " are greater than than machines " + noOfMachines);
-      int divisor = nprocs / noOfMachines;
-      logger.debug("divisor " + divisor);
-      int remainder = nprocs % noOfMachines;
-      logger.debug("remainder " + remainder);
-
+      }
+	  int divisor = nprocs / noOfMachines;
+      if(DEBUG && logger.isDebugEnabled())
+	 {
+	  logger.debug("divisor " + divisor);
+      }
+	  int remainder = nprocs % noOfMachines;
+      if(DEBUG && logger.isDebugEnabled())
+	 {
+	  logger.debug("remainder " + remainder);
+     }
       for (int i = 0; i < noOfMachines; i++) {
 	      
         if (i < remainder) {
@@ -928,8 +942,11 @@ public class MPJRun {
       try {
         clientChannels[i] = SocketChannel.open();
         clientChannels[i].configureBlocking(true);
+		if(DEBUG && logger.isDebugEnabled())
+		{
         logger.debug("Connecting to " + daemon + "@" + D_SER_PORT);
-        connected = clientChannels[i].connect(
+		}      
+	  connected = clientChannels[i].connect(
 			new InetSocketAddress(daemon, D_SER_PORT));
 
 	if(!connected) {
@@ -971,22 +988,32 @@ public class MPJRun {
    * This method cleans up the device environments, closes the selectors, serverSocket, and all the other socketChannels
    */
   public void finish() {
+   if(DEBUG && logger.isDebugEnabled())
+	{
     logger.debug("\n---finish---");
-
+	}
     try {
-      
+      if(DEBUG && logger.isDebugEnabled())
+	 {
       logger.debug("Waking up the selector");
-      selector.wakeup();
+      
+	 }
+	 selector.wakeup();
       selectorFlag = false;
+	if(DEBUG && logger.isDebugEnabled())
+	 {
       logger.debug("Closing the selector");
-      selector.close();
+      }
+	  selector.close();
 
       SocketChannel peerChannel = null;
 
       for (int i = 0; i < peerChannels.size(); i++) {
         peerChannel = peerChannels.get(i);
-        logger.debug("Closing the channel " + peerChannel);
-
+	if(DEBUG && logger.isDebugEnabled())
+	 {       
+	   logger.debug("Closing the channel " + peerChannel);
+	 }
         if (peerChannel.isOpen()) {
           peerChannel.close();
         }
@@ -1002,22 +1029,27 @@ public class MPJRun {
   }
 
   private void doConnect(SocketChannel peerChannel) {
+  if(DEBUG && logger.isDebugEnabled())
     logger.debug("---doConnect---");
     try {
+	if(DEBUG && logger.isDebugEnabled())
       logger.debug("Configuring it to be non-blocking");
       peerChannel.configureBlocking(false);
     }
     catch (IOException ioe) {
+	if(DEBUG && logger.isDebugEnabled())
       logger.debug("Closed Channel Exception in doConnect");
       System.exit(0);
     }
 
     try {
+	if(DEBUG && logger.isDebugEnabled())
       logger.debug("Registering for OP_READ & OP_WRITE event");
       peerChannel.register(selector,
                            SelectionKey.OP_READ | SelectionKey.OP_WRITE);
     }
     catch (ClosedChannelException cce) {
+	if(DEBUG && logger.isDebugEnabled())
       logger.debug("Closed Channel Exception in doConnect");
       System.exit(0);
     }
@@ -1027,9 +1059,12 @@ public class MPJRun {
     }
     catch (Exception e) {}
     peerChannels.add(peerChannel);
+	if(DEBUG && logger.isDebugEnabled())
+	{
     logger.debug("Adding the channel " + peerChannel + " to " + peerChannels);
     logger.debug("Size of Peer Channels vector " + peerChannels.size());
-    peerChannel = null;
+    }
+	peerChannel = null;
     if (peerChannels.size() == machineVector.size()) {
       Notify();
     }
@@ -1075,7 +1110,8 @@ public class MPJRun {
 
     /* This is selector thread */
     public void run() {
-      logger.debug("selector Thread started ");
+if(DEBUG && logger.isDebugEnabled())     
+	 logger.debug("selector Thread started ");
       Set readyKeys = null;
       Iterator readyItor = null;
       SelectionKey key = null;
@@ -1095,15 +1131,17 @@ public class MPJRun {
             key = (SelectionKey) readyItor.next();
             readyItor.remove();
             keyChannel = (SelectableChannel) key.channel();
+			if(DEBUG && logger.isDebugEnabled())
             logger.debug("\n---selector EVENT---");
 
             if (key.isAcceptable()) {
               //doAccept(keyChannel);
+			  if(DEBUG && logger.isDebugEnabled())
               logger.debug("ACCEPT_EVENT");
             }
 
             else if (key.isConnectable()) {
-
+				if(DEBUG && logger.isDebugEnabled())
               logger.debug("CONNECT_EVENT");
               try {
                 socketChannel = (SocketChannel) keyChannel;
@@ -1125,7 +1163,7 @@ public class MPJRun {
             }
 
             else if (key.isReadable()) { 
- 
+              //if(DEBUG && logger.isDebugEnabled())
               //logger.debug("READ_EVENT");
               socketChannel = (SocketChannel) keyChannel;
               int read = socketChannel.read(bigBuffer);  
@@ -1137,15 +1175,19 @@ public class MPJRun {
                */ 
 
               if (read == -1) {
-                logger.debug("END_OF_STREAM signal at starter from "+
+                if(DEBUG && logger.isDebugEnabled())
+				logger.debug("END_OF_STREAM signal at starter from "+
                              "channel "+socketChannel) ;  
                 streamEndedCount ++ ;  
 
                 if (streamEndedCount == machineVector.size()) {
+				if(DEBUG && logger.isDebugEnabled())
+				{
                   logger.debug("The starter has received "+ 
                                machineVector.size() +"signals"); 
                   logger.debug("This means its time to exit"); 
-                  Notify();
+				}                 
+				 Notify();
                 }
                 
               } 
@@ -1162,18 +1204,22 @@ public class MPJRun {
               String line = new String(tempArray);
               bigBuffer.clear();
               //RECEIVED
+			  //if(DEBUG && logger.isDebugEnabled()){
               //logger.debug("line <" + line + ">");
 
               //logger.debug("Does it endup with EXIT ? ==>" +
-              //            line.endsWith("EXIT"));
+              //            line.endsWith("EXIT"));}
 
               if (line.endsWith("EXIT")) {
                 endCount++;
-                logger.debug("endCount " + endCount);
+                if(DEBUG && logger.isDebugEnabled())
+				{
+				logger.debug("endCount " + endCount);
                 logger.debug("machineVector.size() " + machineVector.size());
-
+				}
                 if (endCount == machineVector.size()) {
-                  logger.debug("Notify and exit"); 
+				if(DEBUG && logger.isDebugEnabled())
+				 logger.debug("Notify and exit"); 
                   Notify();
                 }
               } 
@@ -1184,6 +1230,7 @@ public class MPJRun {
             } //end if key.isReadable()
 
             else if (key.isWritable()) {
+			if(DEBUG && logger.isDebugEnabled())
               logger.debug(
                   "In, WRITABLE, so changing the interestOps to READ_ONLY");
               key.interestOps(SelectionKey.OP_READ);
@@ -1192,10 +1239,12 @@ public class MPJRun {
         }
       }
       catch (Exception ioe1) {
+	  if(DEBUG && logger.isDebugEnabled())
         logger.debug("Exception in selector thread ");
         ioe1.printStackTrace();
         System.exit(0);
       }
+	  if(DEBUG && logger.isDebugEnabled())
       logger.debug("Thread getting out");
     }
   };
