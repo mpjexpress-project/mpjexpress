@@ -660,7 +660,11 @@ if(DEBUG && logger.isDebugEnabled())
     try {
       cfos = new FileOutputStream(CONF_FILE);
     }
-    catch (FileNotFoundException fnfe) {}
+    catch (FileNotFoundException fnfe) {
+//  added up
+System.out.println("Unable to Create Config File \n HINT: may be due to access rights \n if you are a linux user confirm access rights by ls -a");
+throw new Exception(fnfe);	
+	}
 
     cout = new PrintStream(cfos);
     int noOfMachines = machineVector.size();
@@ -708,7 +712,7 @@ if(DEBUG && logger.isDebugEnabled())
      if(DEBUG && logger.isDebugEnabled())
 	 {
       logger.debug("Processes Requested " + nprocs +
-                  " are greater than than machines " + noOfMachines);
+                  " are greater than  machines " + noOfMachines);
       }
 	  int divisor = nprocs / noOfMachines;
       if(DEBUG && logger.isDebugEnabled())
@@ -858,7 +862,14 @@ if(DEBUG && logger.isDebugEnabled())
 
       line = line.trim();
 
-      InetAddress address = InetAddress.getByName(line);
+      InetAddress address = null ;
+ 
+      if(line.equalsIgnoreCase("localhost") | line.equals("127.0.0.1")) { 
+        address = InetAddress.getLocalHost();
+      } else { 
+        address = InetAddress.getByName(line);
+      } 
+
       String addressT = address.getHostAddress();
       String nameT = address.getHostName();
 
@@ -893,9 +904,7 @@ if(DEBUG && logger.isDebugEnabled())
           logger.debug("Line " + line.trim() +
                     " added to vector " + machineVector);
         }
-
       }
-
     }//end while.
   
   }
