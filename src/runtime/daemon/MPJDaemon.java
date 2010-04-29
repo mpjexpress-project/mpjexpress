@@ -189,6 +189,25 @@ public class MPJDaemon {
 
         } //end while
 
+        /* FIXME: This code is written by Rizwan Hanif to throw an
+           exception in the case when rank cannot be read from the 
+           MPJ Express configuration file ~/.mpj/mpjdev.conf
+         */
+
+        if(rank==null) {
+          if(DEBUG && logger.isDebugEnabled()) {
+            logger.debug("rank is null") ; 
+            logger.debug("perhaps the configuration file could not be read");
+            logger.debug("a possible reason is that user home directory ");
+            logger.debug("might not bei shared");
+          }
+
+          throw new MPJRuntimeException("Rank could not be read from the "+
+                 "configuration file. Note that for the cluster version to"+
+                  "work, MPJ Express assumes shared file system (user home "+
+                  "directories to be specific)."); 
+        } 
+
         if(DEBUG && logger.isDebugEnabled()) { 
           logger.debug("out of while loop");
         }
