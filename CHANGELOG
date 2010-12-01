@@ -1,3 +1,9 @@
+Version 0.37
+------------
+
+1. Added the executing and debugging tutorial of MPJ Express applications
+   using Eclipse IDE. 14/5/2010
+
 Version 0.36
 ------------
 
@@ -15,4 +21,4 @@ Version 0.36
 5. On some clusters, users complained that MPJ Express took abnormally 
    long amount of time to bootstrap. We have fixed this bug in this release.
    1/4/2010
-6. Got rid of the Jetty dependency 9/4/2010
+6. Got rid of the Jetty dependency. 9/4/2010
