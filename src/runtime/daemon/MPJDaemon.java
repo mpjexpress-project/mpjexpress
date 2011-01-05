@@ -579,11 +579,8 @@ public class MPJDaemon {
       }
 
       Set readyKeys = null;
-
       Iterator readyItor = null;
-
       SelectionKey key = null;
-
       SelectableChannel keyChannel = null;
 
       /* why are these required here? */
@@ -596,375 +593,371 @@ public class MPJDaemon {
       try {
         while (selector.select() > -1) {
 
-          readyKeys = selector.selectedKeys();
-          readyItor = readyKeys.iterator();
+          try { 
+            readyKeys = selector.selectedKeys();
+            readyItor = readyKeys.iterator();
 
-          while (readyItor.hasNext()) {
+            while (readyItor.hasNext()) {
 
-            key = (SelectionKey) readyItor.next();
-            readyItor.remove();
-            keyChannel = (SelectableChannel) key.channel();
-            if(DEBUG && logger.isDebugEnabled()) { 
-              logger.debug ("\n---selector EVENT---");
-	    }
+              key = (SelectionKey) readyItor.next();
+              readyItor.remove();
+              keyChannel = (SelectableChannel) key.channel();
+              if(DEBUG && logger.isDebugEnabled()) { 
+                logger.debug ("\n---selector EVENT---");
+	      }
 
-            if (key.isAcceptable() && selectorAcceptConnect) {
-              doAccept(keyChannel);
-            }
-            else if (key.isConnectable()) {
-
-              /*
-               * why would this method be called?
-               * At the daemon, this event is not generated ..
-               */
-
-              try {
-                socketChannel = (SocketChannel) keyChannel;
+              if (key.isAcceptable() && selectorAcceptConnect) {
+                doAccept(keyChannel);
               }
-              catch (NoConnectionPendingException e) {
-                continue;
-              }
+              else if (key.isConnectable()) {
 
-              if (socketChannel.isConnectionPending()) {
+                /*
+                 * why would this method be called?
+                 * At the daemon, this event is not generated ..
+                 */
+
                 try {
-                  socketChannel.finishConnect();
+                  socketChannel = (SocketChannel) keyChannel;
                 }
-                catch (IOException e) {
+                catch (NoConnectionPendingException e) {
                   continue;
                 }
-              }
-              //doConnect(socketChannel);
-            }
 
-            else if (key.isReadable()) {
-
-              if(DEBUG && logger.isDebugEnabled()) { 
-                logger.debug ("READ_EVENT");
-	      }
-	      
-              socketChannel = (SocketChannel) keyChannel;
-	      
-              int readInt = -1 ; 
-	      
-              if(DEBUG && logger.isDebugEnabled()) { 
-                logger.debug("lilBuffer "+ lilBuffer);         
-	      }
-
-	        // .. this line is generating exception which kills the 
-		//    daemon ... I think we need a try catch here and if
-		//    any exception is generated, then we will have to 
-		//    goto back to selector.select() method ..
-		//
-		//    this is Windows 2000 specific error ..i have not 
-		//    seen this error on Windows XP ..
-	      
-	      try { 
-		      
-                if((readInt = socketChannel.read(lilBuffer)) == -1) {
-
-                  if(DEBUG && logger.isDebugEnabled()) { 
-                    logger.debug(" The daemon has received an End of "+
-	  	  		  "Stream signal") ; 
-	    	    logger.debug(" checking if this channel is still open");
-		  }
-		  
-		  if(socketChannel.isOpen()) {
-                    if(DEBUG && logger.isDebugEnabled()) { 
-                      logger.debug("closing the channel");
-		    }
-		    socketChannel.close() ; 			  
-		  }
-
-                  if(DEBUG && logger.isDebugEnabled()) { 
-                    logger.debug("continuing to select()");
-		  }
-		  continue ; 
-                  //END_OF_STREAM signal .... 
-
+                if (socketChannel.isConnectionPending()) {
+                  try {
+                    socketChannel.finishConnect();
+                  }
+                  catch (IOException e) {
+                    continue;
+                  }
                 }
-	      }
-	      catch(Exception innerException) {
+                //doConnect(socketChannel);
+              }
+
+              else if (key.isReadable()) {
+
                 if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("Exception in selector thread, message is"+
+                  logger.debug ("READ_EVENT");
+	        }
+	      
+                socketChannel = (SocketChannel) keyChannel;
+	      
+                int readInt = -1 ; 
+	      
+                if(DEBUG && logger.isDebugEnabled()) { 
+                  logger.debug("lilBuffer "+ lilBuffer);         
+	        }
+
+	        try { 
+		      
+                  if((readInt = socketChannel.read(lilBuffer)) == -1) {
+
+                    if(DEBUG && logger.isDebugEnabled()) { 
+                      logger.debug(" The daemon has received an End of "+
+	      	  		   "Stream signal") ; 
+	      	      logger.debug(" checking if this channel is still open");
+		    }
+		  
+		    if(socketChannel.isOpen()) {
+                      if(DEBUG && logger.isDebugEnabled()) { 
+                        logger.debug("closing the channel");
+		      }
+		      socketChannel.close() ; 			  
+		    }
+
+                    if(DEBUG && logger.isDebugEnabled()) { 
+                      logger.debug("continuing to select()");
+		    }
+		    continue ; 
+                    //END_OF_STREAM signal .... 
+
+                  }
+	        } catch(Exception innerException) {
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("Exception in selector thread, message is"+
 				  innerException.getMessage() );
-                  logger.debug (" continuing to select() method ..."); 
-		}
-		continue; 
-	      }
+                    logger.debug (" continuing to select() method ..."); 
+	  	  }
+		  continue; 
+	        }
 		      
 
                 if(DEBUG && logger.isDebugEnabled()) { 
                   logger.debug ("READ_EVENT (read)" + readInt);
 		}
 
-              lilBuffer.flip();
-              lilBuffer.get(lilArray, 0, 4);
-              String read = new String(lilArray);
-              if(DEBUG && logger.isDebugEnabled()) { 
-                logger.debug ("READ_EVENT (String)<" + read + ">");
-	      }
+                lilBuffer.flip();
+                lilBuffer.get(lilArray, 0, 4);
+                String read = new String(lilArray);
+                if(DEBUG && logger.isDebugEnabled()) { 
+                  logger.debug ("READ_EVENT (String)<" + read + ">");
+	        }
 
-              if (read.equals("cpe-")) {
- 	        if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("cpe-");
-		}
-                int length = lilBuffer.getInt();
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("App CP Entry Length -->" + length);
-		}
-                lilBuffer.clear();
-                buffer.limit(length);
-                socketChannel.read(buffer);
-                byte[] byteArray = new byte[length];
-                buffer.flip();
-                buffer.get(byteArray, 0, length);
-                applicationClassPathEntry = new String(byteArray);
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("applicationClassPathEntry:<"+ 
-                                       applicationClassPathEntry+">");
-		}
-		
-                buffer.clear();
-              }
-	      
-              if (read.equals("cls-")) {
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("cls-");
-		}
-                int length = lilBuffer.getInt();
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("className length -->" + length);
-		}
-                lilBuffer.clear();
-                buffer.limit(length);
-                socketChannel.read(buffer);
-                byte[] byteArray = new byte[length];
-                buffer.flip();
-                buffer.get(byteArray, 0, length);
-                className = new String(byteArray);
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("className :<" + className + ">");
-		}
-                buffer.clear();
-              }
-
-              if (read.equals("cfn-")) {
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("cfn-");
-		}
-                int length = lilBuffer.getInt();
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("className length -->" + length);
-		}
-                lilBuffer.clear();
-                buffer.limit(length);
-                socketChannel.read(buffer);
-                byte[] byteArray = new byte[length];
-                buffer.flip();
-                buffer.get(byteArray, 0, length);
-                configFileName = new String(byteArray);
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("configFileName :<"+ 
-                                           configFileName + ">");
-		}
-                buffer.clear();
-              }
-
-              if (read.equals("app-")) {
-		      
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("app-");
-		}
-                int length = lilBuffer.getInt();
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("Application args Length -->" + length);
-		}
-                lilBuffer.clear();
-
-		for(int j=0 ; j<length ; j++) {
-                  lilBuffer2.position(0); lilBuffer2.limit(4); 			
-                  socketChannel.read(lilBuffer2);
-		  lilBuffer2.flip();
-                  int argLen = lilBuffer2.getInt();
-                  buffer.limit(argLen);
-                  socketChannel.read(buffer);
-                  byte[] t = new byte[argLen];
-                  buffer.flip();
-                  buffer.get(t,0,argLen);
-		  appArgs.add(new String(t)); 
-		  buffer.clear(); 
-		  lilBuffer2.clear();
-		}
-                 
-		//for loop to create a new array ...
-                buffer.clear();
-		
-              }
-              else if (read.equals("num-")) {
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("num-");
-		}
-                int length = lilBuffer.getInt();
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("should be 4, isit ? -->" + length);
-		}
-                lilBuffer.clear();
-                socketChannel.read(lilBuffer2);
-                lilBuffer2.flip();
-                processes = lilBuffer2.getInt();
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("Num of processes ==>" + processes);
-		}
-                lilBuffer2.clear();
-              }
-
-              else if (read.equals("arg-")) {
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("arg-");
-		}
-                int length = lilBuffer.getInt();
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("argu len -->"+length);
-		}
-                lilBuffer.clear();
-
-		for(int j=0 ; j<length ; j++) {
-                  lilBuffer2.position(0); lilBuffer2.limit(4); 			
-                  socketChannel.read(lilBuffer2);
-		  lilBuffer2.flip();
-                  int argLen = lilBuffer2.getInt();
-                  buffer.limit(argLen);
-                  socketChannel.read(buffer);
-                  byte[] t = new byte[argLen];
-                  buffer.flip();
-                  buffer.get(t,0,argLen);
-		  jvmArgs.add(new String(t)); 
-		  buffer.clear(); 
-		  lilBuffer2.clear();
-		}
-                 
-		//for loop to create a new array ...
-                buffer.clear();
-		
-              }
-
-              else if (read.equals("dev-")) {
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("dev-");
-		}
-                int length = lilBuffer.getInt();
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("dev-Length -->" + length);
-		}
-                lilBuffer.clear();
-                buffer.limit(length);
-                socketChannel.read(buffer);
-                byte[] byteArray = new byte[length];
-                buffer.flip();
-                buffer.get(byteArray, 0, length);
-                deviceName = new String(byteArray);
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("Device Name :<" + deviceName + ">");
-		}
-                buffer.clear();
-              }
-
-              else if (read.equals("wdr-")) {
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("wdr-");
-		}
-                int length = lilBuffer.getInt();
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("wdr-Length -->" + length);
-		}
-                lilBuffer.clear();
-                buffer.limit(length);
-                socketChannel.read(buffer);
-                byte[] byteArray = new byte[length];
-                buffer.flip();
-                buffer.get(byteArray, 0, length);
-                wdir = new String(byteArray);
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("wdir :<"+wdir+">");
-		}
-                buffer.clear();
-              }
-
-              else if (read.equals("*GO*")) {
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("GO");
-		}
-                lilBuffer.clear();
-                startExecution ();
-
-              }
-              else if (read.equals("kill")) {
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("processing kill event");
-		}
-                MPJProcessPrintStream.stop();
-                if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("Stopping the output");
-		}
-
-                try {
+                if (read.equals("cpe-")) {
+ 	          if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("cpe-");
+		  }
+                  int length = lilBuffer.getInt();
                   if(DEBUG && logger.isDebugEnabled()) { 
-                    logger.debug ("peerChannel is closed or what ?" +
-                                peerChannel.isOpen());
+                    logger.debug ("App CP Entry Length -->" + length);
+	  	  }
+                  lilBuffer.clear();
+                  buffer.limit(length);
+                  socketChannel.read(buffer);
+                  byte[] byteArray = new byte[length];
+                  buffer.flip();
+                  buffer.get(byteArray, 0, length);
+                  applicationClassPathEntry = new String(byteArray);
+
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("applicationClassPathEntry:<"+ 
+                                         applicationClassPathEntry+">");
+		  }  
+		
+                  buffer.clear();
+                }
+	      
+                if (read.equals("cls-")) {
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("cls-");
+		  }
+                  int length = lilBuffer.getInt();
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("className length -->" + length);
+		  }
+                  lilBuffer.clear();
+                  buffer.limit(length);
+                  socketChannel.read(buffer);
+                  byte[] byteArray = new byte[length];
+                  buffer.flip();
+                  buffer.get(byteArray, 0, length);
+                  className = new String(byteArray);
+
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("className :<" + className + ">");
+	  	  }
+                  buffer.clear();
+                }
+
+                if (read.equals("cfn-")) {
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("cfn-");
+		  }
+                  int length = lilBuffer.getInt();
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("className length -->" + length);
+		  }
+                  lilBuffer.clear();
+                  buffer.limit(length);
+                  socketChannel.read(buffer);
+                  byte[] byteArray = new byte[length];
+                  buffer.flip();
+                  buffer.get(byteArray, 0, length);
+                  configFileName = new String(byteArray);
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("configFileName :<"+ 
+                                           configFileName + ">");
+		  }
+                  buffer.clear();
+                }
+
+                if (read.equals("app-")) {
+		      
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("app-");
+  		  }
+                  int length = lilBuffer.getInt();
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("Application args Length -->" + length);
+		  }
+                  lilBuffer.clear();
+
+		  for(int j=0 ; j<length ; j++) {
+                    lilBuffer2.position(0); lilBuffer2.limit(4); 
+                    socketChannel.read(lilBuffer2);
+		    lilBuffer2.flip();
+                    int argLen = lilBuffer2.getInt();
+                    buffer.limit(argLen);
+                    socketChannel.read(buffer);
+                    byte[] t = new byte[argLen];
+                    buffer.flip();
+                    buffer.get(t,0,argLen);
+		    appArgs.add(new String(t)); 
+		    buffer.clear(); 
+		    lilBuffer2.clear();
+	  	  }
+                 
+		  //for loop to create a new array ...
+                  buffer.clear();
+		
+                }
+                else if (read.equals("num-")) {
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("num-");
+		  }
+                  int length = lilBuffer.getInt();
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("should be 4, isit ? -->" + length);
+	  	  }
+                  lilBuffer.clear();
+                  socketChannel.read(lilBuffer2);
+                  lilBuffer2.flip();
+                  processes = lilBuffer2.getInt();
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("Num of processes ==>" + processes);
+		  }
+                  lilBuffer2.clear();
+                }
+
+                else if (read.equals("arg-")) {
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("arg-");
+		  }
+                  int length = lilBuffer.getInt();
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("argu len -->"+length);
+		  }
+                  lilBuffer.clear();
+
+	  	  for(int j=0 ; j<length ; j++) {
+                    lilBuffer2.position(0); lilBuffer2.limit(4);
+                    socketChannel.read(lilBuffer2);
+		    lilBuffer2.flip();
+                    int argLen = lilBuffer2.getInt();
+                    buffer.limit(argLen);
+                    socketChannel.read(buffer);
+                    byte[] t = new byte[argLen];
+                    buffer.flip();
+                    buffer.get(t,0,argLen);
+		    jvmArgs.add(new String(t)); 
+		    buffer.clear(); 
+		    lilBuffer2.clear();
+		  }
+                 
+		  //for loop to create a new array ...
+                  buffer.clear();
+                }  
+
+                else if (read.equals("dev-")) {
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("dev-");
+		  }
+                  int length = lilBuffer.getInt();
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("dev-Length -->" + length);
+		  }
+                  lilBuffer.clear();
+                  buffer.limit(length);
+                  socketChannel.read(buffer);
+                  byte[] byteArray = new byte[length];
+                  buffer.flip();
+                  buffer.get(byteArray, 0, length);
+                  deviceName = new String(byteArray);
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("Device Name :<" + deviceName + ">");
+		  }
+                  buffer.clear();
+                }  
+
+                else if (read.equals("wdr-")) {
+  
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("wdr-");
+  		  }
+                  int length = lilBuffer.getInt();
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("wdr-Length -->" + length);
+		  }
+                  lilBuffer.clear();
+                  buffer.limit(length);
+                  socketChannel.read(buffer);
+                  byte[] byteArray = new byte[length];
+                  buffer.flip();
+                  buffer.get(byteArray, 0, length);
+                  wdir = new String(byteArray);
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("wdir :<"+wdir+">");
+		  }
+                  buffer.clear();
+                }
+
+                else if (read.equals("*GO*")) {
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("GO");
+	 	  }
+                  lilBuffer.clear();
+                  startExecution ();
+
+                }
+                else if (read.equals("kill")) {
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("processing kill event");
+		  }
+                  MPJProcessPrintStream.stop();
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("Stopping the output");
 		  }
 
-                  if (peerChannel.isOpen()) {
+                  try {
                     if(DEBUG && logger.isDebugEnabled()) { 
-                      logger.debug ("Closing it ...");
+                      logger.debug ("peerChannel is closed or what ?" +
+                                  peerChannel.isOpen());
 		    }
-                    peerChannel.close();
-                  }
-                }
-                catch (Exception e) {}
+
+                    if (peerChannel.isOpen()) {
+                      if(DEBUG && logger.isDebugEnabled()) { 
+                        logger.debug ("Closing it ...");
+		      }
+                      peerChannel.close();
+                    }
+                  } catch (Exception e) {}
 
                   if(DEBUG && logger.isDebugEnabled()) { 
                     logger.debug ("Killling the process");
 		  }
-                try {
-                  synchronized (MPJDaemon.this) {
-                    if (p != null) {
-                      synchronized (p) {
 
-                        for(int i=0 ; i<processes ; i++) 
-                         p[i].destroy() ; 
+                  try {
+                    synchronized (MPJDaemon.this) {
+                      if (p != null) {
+                        synchronized (p) {
 
-                        kill_signal = true;
+                          for(int i=0 ; i<processes ; i++) 
+                            p[i].destroy() ; 
+
+                          kill_signal = true;
+                        }
                       }
                     }
-                  }
-                }
-                catch (Exception e) {e.printStackTrace(); } 
+                  } catch (Exception e) {e.printStackTrace(); } 
 //no matter what happens, we cant let this thread
 //die, coz otherwise, the daemon will die as well..
 //maybe you wanne stop the output handler threads as well.
 
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("Killed it");
+		  }
+                  buffer.clear();
+                  lilBuffer.clear();
+                }
+              } //end if key.isReadable()
+
+              else if (key.isWritable()) {
+
                 if(DEBUG && logger.isDebugEnabled()) { 
-                  logger.debug ("Killed it");
-		}
-                buffer.clear();
-                lilBuffer.clear();
-
+                  logger.debug(
+                      "In, WRITABLE, so changing the interestOps to READ_ONLY");
+	        }  
+                key.interestOps(SelectionKey.OP_READ);
               }
-
-            } //end if key.isReadable()
-
-            else if (key.isWritable()) {
-
-              if(DEBUG && logger.isDebugEnabled()) { 
-                logger.debug(
-                    "In, WRITABLE, so changing the interestOps to READ_ONLY");
-	      }
-              key.interestOps(SelectionKey.OP_READ);
-
+            } //end while iterator
+          } catch(Exception ioe2) {
+            if(DEBUG && logger.isDebugEnabled()) {
+              logger.debug("Exception in selector thread " + ioe2.getMessage());
+              logger.debug("Can recover from this ");
             }
-
-          } //end while iterator
-        } //end while
+            ioe2.printStackTrace();
+          }
+        } //end while selector.select()
       }
       catch (Exception ioe1) {
         if(DEBUG && logger.isDebugEnabled()) { 
