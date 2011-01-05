@@ -1,11 +1,11 @@
 /*
  The MIT License
 
- Copyright (c) 2005 - 2008
+ Copyright (c) 2005 - 2011
    1. Distributed Systems Group, University of Portsmouth (2005)
-   2. Aamir Shafi (2005 - 2008)
-   3. Bryan Carpenter (2005 - 2008)
-   4. Mark Baker (2005 - 2008)
+   2. Aamir Shafi (2005 - 2011)
+   3. Bryan Carpenter (2005 - 2011)
+   4. Mark Baker (2005 - 2011)
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -62,6 +62,9 @@ import java.util.concurrent.Semaphore ;
 
 public class MPJDaemon {
 
+  static private String MPJ_DIR_NAME = ".mpj";
+  static private String CONF_FILE_NAME = "mpjdev.conf";
+  
   private SocketChannel peerChannel; 
   private BufferedReader reader = null;
   private InputStream outp = null;
@@ -74,7 +77,7 @@ public class MPJDaemon {
   private volatile boolean waitToStartExecution = true;
   private PrintStream out = null;
   private Semaphore outputHandlerSem = new Semaphore(1,true); 
-  static final boolean DEBUG = false ; 
+  static final boolean DEBUG = true ; 
   
   private String wdir = null ; 
   private String applicationClassPathEntry = null; 
@@ -84,17 +87,18 @@ public class MPJDaemon {
   private ArrayList<String> jvmArgs = new ArrayList<String>();
   private ArrayList<String> appArgs = new ArrayList<String>();
   private int processes = 0;
+  private int start_rank = 0;
   private String cmd = null;
   private Process p[] = null ; 
   static Logger logger = null ; 
   private String mpjHomeDir = null ;  
-  String configFileName = null ;
+  private String configFileContent = null ;
 
   public MPJDaemon(String args[]) throws Exception {
 	  
     InetAddress localaddr = InetAddress.getLocalHost();
     String hostName = localaddr.getHostName();
-    
+    MPJ_DIR_NAME = MPJ_DIR_NAME +"_"+hostName;
     Map<String,String> map = System.getenv() ;
     mpjHomeDir = map.get("MPJ_HOME");
 			    
@@ -118,6 +122,24 @@ public class MPJDaemon {
       throw new MPJRuntimeException("Usage: java MPJDaemon daemonServerPort");
     }
 
+    /* FIXME by Rizwan Hanif creating a directory in user home	directory 
+	     for storing configuration file on this machine*/	
+    File mpjDirectory = new File ( System.getProperty("user.home")
+                                          + File.separator
+                                          + MPJ_DIR_NAME ) ;
+
+    if(!mpjDirectory.isDirectory() && !mpjDirectory.exists()) {
+      mpjDirectory.mkdir();
+    }   
+
+    String configFileName =  System.getProperty("user.home")
+                                     + File.separator
+                                     + MPJ_DIR_NAME
+                                     + File.separator
+                                     + CONF_FILE_NAME  ;
+
+    /* ends here */
+
     serverSocketInit();
     Thread selectorThreadStarter = new Thread(selectorThread);
     
@@ -127,7 +149,7 @@ public class MPJDaemon {
 
     selectorThreadStarter.start();
     int exit = 0;
-
+    
     while (loop) {
 
       if(DEBUG && logger.isDebugEnabled()) { 
@@ -143,16 +165,43 @@ public class MPJDaemon {
       if(DEBUG && logger.isDebugEnabled()) { 
         logger.debug ("A client has connected");
       }
-
+	
       MPJProcessPrintStream.start(peerChannel, 
                        new PrintStream(System.out),
                        new PrintStream(System.err));
-
+      /* FIXME by Rizwan Hanif    
+	   Here are 4 stpes for each connected client
+           1. To write configuration file on local machine
+	   2. To process JVM & Application arguments 
+	   3. To launch MPJ Processes
+	   4: Start a new thread to handle output from each MPJ Process */
+                   
       BufferedReader bufferedReader = null;
       InputStream in = null;
-
       File configFile = new File(configFileName) ; 
       configFile.createNewFile();
+      configFile.deleteOnExit();
+
+      /* XXX Step 1: writing conf file here */	   
+      
+      StringTokenizer conf_file_tokenizer = 
+                            new StringTokenizer(configFileContent, ";");
+      PrintStream cout;
+      FileOutputStream cfos ; 
+
+      cfos = new FileOutputStream(configFile);
+      cout = new PrintStream(cfos);
+
+      while(conf_file_tokenizer.hasMoreTokens()) { 
+        cout.println(conf_file_tokenizer.nextToken());
+      }
+
+      cout.close();
+      cfos.close();
+      /* ends here */
+
+      configFile = new File(configFileName) ; 
+      //configFile.createNewFile();
 
       try {
         in = new FileInputStream(configFile);
@@ -166,59 +215,26 @@ public class MPJDaemon {
       OutputHandler [] outputThreads = new OutputHandler[processes] ;  
       p = new Process[processes] ;  
 
-      for (int j = 0; j < processes; j++) {
+      /* XXX By Rizwan Hanif : Trying to wait for the confFile to be 
+                               ready for reading */
+      String tempLine = null;
 
-        /* Step 1: Read from the config file - basically need to know
-                   rank of processes */ 
-        String line = null;
-        String rank = null; 
+      while((tempLine = bufferedReader.readLine()) == null);
 
-        while((line = bufferedReader.readLine()) != null) {
+      if(DEBUG && logger.isDebugEnabled()) { 
+        logger.debug ("ConfFile ready with line = "+tempLine);
+      }
 
-          if(DEBUG && logger.isDebugEnabled()) { 
-            logger.debug ("line ="+line);
-          }
+      /* Step 1 ends here*/
 
-          if(MPJDaemon.matchMe(line) ) {
-            StringTokenizer tokenizer = new StringTokenizer(line, "@");
-            tokenizer.nextToken();
-            tokenizer.nextToken();
-            rank = tokenizer.nextToken();
-            break ;
-          }
+      /* XXX BY RIZWAN HANIF: Step 2 Processing arguments for launching.  
+	 As all MPI Processes are identical so will be same for all*/
+      /* Step 2: Argument Processing */ 
 
-        } //end while
-
-        /* FIXME: This code is written by Rizwan Hanif to throw an
-           exception in the case when rank cannot be read from the 
-           MPJ Express configuration file ~/.mpj/mpjdev.conf
-         */
-
-        if(rank==null) {
-          if(DEBUG && logger.isDebugEnabled()) {
-            logger.debug("rank is null") ; 
-            logger.debug("perhaps the configuration file could not be read");
-            logger.debug("a possible reason is that user home directory ");
-            logger.debug("might not bei shared");
-          }
-
-          throw new MPJRuntimeException("Rank could not be read from the "+
-                 "configuration file. Note that for the cluster version to"+
-                  "work, MPJ Express assumes shared file system (user home "+
-                  "directories to be specific)."); 
-        } 
-
-        if(DEBUG && logger.isDebugEnabled()) { 
-          logger.debug("out of while loop");
-        }
-
-        /* Step 2: Argument Processing */ 
-
-        String[] jArgs = jvmArgs.toArray(new String[0]); 
-        boolean now = false;
-        boolean noSwitch = true ;
-
-        for(int e=0 ; e<jArgs.length; e++) {
+      String[] jArgs = jvmArgs.toArray(new String[0]); 
+      boolean now = false;
+      boolean noSwitch = true ;
+      for(int e=0 ; e<jArgs.length; e++) {
 
           if(DEBUG && logger.isDebugEnabled()) { 
             logger.debug("jArgs["+e+"]="+jArgs[e]);
@@ -264,38 +280,46 @@ public class MPJDaemon {
         }
 	  
         String[] aArgs = appArgs.toArray(new String[0]); 
-
-        int N_ARG_COUNT = 7 ; 
-	  
+	  /* ends Here */
+	  /* FIX ME BY RIZWAN HANIF : 
+	      making arguments to launch MPI Processes*/
+	  int N_ARG_COUNT = 7 ; 
         String[] ex = new String[(N_ARG_COUNT+jArgs.length+aArgs.length)]; 
         ex[0] = "java";
-
         //System.arraycopy ... can be used ..here ...
         for(int i=0 ; i<jArgs.length ; i++) { 
           ex[i+1] = jArgs[i]; 	
         }
-
+		
         int indx = jArgs.length+1; 
 	
         ex[indx] = "runtime.daemon.Wrapper" ; indx++ ;
         ex[indx] = configFileName; indx++ ; 
         ex[indx] = Integer.toString(processes); indx++ ; 
         ex[indx] = deviceName; indx++ ; 
-        ex[indx] = rank; indx++ ; 
+        ex[indx] = ""+(-1) ; 
+		/* FIX ME BY RIZWAN HANIF : 
+	      This index value is actually the rank of each MPI Processes */
+		int rank_argument_index = indx;indx++ ; 
         ex[indx] = className ; 
 	  
         //System.arraycopy ... can be used ..here ...
         for(int i=0 ; i< aArgs.length ; i++) { 
           ex[i+N_ARG_COUNT+jArgs.length] = aArgs[i]; 	
         }
+        /* Step 2 ends here */
+
+      /* Step 3: Now starting a new JVMs for each MPJ Process */ 
+      for (int j = 0; j < processes; j++) {
+        String rank = new String(""+(start_rank+j));
+        ex[rank_argument_index] = rank;
 
         if(DEBUG && logger.isDebugEnabled()) { 
           for (int i = 0; i < ex.length; i++) {
             logger.debug(i+": "+ ex[i]);
           }  
         }
-	
-        /* Step 3: Now start a new JVM */ 
+        
         ProcessBuilder pb = new ProcessBuilder(ex);
         pb.directory(new File(wdir)) ;
         pb.redirectErrorStream(true); 
@@ -378,7 +402,8 @@ public class MPJDaemon {
     } //end while(true)
   }
 
-  private void restoreVariables() {
+  private void restoreVariables() {	    
+    start_rank = 0;
     jvmArgs.clear();
     appArgs.clear(); 
     wdir = null ; 
@@ -416,7 +441,11 @@ public class MPJDaemon {
 
     try {
       host = InetAddress.getByName(hostName);
-      myHost = InetAddress.getLocalHost() ; 
+      myHost = InetAddress.getLocalHost() ;
+      if(DEBUG && logger.isDebugEnabled()) { 
+          logger.debug("Remote Machine <"+host+"> , Local Machine <"+myHost+">");
+	} 
+      
     } catch (Exception e) {
       return false;
     }
@@ -579,21 +608,25 @@ public class MPJDaemon {
       }
 
       Set readyKeys = null;
+
       Iterator readyItor = null;
+
       SelectionKey key = null;
+
       SelectableChannel keyChannel = null;
 
       /* why are these required here? */
       SocketChannel socketChannel = null;
       ByteBuffer lilBuffer = ByteBuffer.allocateDirect(8);
       ByteBuffer lilBuffer2 = ByteBuffer.allocateDirect(4);
-      ByteBuffer buffer = ByteBuffer.allocateDirect(1000);
+      ByteBuffer buffer = ByteBuffer.allocate(1000);
       byte[] lilArray = new byte[4];
 
       try {
         while (selector.select() > -1) {
 
           try { 
+
             readyKeys = selector.selectedKeys();
             readyItor = readyKeys.iterator();
 
@@ -611,10 +644,10 @@ public class MPJDaemon {
               }
               else if (key.isConnectable()) {
 
-                /*
-                 * why would this method be called?
-                 * At the daemon, this event is not generated ..
-                 */
+              /*
+               * why would this method be called?
+               * At the daemon, this event is not generated ..
+               */
 
                 try {
                   socketChannel = (SocketChannel) keyChannel;
@@ -635,10 +668,10 @@ public class MPJDaemon {
               }
 
               else if (key.isReadable()) {
-
+   
                 if(DEBUG && logger.isDebugEnabled()) { 
                   logger.debug ("READ_EVENT");
-	        }
+  	        }
 	      
                 socketChannel = (SocketChannel) keyChannel;
 	      
@@ -648,14 +681,22 @@ public class MPJDaemon {
                   logger.debug("lilBuffer "+ lilBuffer);         
 	        }
 
+	        // .. this line is generating exception which kills the 
+		//    daemon ... I think we need a try catch here and if
+		//    any exception is generated, then we will have to 
+		//    goto back to selector.select() method ..
+		//
+		//    this is Windows 2000 specific error ..i have not 
+		//    seen this error on Windows XP ..
+	      
 	        try { 
 		      
                   if((readInt = socketChannel.read(lilBuffer)) == -1) {
 
                     if(DEBUG && logger.isDebugEnabled()) { 
                       logger.debug(" The daemon has received an End of "+
-	      	  		   "Stream signal") ; 
-	      	      logger.debug(" checking if this channel is still open");
+	  	    		   "Stream signal") ; 
+	    	      logger.debug(" checking if this channel is still open");
 		    }
 		  
 		    if(socketChannel.isOpen()) {
@@ -672,15 +713,15 @@ public class MPJDaemon {
                     //END_OF_STREAM signal .... 
 
                   }
-	        } catch(Exception innerException) {
+	        }
+	        catch(Exception innerException) {
                   if(DEBUG && logger.isDebugEnabled()) { 
-                    logger.debug ("Exception in selector thread, message is"+
-				  innerException.getMessage() );
+                    logger.debug("Exception in selector thread,"+
+                              "message is"+innerException.getMessage() );
                     logger.debug (" continuing to select() method ..."); 
-	  	  }
+		  }
 		  continue; 
 	        }
-		      
 
                 if(DEBUG && logger.isDebugEnabled()) { 
                   logger.debug ("READ_EVENT (read)" + readInt);
@@ -696,11 +737,11 @@ public class MPJDaemon {
                 if (read.equals("cpe-")) {
  	          if(DEBUG && logger.isDebugEnabled()) { 
                     logger.debug ("cpe-");
-		  }
+	  	  }
                   int length = lilBuffer.getInt();
                   if(DEBUG && logger.isDebugEnabled()) { 
                     logger.debug ("App CP Entry Length -->" + length);
-	  	  }
+		  }
                   lilBuffer.clear();
                   buffer.limit(length);
                   socketChannel.read(buffer);
@@ -712,7 +753,7 @@ public class MPJDaemon {
                   if(DEBUG && logger.isDebugEnabled()) { 
                     logger.debug ("applicationClassPathEntry:<"+ 
                                          applicationClassPathEntry+">");
-		  }  
+		  }
 		
                   buffer.clear();
                 }
@@ -720,7 +761,7 @@ public class MPJDaemon {
                 if (read.equals("cls-")) {
                   if(DEBUG && logger.isDebugEnabled()) { 
                     logger.debug ("cls-");
-		  }
+	  	  }
                   int length = lilBuffer.getInt();
                   if(DEBUG && logger.isDebugEnabled()) { 
                     logger.debug ("className length -->" + length);
@@ -732,10 +773,9 @@ public class MPJDaemon {
                   buffer.flip();
                   buffer.get(byteArray, 0, length);
                   className = new String(byteArray);
-
                   if(DEBUG && logger.isDebugEnabled()) { 
                     logger.debug ("className :<" + className + ">");
-	  	  }
+		  }
                   buffer.clear();
                 }
 
@@ -748,24 +788,28 @@ public class MPJDaemon {
                     logger.debug ("className length -->" + length);
 		  }
                   lilBuffer.clear();
+		  buffer = ByteBuffer.allocate(length+1);
                   buffer.limit(length);
                   socketChannel.read(buffer);
                   byte[] byteArray = new byte[length];
                   buffer.flip();
                   buffer.get(byteArray, 0, length);
-                  configFileName = new String(byteArray);
+                  configFileContent = new String(byteArray);
+
                   if(DEBUG && logger.isDebugEnabled()) { 
-                    logger.debug ("configFileName :<"+ 
-                                           configFileName + ">");
+                    logger.debug ("configFileContent :<"+ 
+                                  configFileContent + ">");
 		  }
                   buffer.clear();
+		  buffer = ByteBuffer.allocate(1000);
+	          buffer.clear();
                 }
 
                 if (read.equals("app-")) {
 		      
                   if(DEBUG && logger.isDebugEnabled()) { 
                     logger.debug ("app-");
-  		  }
+		  }
                   int length = lilBuffer.getInt();
                   if(DEBUG && logger.isDebugEnabled()) { 
                     logger.debug ("Application args Length -->" + length);
@@ -773,7 +817,7 @@ public class MPJDaemon {
                   lilBuffer.clear();
 
 		  for(int j=0 ; j<length ; j++) {
-                    lilBuffer2.position(0); lilBuffer2.limit(4); 
+                    lilBuffer2.position(0); lilBuffer2.limit(4); 			
                     socketChannel.read(lilBuffer2);
 		    lilBuffer2.flip();
                     int argLen = lilBuffer2.getInt();
@@ -785,7 +829,7 @@ public class MPJDaemon {
 		    appArgs.add(new String(t)); 
 		    buffer.clear(); 
 		    lilBuffer2.clear();
-	  	  }
+		  }
                  
 		  //for loop to create a new array ...
                   buffer.clear();
@@ -798,29 +842,48 @@ public class MPJDaemon {
                   int length = lilBuffer.getInt();
                   if(DEBUG && logger.isDebugEnabled()) { 
                     logger.debug ("should be 4, isit ? -->" + length);
-	  	  }
+    		  }
                   lilBuffer.clear();
                   socketChannel.read(lilBuffer2);
                   lilBuffer2.flip();
                   processes = lilBuffer2.getInt();
                   if(DEBUG && logger.isDebugEnabled()) { 
                     logger.debug ("Num of processes ==>" + processes);
-		  }
+  		  }
                   lilBuffer2.clear();
-                }
 
-                else if (read.equals("arg-")) {
+                } else if (read.equals("strk")) {
+	       
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("strk");
+		  }
+                  int length = lilBuffer.getInt();
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("should be 4, isit ? -->" + length);
+		  }
+                  lilBuffer.clear();
+                  socketChannel.read(lilBuffer2);
+                  lilBuffer2.flip();
+                  start_rank = lilBuffer2.getInt();
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("Starting rank of processes ==>" 
+                                                    + start_rank);
+		  }
+
+                  lilBuffer2.clear();
+                } else if (read.equals("arg-")) {
+
                   if(DEBUG && logger.isDebugEnabled()) { 
                     logger.debug ("arg-");
-		  }
+  		  }
                   int length = lilBuffer.getInt();
                   if(DEBUG && logger.isDebugEnabled()) { 
                     logger.debug ("argu len -->"+length);
 		  }
                   lilBuffer.clear();
 
-	  	  for(int j=0 ; j<length ; j++) {
-                    lilBuffer2.position(0); lilBuffer2.limit(4);
+		  for(int j=0 ; j<length ; j++) {
+                    lilBuffer2.position(0); lilBuffer2.limit(4); 			
                     socketChannel.read(lilBuffer2);
 		    lilBuffer2.flip();
                     int argLen = lilBuffer2.getInt();
@@ -836,8 +899,7 @@ public class MPJDaemon {
                  
 		  //for loop to create a new array ...
                   buffer.clear();
-                }  
-
+                }
                 else if (read.equals("dev-")) {
                   if(DEBUG && logger.isDebugEnabled()) { 
                     logger.debug ("dev-");
@@ -857,13 +919,12 @@ public class MPJDaemon {
                     logger.debug ("Device Name :<" + deviceName + ">");
 		  }
                   buffer.clear();
-                }  
+                }
 
                 else if (read.equals("wdr-")) {
-  
                   if(DEBUG && logger.isDebugEnabled()) { 
                     logger.debug ("wdr-");
-  		  }
+		  }
                   int length = lilBuffer.getInt();
                   if(DEBUG && logger.isDebugEnabled()) { 
                     logger.debug ("wdr-Length -->" + length);
@@ -884,7 +945,7 @@ public class MPJDaemon {
                 else if (read.equals("*GO*")) {
                   if(DEBUG && logger.isDebugEnabled()) { 
                     logger.debug ("GO");
-	 	  }
+		  }
                   lilBuffer.clear();
                   startExecution ();
 
@@ -911,7 +972,7 @@ public class MPJDaemon {
                       peerChannel.close();
                     }
                   } catch (Exception e) {}
-
+               
                   if(DEBUG && logger.isDebugEnabled()) { 
                     logger.debug ("Killling the process");
 		  }
@@ -928,14 +989,12 @@ public class MPJDaemon {
                         }
                       }
                     }
-                  } catch (Exception e) {e.printStackTrace(); } 
-//no matter what happens, we cant let this thread
-//die, coz otherwise, the daemon will die as well..
-//maybe you wanne stop the output handler threads as well.
+                  }
+                  catch (Exception e) {e.printStackTrace(); } 
 
                   if(DEBUG && logger.isDebugEnabled()) { 
                     logger.debug ("Killed it");
-		  }
+  		  }
                   buffer.clear();
                   lilBuffer.clear();
                 }
@@ -945,19 +1004,20 @@ public class MPJDaemon {
 
                 if(DEBUG && logger.isDebugEnabled()) { 
                   logger.debug(
-                      "In, WRITABLE, so changing the interestOps to READ_ONLY");
-	        }  
+                    "In, WRITABLE, so interestOps to READ_ONLY");
+	        }
                 key.interestOps(SelectionKey.OP_READ);
               }
             } //end while iterator
           } catch(Exception ioe2) {
             if(DEBUG && logger.isDebugEnabled()) {
-              logger.debug("Exception in selector thread " + ioe2.getMessage());
+              logger.debug("Exception in selector thread " 
+                                                 + ioe2.getMessage());
               logger.debug("Can recover from this ");
             }
             ioe2.printStackTrace();
           }
-        } //end while selector.select()
+        } //end selector.select() while
       }
       catch (Exception ioe1) {
         if(DEBUG && logger.isDebugEnabled()) { 

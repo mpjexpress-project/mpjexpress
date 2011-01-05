@@ -59,6 +59,7 @@ public class MPJRun {
 
   public static String CONF_FILE_NAME = "mpjdev.conf" ;
   public static String MPJ_DIR_NAME = ".mpj" ;
+  public static String CONF_FILE_CONTENTS  = "#temp line" ;
 
   String configFileName = null ; 
 
@@ -101,7 +102,7 @@ public class MPJRun {
   String applicationClassPathEntry = null ; 
   String codeBase = null;
   String mpjCodeBase = null ; 
-  ByteBuffer buffer = ByteBuffer.allocate(1000);
+  ByteBuffer buffer = ByteBuffer.allocate(100);
 
   static final boolean DEBUG = false ; 
   static final String VERSION = "0.36" ; 
@@ -242,7 +243,7 @@ public class MPJRun {
     Wait();
 
     buffer.clear();
-
+	int Peer_Start_Rank = 0;
     for (int j = 0; j < peerChannels.size(); j++) {
 
       SocketChannel socketChannel = peerChannels.get(j);
@@ -266,8 +267,8 @@ public class MPJRun {
 
       int nProcesses = nProcessesInt.intValue();
 
-      pack(nProcesses); 
-
+      pack(nProcesses,Peer_Start_Rank); 
+	  Peer_Start_Rank += nProcesses;
       if(DEBUG && logger.isDebugEnabled()) { 
 	logger.debug("Sending to " + socketChannel);
       }
@@ -311,18 +312,21 @@ if(DEBUG && logger.isDebugEnabled())
         working directory where mpjrun command was launched. 
    * 2. num- [# of processes] to be started by a particular MPJ Express
         daemon.
-   * 3. arg- args to JVM
-   * 4. wdr- Working Directory 
-   * 5. cls- Classname to be executed. In the case of JAR file, this 
+   * 3. num- [starting #(rank) of process] to be started by a particular MPJ Express
+        daemon.	
+   * 4. arg- args to JVM
+   * 5. wdr- Working Directory 
+   * 6. cls- Classname to be executed. In the case of JAR file, this 
         name is taken from the manifest file. In the case of class file, 
         the class name is specified on the command line by the user.
-   * 6. cfn- Configuration File name. This points to "System.getProperty
-        ("user.home")+/+.mpj+/+mpjdev.conf
-   * 7. dev-: what device to use?
-   * 8. app-: Application arguments ..
-   * 9. GO_FOR_IT_SIGNAL
+   * 7. cfn- Configuration File name. This is a ';' delimeted string of config file contents
+   * 8. dev-: what device to use?
+   * 9. app-: Application arguments ..
+   * 10. GO_FOR_IT_SIGNAL
    */ 
-  private void pack(int nProcesses) {
+  private void pack(int nProcesses,int start_rank) {
+    
+	buffer = ByteBuffer.allocate(CONF_FILE_CONTENTS.getBytes().length+1000);
     if(DEBUG && logger.isDebugEnabled()) {
       logger.debug("buffer (initial)" + buffer);
     }
@@ -361,7 +365,21 @@ if(DEBUG && logger.isDebugEnabled())
     if(DEBUG && logger.isDebugEnabled()) {
       logger.debug("buffer(after nProcesses) " + buffer);
     }
+	buffer.put("strk".getBytes());
+	 
+    if(DEBUG && logger.isDebugEnabled()) {
+      logger.debug("buffer " + buffer);
+    }
+	buffer.putInt(4);
 
+    if(DEBUG && logger.isDebugEnabled()) {
+      logger.debug("buffer(after writing 4) " + buffer);
+      logger.debug("start_rank " + start_rank);
+    }
+    buffer.putInt(start_rank);
+    if(DEBUG && logger.isDebugEnabled()) {
+      logger.debug("buffer(after start_rank) " + buffer);
+    }
     buffer.put("arg-".getBytes());
     buffer.putInt(jArgs.length); 
     for(int j=0 ; j<jArgs.length ; j++) {
@@ -383,8 +401,8 @@ if(DEBUG && logger.isDebugEnabled())
 
     //configFileName 
     buffer.put("cfn-".getBytes());
-    buffer.putInt(configFileName.getBytes().length);
-    buffer.put(configFileName.getBytes(), 0, configFileName.getBytes().length); 
+    buffer.putInt(CONF_FILE_CONTENTS.getBytes().length);
+    buffer.put(CONF_FILE_CONTENTS.getBytes(), 0, CONF_FILE_CONTENTS.getBytes().length); 
 
     buffer.put("dev-".getBytes());
     buffer.putInt(deviceName.getBytes().length);
@@ -653,26 +671,22 @@ if(DEBUG && logger.isDebugEnabled())
 
   private void assignTasks() throws Exception {
 	  
-    PrintStream cout = null;
+   // PrintStream cout = null;
     int rank = 0;
     String name = null;
 
-    try {
-      cfos = new FileOutputStream(CONF_FILE);
-    }
-    catch (FileNotFoundException fnfe) {
-//  added up
-System.out.println("Unable to Create Config File \n HINT: may be due to access rights \n if you are a linux user confirm access rights by ls -a");
-throw new Exception(fnfe);	
-	}
+   // try {
+   //  cfos = new FileOutputStream(CONF_FILE);
+   // }
+   //catch (FileNotFoundException fnfe) {}
 
-    cout = new PrintStream(cfos);
+    ////cout = new PrintStream(cfos);
     int noOfMachines = machineVector.size();
-    cout.println("# Number of Processes");
-    cout.println(nprocs);
-    cout.println("# Protocol Switch Limit");
-    cout.println(psl);
-    cout.println("# Entry, HOST_NAME/IP@SERVERPORT@RANK");
+    CONF_FILE_CONTENTS = CONF_FILE_CONTENTS + ";" + "# Number of Processes" ;
+    CONF_FILE_CONTENTS = CONF_FILE_CONTENTS + ";" + nprocs ;
+    CONF_FILE_CONTENTS = CONF_FILE_CONTENTS + ";" + "# Protocol Switch Limit" ;
+    CONF_FILE_CONTENTS = CONF_FILE_CONTENTS + ";" + psl;
+    CONF_FILE_CONTENTS = CONF_FILE_CONTENTS + ";" + "# Entry, HOST_NAME/IP@SERVERPORT@RANK" ;
 
     if (nprocs < noOfMachines) {
 
@@ -691,11 +705,11 @@ throw new Exception(fnfe);
                                  new Integer(1));
 	 
 	if(deviceName.equals("niodev")) { 
-          cout.println(name + "@" + MPJ_SERVER_PORT +
-                       "@" + (rank++));
+          CONF_FILE_CONTENTS = CONF_FILE_CONTENTS + ";" +name + "@" + MPJ_SERVER_PORT +
+                       "@" + (rank++) ;
 	} else if(deviceName.equals("mxdev")) { 
-          cout.println(name + "@" + mxBoardNum+
-                       "@" + (rank++));
+          CONF_FILE_CONTENTS = CONF_FILE_CONTENTS + ";" +name + "@" + mxBoardNum+
+                       "@" + (rank++) ;
 	} 
 	
 	
@@ -712,7 +726,7 @@ throw new Exception(fnfe);
      if(DEBUG && logger.isDebugEnabled())
 	 {
       logger.debug("Processes Requested " + nprocs +
-                  " are greater than  machines " + noOfMachines);
+                  " are greater than than machines " + noOfMachines);
       }
 	  int divisor = nprocs / noOfMachines;
       if(DEBUG && logger.isDebugEnabled())
@@ -740,11 +754,11 @@ throw new Exception(fnfe);
 
           for (int j = 0; j < (divisor + 1); j++) {
             if(deviceName.equals("niodev")) { 		  
-              cout.println( (String) machineVector.get(i) + "@" +
-                           (MPJ_SERVER_PORT + (j * 2)) + "@" + (rank++));
+              CONF_FILE_CONTENTS = CONF_FILE_CONTENTS + ";" + (String) machineVector.get(i) + "@" +
+                           (MPJ_SERVER_PORT + (j * 2)) + "@" + (rank++) ;
 	    } else if(deviceName.equals("mxdev")) { 
-              cout.println( (String) machineVector.get(i) + "@" +
-                           (mxBoardNum+j) + "@" + (rank++));
+              CONF_FILE_CONTENTS = CONF_FILE_CONTENTS + ";" + (String) machineVector.get(i) + "@" +
+                           (mxBoardNum+j) + "@" + (rank++) ;
 	    }
           }
 	  
@@ -762,11 +776,11 @@ throw new Exception(fnfe);
           //name=InetAddress.getByAddress( name.getBytes() ).getHostName();
           for (int j = 0; j < divisor; j++) {
             if(deviceName.equals("niodev")) { 		  
-              cout.println( (String) machineVector.get(i) + "@" +
-                           (MPJ_SERVER_PORT + (j * 2)) + "@" + (rank++));
+              CONF_FILE_CONTENTS = CONF_FILE_CONTENTS + ";" + (String) machineVector.get(i) + "@" +
+                           (MPJ_SERVER_PORT + (j * 2)) + "@" + (rank++) ;
 	    } else if(deviceName.equals("mxdev")) { 
-              cout.println( (String) machineVector.get(i) + "@" +
-                           (mxBoardNum+j) + "@" + (rank++));
+              CONF_FILE_CONTENTS = CONF_FILE_CONTENTS + ";" + (String) machineVector.get(i) + "@" +
+                           (mxBoardNum+j) + "@" + (rank++) ;
 	    }
           }
         }
@@ -785,11 +799,11 @@ throw new Exception(fnfe);
         procsPerMachineTable.put( (String) machineVector.get(i), 
                                   new Integer(1));
 	if(deviceName.equals("niodev")) { 
-          cout.println( (String) machineVector.get(i) + "@" + MPJ_SERVER_PORT +
-                       "@" + (rank++));
+          CONF_FILE_CONTENTS = CONF_FILE_CONTENTS + ";" + (String) machineVector.get(i) + "@" + MPJ_SERVER_PORT +
+                       "@" + (rank++) ;
 	} else if(deviceName.equals("mxdev")) { 
-          cout.println( (String) machineVector.get(i) + "@" +
-                       (mxBoardNum) + "@" + (rank++));
+          CONF_FILE_CONTENTS = CONF_FILE_CONTENTS + ";" + (String) machineVector.get(i) + "@" +
+                       (mxBoardNum) + "@" + (rank++) ;
 	}
 	
         if(DEBUG && logger.isDebugEnabled()) { 
@@ -799,8 +813,8 @@ throw new Exception(fnfe);
 
     }
 
-    cout.close(); 
-    cfos.close(); 
+    //cout.close(); 
+    //cfos.close(); 
 
   }
 
@@ -862,14 +876,7 @@ throw new Exception(fnfe);
 
       line = line.trim();
 
-      InetAddress address = null ;
- 
-      if(line.equalsIgnoreCase("localhost") | line.equals("127.0.0.1")) { 
-        address = InetAddress.getLocalHost();
-      } else { 
-        address = InetAddress.getByName(line);
-      } 
-
+      InetAddress address = InetAddress.getByName(line);
       String addressT = address.getHostAddress();
       String nameT = address.getHostName();
 
@@ -904,7 +911,9 @@ throw new Exception(fnfe);
           logger.debug("Line " + line.trim() +
                     " added to vector " + machineVector);
         }
+
       }
+
     }//end while.
   
   }
