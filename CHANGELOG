@@ -3,6 +3,10 @@ Version 0.37
 
 1. Added the executing and debugging tutorial of MPJ Express applications
    using Eclipse IDE. 14/5/2010
+2. Modified the runtime to get rid of the shared directory requirement 
+   between the starter (head node) and daemons (running on compute nodes).
+   This paper is coded by Rizwan Hanif and Amjad Aziz. 6/1/2011
+3. Fixed a bug that causes daemons to crash on Windows boxes. 4/1/2011
 
 Version 0.36
 ------------

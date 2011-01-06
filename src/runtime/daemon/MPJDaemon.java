@@ -77,7 +77,7 @@ public class MPJDaemon {
   private volatile boolean waitToStartExecution = true;
   private PrintStream out = null;
   private Semaphore outputHandlerSem = new Semaphore(1,true); 
-  static final boolean DEBUG = true ; 
+  static final boolean DEBUG = false ; 
   
   private String wdir = null ; 
   private String applicationClassPathEntry = null; 
