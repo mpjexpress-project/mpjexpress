@@ -801,8 +801,8 @@ public class MPJDaemon {
                                   configFileContent + ">");
 		  }
                   buffer.clear();
-		  buffer = ByteBuffer.allocate(1000);
-	          buffer.clear();
+		  //buffer = ByteBuffer.allocate(1000);
+	          //buffer.clear();
                 }
 
                 if (read.equals("app-")) {
