@@ -78,7 +78,6 @@ public class MPJRun {
   static Logger logger = null ; 
   private volatile boolean wait = true;
   private Vector<SocketChannel> peerChannels;
-  private InetAddress localaddr = null;
   private Selector selector = null;
   private volatile boolean selectorFlag = true;
   private String hostIP = null;
@@ -156,22 +155,6 @@ public class MPJRun {
 
     readMachineFile();
     machinesSanityCheck() ;
-	    
-    try {
-
-      localaddr = InetAddress.getLocalHost();
-
-      if(hostIP == null)
-        hostIP = localaddr.getHostAddress(); 
-
-      if(DEBUG && logger.isDebugEnabled()) {
-	logger.debug("Address: " + localaddr);
-      }
-
-    } catch (UnknownHostException unkhe) {
-      throw new MPJRuntimeException(unkhe);  
-    }
-
     assignTasks();
 
     urlArray = applicationClassPathEntry.getBytes();
@@ -197,7 +180,7 @@ public class MPJRun {
       SocketChannel socketChannel = peerChannels.get(j);
       
       if(DEBUG && logger.isDebugEnabled()) { 
-	logger.debug("procsPerMachineTable " + procsPerMachineTable);
+	     logger.debug("procsPerMachineTable " + procsPerMachineTable);
       }
 
       /* FIXME: should we not be checking all IP addresses of remote 
@@ -214,22 +197,23 @@ public class MPJRun {
       } 
 
       int nProcesses = nProcessesInt.intValue();
-
+	  /* FIX ME By Amjad Aziz & Rizwan Hanif
+	  *  sending the starting rank to peer processi.e Daemon*/
       pack(nProcesses, peersStartingRank); 
       peersStartingRank += nProcesses;
 
       if(DEBUG && logger.isDebugEnabled()) { 
-	logger.debug("Sending to " + socketChannel);
+	    logger.debug("Sending to " + socketChannel);
       }
 
       int w = 0 ; 
       while(buffer.hasRemaining()) {
-	if((w += socketChannel.write(buffer)) == -1) {
+	  if((w += socketChannel.write(buffer)) == -1) {
 	  //throw an exception ...
-	} 
+	  } 
       }
       if(DEBUG && logger.isDebugEnabled()) { 
-	logger.debug("Wrote bytes-->"+w+"to process"+j);
+		logger.debug("Wrote bytes-->"+w+"to process"+j);
       }
 
       buffer.clear();
@@ -253,14 +237,14 @@ public class MPJRun {
   }
 	  
   /* 
-   * 1.  Application Classpath Entry (-cpe). This is a String classpath entry 
+   * 1.  Application Classpath Entry (cpe-). This is a String classpath entry 
          which will be appended by the MPJ Express daemon before starting
          a user process (JVM). In the case of JAR file, it's the absolute
          path and name. In the case of a class file, its the name of the 
          working directory where mpjrun command was launched. 
    * 2.  num- [# of processes] to be started by a particular MPJ Express
          daemon.
-   * 3.  num- [starting #(rank) of process] to be started by a 
+   * 3.  srk- [starting #(rank) of process] to be started by a 
          particular MPJ Express daemon.	
    * 4.  arg- args to JVM
    * 5.  wdr- Working Directory 
@@ -315,7 +299,7 @@ public class MPJRun {
     if(DEBUG && logger.isDebugEnabled()) {
       logger.debug("buffer(after nProcesses) " + buffer);
     }
-	buffer.put("strk".getBytes());
+	buffer.put("srk-".getBytes());
 	 
     if(DEBUG && logger.isDebugEnabled()) {
       logger.debug("buffer " + buffer);
