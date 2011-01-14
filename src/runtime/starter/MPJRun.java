@@ -606,7 +606,6 @@ public class MPJRun {
   private void assignTasks() throws Exception {
 	  
     int rank = 0;
-    String name = null;
 
     int noOfMachines = machineVector.size();
 
@@ -632,10 +631,10 @@ public class MPJRun {
                                  new Integer(1));
 	 
 	if(deviceName.equals("niodev")) { 
-          CONF_FILE_CONTENTS += ";" +name + "@" 
+          CONF_FILE_CONTENTS += ";"+(String) machineVector.get(i)+"@"
                                     + MPJ_SERVER_PORT + "@" + (rank++) ;
 	} else if(deviceName.equals("mxdev")) { 
-          CONF_FILE_CONTENTS += ";" +name + "@" 
+          CONF_FILE_CONTENTS += ";"+(String) machineVector.get(i)+"@"
                                     + mxBoardNum + "@" + (rank++) ;
 	} 
 	
