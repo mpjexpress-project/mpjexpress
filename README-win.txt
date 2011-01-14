@@ -1,6 +1,6 @@
            QuickStart Guide: Running MPJ Express on Windows Platform 
-                  Last Updated: Thu Jan  6 18:49:19 EST 2011
-                                Version 0.37
+                  Last Updated: Fri Jan 14 12:11:47 EST 2011
+                                Version 0.38
 
 Introduction
 ============

@@ -1,3 +1,10 @@
+Version 0.38
+------------
+
+1. Fixed a bug in the mpjrun module that appends null as the host name 
+   in the configuration file. Thanks to Pete Christopher for 
+   identifying this bug. 14/1/2011
+
 Version 0.37
 ------------
 

@@ -96,7 +96,7 @@ public class MPJRun {
   ByteBuffer buffer = null;
 
   static final boolean DEBUG = false ; 
-  static final String VERSION = "0.37" ; 
+  static final String VERSION = "0.38" ; 
   private static int RUNNING_JAR_FILE = 2 ; 
   private static int RUNNING_CLASS_FILE = 1 ; 
 
