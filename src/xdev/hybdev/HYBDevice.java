@@ -120,7 +120,7 @@ public class HYBDevice implements Device {
           break;
         }
         try{
-          Thread.currentThread().sleep(4000);
+          Thread.currentThread().sleep(2000);
         }catch (Exception e){
           e.printStackTrace();
         }
