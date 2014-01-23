@@ -253,6 +253,18 @@ public interface Device {
   public abstract mpjdev.Status iprobe(ProcessID srcID, int tag,
                                        int context) throws XDevException;
 
+  /**
+   * This method is sam as iprobe method but added to facilitate 
+   * Hybrid device, only difference is destination Process id is added.
+   * In Hybrid Device we may not know Destination ProcessID 
+   * while multiple processes are running on destination host 
+   */
+  public abstract mpjdev.Status iprobe(ProcessID srcID, ProcessID dstID, 
+                                  int tag, int context) throws XDevException;
+                                  
+  public abstract mpjdev.Status iprobeAndFetch(ProcessID srcID, ProcessID dstID, 
+                  int tag, int context, mpjbuf.Buffer buf ) throws XDevException;
+                                                                    
   public abstract mpjdev.Request peek() throws XDevException; 
 
 }
