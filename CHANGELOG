@@ -1,3 +1,57 @@
+Version 0.39
+------------
+1. This release provides support for hybrid parallelism for efficient and 
+   seamless utilization of cluster of multicore machines. This support is 
+   provided in a new device, named hybdev. A new package hybdev is added 
+   in src/xdev/ package. This package contains source code of Hybrid device. 
+   
+2. In xdev.Device.java an overloaded abstract method is added
+    public abstract mpjdev.Status iprobe (ProcessID srcID, ProcessID dstID,
+                int tag, int context);
+   It is required for Hybrid device to probe for messages as Key for adding and 
+   removing in the queues is updated (details are described below). 
+   This overloaded method will not be used by NIO of MX dev  
+
+3. In xdev.Device.java an abstract method is added
+    public abstract mpjdev.Status iprobeAndFetch (ProcessID srcID, ProcessID dstID,
+                int tag, int context, mpjbuf.Buffer buf);
+   It is required for Hybrid device for providing support for wildcard messages.
+   
+4. ProcTree.java is been added in nio package, previously it was imported from MPI 
+   layer. In hybrid mode custom classLoader is being used and resources of MPI layer 
+   are not available in xdev layer.
+
+5. add and remove methods of ArrQueue and RecvQueue in NIODevice.java has been
+   updated. The message addition and removal process in the queues is based on the 
+   Key which had Source, tag and context information. Key is updated to 
+   have 4-tuples i.e. Source, Destination, tag, context. 
+
+6. A boolean variable isHybrid is added in NIODevice to act as a switch for 
+   Hybrid Device. It is turned ON and OFF from HYBDevice.java. 
+   It is useful in adding and removing messages in queues. While isHybrid 
+   switch is ON message source and destination key contains  
+   Hybrid source and destination values while in NIO case key contains 
+   NIO source and destination values.
+
+7. Default send overhead in NIODevice was 49 bytes in previous version. 
+   Now, it is updated to 81 bytes. 
+   So now in NIO Case bytes after 49th will have null values and 
+   these will not be processes on the receiving end but in Hybrid case these 
+   last 32 bytes will be processes to get the Hybrid source and destination.
+
+8. SMP device is updated. Its Send overhead and receive overhead values were 
+   fixed to zero. Now, it is flexible to operate on any given send and recived 
+   overhead values. In multicore mode, SMP device operates with zero send/receive 
+   overhead values but in case of Hybrid device these overhead values are 
+   adjusted to 81 bytes.
+
+9. Hybrid device support is added in runtime i.e. MPJDaemon.java and MPJRun.java. 
+   Also HybridDaemon is added which is responsible for starting and managing 
+   hybrid daemon and device. 
+   1. HybridDaemon.java
+   2. HybridStarter.java
+
+
 Version 0.38
 ------------
 
