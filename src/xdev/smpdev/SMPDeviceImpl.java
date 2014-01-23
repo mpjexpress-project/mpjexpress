@@ -194,8 +194,8 @@ public class SMPDeviceImpl {
      * 
      * Equivalent to MPI_SEND
      */
-    public void send(mpjbuf.Buffer buf, ProcessID destID, int tag,
-            int context) throws Exception {
+  public void send(mpjbuf.Buffer buf, ProcessID destID, int tag, int context)
+      throws Exception {
         SMPRequest req = (SMPRequest) isend(buf, destID, tag, context);
 
         if (mpi.MPI.DEBUG && SMPDevice.logger.isDebugEnabled()) {
@@ -215,8 +215,7 @@ public class SMPDeviceImpl {
      * returned `Status'.  Equivalent to MPI_RECV.
      */
     public mpjdev.Status recv(mpjbuf.Buffer buf, ProcessID srcID, int tag,
-            int context)
-            throws XDevException {
+      int context) throws XDevException {
          mpjdev.Status status = new mpjdev.Status(srcID.uuid(), tag, -1);
         SMPRequest req = (SMPRequest) irecv(buf, srcID, tag, context, status);
         return req.iwait();
@@ -277,17 +276,34 @@ public class SMPDeviceImpl {
                     matchingRecv.buffer.setDynamicBuffer(buf.getDynamicBuffer());
                 }
                 
-               
-                ((NIOBuffer) matchingRecv.buffer.getStaticBuffer()).getBuffer().limit(
-                        buf.getSize());
-                ((NIOBuffer) matchingRecv.buffer.getStaticBuffer()).getBuffer().position(0);
-                ((NIOBuffer) buf.getStaticBuffer()).getBuffer().limit(buf.getSize());
-                ((NIOBuffer) buf.getStaticBuffer()).getBuffer().position(0);
-                ((NIOBuffer) matchingRecv.buffer.getStaticBuffer()).getBuffer().put(
+        // ((NIOBuffer)
+        // matchingRecv.buffer.getStaticBuffer()).getBuffer().limit(
+        // buf.getSize() );
+        
+        // HYB how much I need to get + myOffset
+
+        ((NIOBuffer) matchingRecv.buffer.getStaticBuffer()).getBuffer().limit(
+            matchingRecv.buffer.getSize() + matchingRecv.buffer.offset()); 
+        // ((NIOBuffer)
+        // matchingRecv.buffer.getStaticBuffer()).getBuffer().position();
+        ((NIOBuffer) matchingRecv.buffer.getStaticBuffer()).getBuffer()
+            .position(SMPDevice.RECV_OVERHEAD); // HYB
+        // ((NIOBuffer) buf.getStaticBuffer()).getBuffer().limit(buf.getSize());
+        ((NIOBuffer) buf.getStaticBuffer()).getBuffer().limit(
+            buf.getSize() + buf.offset());
+        // ((NIOBuffer) buf.getStaticBuffer()).getBuffer().position(0);
+        ((NIOBuffer) buf.getStaticBuffer()).getBuffer().position(
+            SMPDevice.SEND_OVERHEAD); // HYB
+        // System.out.println ("xdev-MRecv B$PUT: Src= limit:"+((NIOBuffer)
+        // buf.getStaticBuffer()).getBuffer().limit()
+        // +" Dst= Limit:"+((NIOBuffer)
+        // matchingRecv.buffer.getStaticBuffer()).getBuffer().limit()
+        // +"^^^^^^\n");
+        ((NIOBuffer) matchingRecv.buffer.getStaticBuffer()).getBuffer().put(
                         ((NIOBuffer) buf.getStaticBuffer()).getBuffer());
                 ((NIOBuffer) matchingRecv.buffer.getStaticBuffer()).getBuffer().flip();
                 ((NIOBuffer) buf.getStaticBuffer()).getBuffer().clear();
-////////////////////////////////////////////////////////////////////
+
 
                 matchingRecv.status.srcID = myID.uuid();
                 matchingRecv.status.tag = tag;
@@ -322,9 +338,98 @@ public class SMPDeviceImpl {
         return send;
     }
 
-    /**
-     * Non-blocking version of `recv'.
-     * Equivalent to MPI_IRECV
+
+
+
+
+  /**
+   * Non-Blocking overloaded probe method.
+   * 
+   * @param srcID
+   * @param dstID
+   * @param tag
+   * @param context
+   * @return mpjdev.Status
+   **/  
+  public mpjdev.Status iprobeAndFetch(ProcessID srcID, ProcessID dstID, int tag,
+    int context, mpjbuf.Buffer buf) throws XDevException {
+    
+    SMPSendRequest request = sendQueue.check(context, dstID, srcID, tag);
+    
+    if (request != null) {
+      
+      synchronized (SMPDeviceImpl.class) {
+//        System.out.println (" smpdev: complete Request, processing buffer ");
+        mpjdev.Status status = new mpjdev.Status(id().uuid(), tag, -1);
+        SMPRecvRequest recv = new SMPRecvRequest(buf, context, dstID, srcID, tag,
+              status);
+      
+        SMPSendRequest matchingSend = sendQueue.rem(recv);
+        buf.setSize(matchingSend.buffer.getSize());
+        if (matchingSend.buffer.getDynamicBuffer() != null) {
+          buf.setDynamicBuffer(matchingSend.buffer.getDynamicBuffer());
+        }
+        // ((NIOBuffer)
+        // matchingSend.buffer.getStaticBuffer()).getBuffer().limit(buf.getSize());
+        ((NIOBuffer) matchingSend.buffer.getStaticBuffer()).getBuffer().limit(
+            matchingSend.buffer.getSize() + matchingSend.buffer.offset()); // HYB
+        // ((NIOBuffer)
+        // matchingSend.buffer.getStaticBuffer()).getBuffer().position(0);
+        ((NIOBuffer) matchingSend.buffer.getStaticBuffer()).getBuffer()
+            .position(SMPDevice.SEND_OVERHEAD); // HYB
+        // ((NIOBuffer) buf.getStaticBuffer()).getBuffer().limit(buf.getSize()
+        // );
+        ((NIOBuffer) buf.getStaticBuffer()).getBuffer().limit(
+            buf.getSize() + buf.offset()); // HYB
+        // ((NIOBuffer) buf.getStaticBuffer()).getBuffer().position(0);
+        ((NIOBuffer) buf.getStaticBuffer()).getBuffer().position(
+            SMPDevice.RECV_OVERHEAD); // HYB
+
+        ((NIOBuffer) buf.getStaticBuffer()).getBuffer().put(
+            ((NIOBuffer) matchingSend.buffer.getStaticBuffer()).getBuffer());
+        ((NIOBuffer) buf.getStaticBuffer()).getBuffer().flip();
+        
+        ((NIOBuffer) matchingSend.buffer.getStaticBuffer()).getBuffer().clear();
+
+        
+        
+        recv.status = status;
+        // System.out.println("UUID" + matchingSend.sourceID.uuid());
+        // System.out.println("Status -- tag" + status.tag);
+        recv.status.srcID = matchingSend.srcID.uuid();
+        recv.status.tag = matchingSend.tag;
+        recv.type = matchingSend.type;
+        recv.numEls = matchingSend.numEls;        
+        request.srcID = matchingSend.srcID;
+        status.srcID = matchingSend.srcID.uuid();
+
+        // recv.status.numEls = matchingSend.numEls; //temp
+        // recv.status.type = matchingSend.type; //temp
+
+        // System.out.println(" In irecv -- status " + status.index + "  " +
+        // recv.status.srcID + "  " + recv.status.tag );
+
+        matchingSend.setPending(false);
+
+        // Check if anybody is iwait-ing on `matchingSend'.
+        // If so, remove all requests from wait set, and signal
+        // the waiting thread.
+
+        SMPRequest.WaitSet waiting = matchingSend.getWaitSet();
+        if (waiting != null) {
+          waiting.select(matchingSend);
+        }
+        recv.setPending(false);
+        
+        
+        return status;
+      }
+    }
+    //System.out.println (" smpdev: incomplete Request, releasing lock in Fetch ");
+    return null;
+  }
+     /**
+     * Non-blocking version of `recv'.* Equivalent to MPI_IRECV
      */
     public mpjdev.Request irecv(mpjbuf.Buffer buf, ProcessID srcID,
             int tag, int context, mpjdev.Status status)
@@ -359,8 +464,6 @@ public class SMPDeviceImpl {
             SMPSendRequest matchingSend = sendQueue.rem(recv);
 //matchingSend.status = status;
             if (matchingSend != null) {
-              //     System.out.println(" irecv -- matching send size "+  ((NIOBuffer)(matchingSend.buffer.getStaticBuffer())).getCapacity() +" receiver "+myID+" context "+context);
-              //     System.out.println(" irecv -- buf size "+ buf.getSize() +" sender "+ srcID);
 
                 //out.println(" got matching send req. <"+matchingSend+">=<"
                 //		    +id()+">");
@@ -375,15 +478,40 @@ public class SMPDeviceImpl {
                 if (matchingSend.buffer.getDynamicBuffer() != null) {
                     buf.setDynamicBuffer(matchingSend.buffer.getDynamicBuffer());
                 }
-                ((NIOBuffer) matchingSend.buffer.getStaticBuffer()).getBuffer().limit(buf.getSize());
-                ((NIOBuffer) matchingSend.buffer.getStaticBuffer()).getBuffer().position(0);
-                ((NIOBuffer) buf.getStaticBuffer()).getBuffer().limit(buf.getSize());
-                ((NIOBuffer) buf.getStaticBuffer()).getBuffer().position(0);
-                ((NIOBuffer) buf.getStaticBuffer()).getBuffer().put(
-                        ((NIOBuffer) matchingSend.buffer.getStaticBuffer()).getBuffer());
-                ((NIOBuffer) buf.getStaticBuffer()).getBuffer().flip();
-                ((NIOBuffer) matchingSend.buffer.getStaticBuffer()).getBuffer().clear();
-////////////////////////////////////////////////////////////////////
+        ((NIOBuffer) matchingSend.buffer.getStaticBuffer()).getBuffer().limit(
+            matchingSend.buffer.getSize() + matchingSend.buffer.offset()); // HYB
+        // ((NIOBuffer)
+        // matchingSend.buffer.getStaticBuffer()).getBuffer().position(0);
+        ((NIOBuffer) matchingSend.buffer.getStaticBuffer()).getBuffer()
+            .position(SMPDevice.SEND_OVERHEAD); // HYB
+        // ((NIOBuffer) buf.getStaticBuffer()).getBuffer().limit(buf.getSize()
+        // );
+        ((NIOBuffer) buf.getStaticBuffer()).getBuffer().limit(
+            buf.getSize() + buf.offset()); // HYB
+        // ((NIOBuffer) buf.getStaticBuffer()).getBuffer().position(0);
+        ((NIOBuffer) buf.getStaticBuffer()).getBuffer().position(
+            SMPDevice.RECV_OVERHEAD); // HYB
+        // System.out.println ("xdev-MSend B$PUT: DST= limit:"+((NIOBuffer)
+        // buf.getStaticBuffer()).getBuffer().limit()
+        // +" SRC= Limit:"+((NIOBuffer)
+        
+        ((NIOBuffer) buf.getStaticBuffer()).getBuffer().put(
+            ((NIOBuffer) matchingSend.buffer.getStaticBuffer()).getBuffer());
+        ((NIOBuffer) buf.getStaticBuffer()).getBuffer().flip();
+
+        /*
+         * if (commDone) { ((NIOBuffer)
+         * matchingSend.buffer.getStaticBuffer()).getBuffer().flip();
+         * ((NIOBuffer)
+         * matchingSend.buffer.getStaticBuffer()).getBuffer().position(4); try{
+         * int [] test = new int [6]; matchingSend.buffer.read(test, 0, 5);
+         * for(int i=0;i<test.length;i++) {
+         * System.out.print(" MS "+test[i]+" "); } }catch (BufferException e){
+         * System.out.print("MS buffer read exception " ); } }
+         */
+
+        ((NIOBuffer) matchingSend.buffer.getStaticBuffer()).getBuffer().clear();
+
 
                 recv.status =status;
                // System.out.println("UUID" + matchingSend.sourceID.uuid());
@@ -481,10 +609,7 @@ public class SMPDeviceImpl {
          */
         /* putting the debug initialization code here */
 
-        /*    out.println("SMPDeviceImpl  "+Thread.currentThread() +"time"+
-        System.currentTimeMillis() +"numRegistered"+
-        numRegisteredThreads );
-         */
+       
         //System.out.println("  -- File "+file);
         int nprocs = 0, psl = 0;
 /*
@@ -517,11 +642,7 @@ public class SMPDeviceImpl {
             throw new XDevException("In SMPDeviceImpl.init(), requested negative " +
                     "world size " + nprocs);
         } else if (numRegisteredThreads == 0) {
-            /*          out.println("first thread in init <"+rank+">");
-            out.println("SMPDeviceImpl  "+Thread.currentThread() +"time"+
-            System.currentTimeMillis() +"numRegistered"+
-            numRegisteredThreads );
-             */
+            
             WORLD.size = nprocs;
 
             WORLD.pids = new ProcessID[WORLD.size];
@@ -582,7 +703,6 @@ public class SMPDeviceImpl {
 
             numRegisteredThreads++; 
 
-          //  System.out.println(" numRegThreads "+numRegisteredThreads+" World size "+WORLD.size);
 
             /*          out.println("SMPDeviceImpl  "+Thread.currentThread() +"time"+
             System.currentTimeMillis() +"numRegistered"+
@@ -684,10 +804,7 @@ public class SMPDeviceImpl {
          *  its key.
          */
         public void add(SMPRecvRequest recv) {
-            /*     System.out.println("*************");
-            System.out.println("RecvQueue add");
-            System.out.println("Recv Queue");
-            recv.key.tostring();*/
+            
             add(recv.key, recv);
         }
 
@@ -785,10 +902,9 @@ public class SMPDeviceImpl {
          *  its keys.
          */
         public void add(SMPSendRequest send) {
-            //      SMPDeviceImpl.out.println("add method of SendQueue");
+            
             Key[] keys = send.keys;
-            //    SMPDeviceImpl.out.println("adding keys ");
-//System.out.println("add keys");
+            
             for (int i = 0; i < keys.length; i++) {
                 add(i, keys[i], send);
 
@@ -867,10 +983,7 @@ public class SMPDeviceImpl {
 
             SMPSendRequest check(int context, ProcessID destID, ProcessID srcID, int tag) {
             Key key = new Key(context, destID, srcID, tag);
-          //  System.out.println(" SMPdevImpl Sendqueue rem - - Check");
-
-          //  key.tostring();
-
+          
             return (SMPSendRequest)map.get(key);
 
         }
