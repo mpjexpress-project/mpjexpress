@@ -94,9 +94,14 @@ public class MPJRun {
   String className = null ; 
   String applicationClassPathEntry = null ; 
   ByteBuffer buffer = null;
+  
+	// variables for Hybrid device
+  private int netID = -1;
+  private int noOfMachines= -1;
+	private int nioProcs= -1;	
 
   static final boolean DEBUG = false ; 
-  static final String VERSION = "0.38" ; 
+  static final String VERSION = "0.39" ; 
   private static int RUNNING_JAR_FILE = 2 ; 
   private static int RUNNING_CLASS_FILE = 1 ; 
 
@@ -155,8 +160,16 @@ public class MPJRun {
 
     readMachineFile();
     machinesSanityCheck() ;
-    assignTasks();
-
+    
+    //for Hybrid device number of processes per node assignment is 
+      //changed from that of NIO/MX dev
+    if (deviceName.equals("hybdev")){				
+			assignTasksHyb();
+		}
+    else{
+			//for NIO/MX device
+			assignTasks();
+		}
     urlArray = applicationClassPathEntry.getBytes();
 
     peerChannels = new Vector<SocketChannel>();
@@ -198,11 +211,20 @@ public class MPJRun {
 
       int nProcesses = nProcessesInt.intValue();
 	  /* FIX ME By Amjad Aziz & Rizwan Hanif
-	  *  sending the starting rank to peer processi.e Daemon*/
-      pack(nProcesses, peersStartingRank); 
-      peersStartingRank += nProcesses;
-
-      if(DEBUG && logger.isDebugEnabled()) { 
+	  *  sending the starting rank to peer process i.e Daemon*/
+      
+			//------------------------------------ Hybrid -----------------------------
+			if (deviceName.equals("hybdev")) {
+				//starting NETID of hybrid device should be adjusted according to node 
+        //(NioProcessCount, StartingRank)
+        pack(nProcesses, j); 		
+			}
+			else{
+        //giving starting rank for processes on one compute node 
+				pack(nProcesses, peersStartingRank); 
+				peersStartingRank += nProcesses;						
+      }
+			if(DEBUG && logger.isDebugEnabled()) { 
 	    logger.debug("Sending to " + socketChannel);
       }
 
@@ -227,9 +249,19 @@ public class MPJRun {
     addShutdownHook();
 
     /* waiting to get the answer from the daemons that the job has finished. */
+    if(DEBUG && logger.isDebugEnabled()) {
+      logger.debug(" returned from addShutdownHook and putting in wait " );
+    }
+    
     Wait();
-
-    if(DEBUG && logger.isDebugEnabled())
+    
+    if(DEBUG && logger.isDebugEnabled()) {
+      logger.debug(" done with wait, calling finish() method ");
+    }
+    
+//		System.out.println("Calling the finish method");
+		
+		if(DEBUG && logger.isDebugEnabled())
       logger.debug("Calling the finish method now");
 
     this.finish();
@@ -342,7 +374,51 @@ public class MPJRun {
     buffer.put("dev-".getBytes());
     buffer.putInt(deviceName.getBytes().length);
     buffer.put(deviceName.getBytes(), 0, deviceName.getBytes().length); 
-	    
+	  
+		
+		//for Hybrid, passing on NIO process count
+		if (deviceName.equals("hybdev")){
+				
+			buffer.put("npr-".getBytes());			//npr stands for NIO Processes
+		 
+			if(DEBUG && logger.isDebugEnabled()) {
+				logger.debug("buffer " + buffer);
+			}
+
+			buffer.putInt(4);
+
+			if(DEBUG && logger.isDebugEnabled()) {
+				logger.debug("buffer(after writing 4) " + buffer);
+				logger.debug("NIO Processes " + nioProcs);
+			}
+
+			buffer.putInt(nioProcs);
+
+			if(DEBUG && logger.isDebugEnabled()) {
+				logger.debug("buffer(after NioProcesses) " + buffer);
+			}
+
+			buffer.put("tpr-".getBytes());
+		 
+			if(DEBUG && logger.isDebugEnabled()) {
+				logger.debug("buffer " + buffer);
+			}
+
+			buffer.putInt(4);
+
+			if(DEBUG && logger.isDebugEnabled()) {
+				logger.debug("buffer(after writing 4) " + buffer);
+				logger.debug("Total Processes(np) " + nprocs);
+			}
+
+			buffer.putInt(nprocs);
+
+			if(DEBUG && logger.isDebugEnabled()) {
+				logger.debug("buffer(after Total Processes i.e. np) " + buffer);
+			}
+		} //-------------------------------------end Hybrid Dev specific buffer
+	
+		
     buffer.put("app-".getBytes());
     buffer.putInt(aArgs.length); 
 
@@ -451,16 +527,17 @@ public class MPJRun {
       else if (args[i].equals("-dev")) {
         deviceName = args[i+1];
         i++;
-	if(!(deviceName.equals("niodev") || deviceName.equals("mxdev") ||
-	                    deviceName.equals("multicore"))){
-	  System.out.println("MPJ Express currently does not support the <"+
-	                                   deviceName+"> device.");
-          System.out.println("Possible options are niodev, mxdev, and "+
-	                               "multicore devices.");
-	  System.out.println("exiting ...");
-	  System.exit(0); 
-	}
-      } 
+			if(!(deviceName.equals("niodev") || deviceName.equals("mxdev") || 
+				deviceName.equals("hybdev") ||  deviceName.equals("multicore"))){
+							System.out.println("MPJ Express currently does not support the <"+
+																					 deviceName+"> device.");
+								System.out.println("Possible options are niodev, mxdev, hybdev, and "+
+																			 "multicore devices.");
+					System.out.println("exiting ...");
+					System.exit(0); 
+				}
+				System.out.println("MPJ Express selected device to run is ("+deviceName+")");
+      }
 
       else if (args[i].equals("-machinesfile")) {
         machinesFile = args[i+1];
@@ -633,6 +710,9 @@ public class MPJRun {
 	if(deviceName.equals("niodev")) { 
           CONF_FILE_CONTENTS += ";"+(String) machineVector.get(i)+"@"
                                     + MPJ_SERVER_PORT + "@" + (rank++) ;
+				} else if(deviceName.equals("hybdev")) { 
+						CONF_FILE_CONTENTS += ";"+(String) machineVector.get(i)+"@"
+																					+ MPJ_SERVER_PORT + "@" + (rank++) ;
 	} else if(deviceName.equals("mxdev")) { 
           CONF_FILE_CONTENTS += ";"+(String) machineVector.get(i)+"@"
                                     + mxBoardNum + "@" + (rank++) ;
@@ -674,6 +754,9 @@ public class MPJRun {
 	  
           for (int j = 0; j < (divisor + 1); j++) {
             if(deviceName.equals("niodev")) { 		  
+							CONF_FILE_CONTENTS += ";"+(String) machineVector.get(i)+"@"+
+																	(MPJ_SERVER_PORT + (j * 2)) + "@" + (rank++) ;
+						} if(deviceName.equals("hybdev")) { 		  
               CONF_FILE_CONTENTS += ";"+(String) machineVector.get(i)+"@"+
                                 (MPJ_SERVER_PORT + (j * 2)) + "@" + (rank++) ;
 	    } else if(deviceName.equals("mxdev")) { 
@@ -703,6 +786,37 @@ public class MPJRun {
     } 
   }
 
+	//________________ HD _________________________
+	
+	private void assignTasksHyb() throws Exception {
+		
+		noOfMachines = machineVector.size();
+		nioProcs=-1;
+		if (nprocs <= noOfMachines){						
+			nioProcs=nprocs;
+		}
+		else{												//when np is higher than the nodes available
+			nioProcs=noOfMachines;
+		} 
+		netID=0;
+    
+		CONF_FILE_CONTENTS += ";" + "# Number of NIO Processes" ;
+    CONF_FILE_CONTENTS += ";" + nioProcs ;
+    CONF_FILE_CONTENTS += ";" + "# Protocol Switch Limit" ;
+    CONF_FILE_CONTENTS += ";" + psl;
+    CONF_FILE_CONTENTS += ";" + "# Entry, HOST_NAME/IP@SERVERPORT@NETID" ;
+    //One NIO Process per machine is being implemented, SMP Threads per node will be decided in SMPDev
+		for (int i = 0; i < nioProcs; i++) {
+			procsPerMachineTable.put( (String) machineVector.get(i), 1);						//np because each node will have at max 1 NIODev Process and np is required on each node to calculate SMP processes required at that node    
+					CONF_FILE_CONTENTS += ";"+(String) machineVector.get(i)+"@"
+																				+ MPJ_SERVER_PORT + "@" + (netID++) ;
+		}
+		if(DEBUG && logger.isDebugEnabled()) {
+			logger.debug("procPerMachineTable==>" + procsPerMachineTable);
+		}
+	
+	}
+	
   private void machinesSanityCheck() throws Exception {
 	  
     for(int i=0 ; i<machineVector.size() ; i++) {
