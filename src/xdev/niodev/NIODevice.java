@@ -31,8 +31,8 @@
  * File         : NIODevice.java
  * Author       : Aamir Shafi, Bryan Carpenter
  * Created      : Thu Apr  9 12:22:15 BST 2004
- * Revision     : $Revision: 1.28 $
- * Updated      : $Date: 2006/10/20 17:24:47 $
+ * Revision     : $Revision: 1.29 $
+ * Updated      : $Date: 2013/12/17 17:24:47 $
  *
  */
 
@@ -47,8 +47,7 @@ import mpjdev.*;
 import java.util.concurrent.Semaphore;
 import xdev.*;
 import java.io.IOException;
-import java.io.File; 
-import mpi.ProcTree;
+import java.io.File;
 
 import org.apache.log4j.Logger;
 
@@ -328,22 +327,31 @@ public class NIODevice
     }
 
     void add(NIORecvRequest request) {
-      request.recvKey = new NIODevice.Key(request.context, request.srcUUID,
-                                          request.tag);
+      /*
+       * Checking if Hybrid device is enabled then source and destination of 
+       * message in key should be Hybrid source and destination, not those of 
+       * Network source and destination
+       */
+      if (isHybrid) {
+        request.recvKey = new NIODevice.Key(request.context,
+            request.dstHybUUID, request.srcHybUUID, request.tag);
+    
+      } else {
+        request.recvKey = new NIODevice.Key(request.context, request.dstUUID,
+            request.srcUUID, request.tag);            
+      }
+
       add(request.recvKey, request);
     }
 
-    NIORecvRequest rem(int context, UUID srcUUID, int tag) {
+    NIORecvRequest rem(int context, UUID dstUUID, UUID srcUUID, int tag) {
 
       Key[] keys = new NIODevice.Key[] {
-          new NIODevice.Key(context, srcUUID, tag),
-          new NIODevice.Key(context,
-                            srcUUID, xdev.Device.ANY_TAG),
-          new NIODevice.Key(context, xdev.Device.ANY_SRC.uuid(),
-                            tag),
-          new NIODevice.Key(context, xdev.Device.ANY_SRC.uuid(),
-                            xdev.Device.ANY_TAG)
-      };
+          new NIODevice.Key(context, dstUUID, srcUUID, tag),
+          new NIODevice.Key(context, dstUUID, srcUUID, xdev.Device.ANY_TAG),
+          new NIODevice.Key(context, dstUUID, xdev.Device.ANY_SRC.uuid(), tag),
+          new NIODevice.Key(context, dstUUID, xdev.Device.ANY_SRC.uuid(),
+              xdev.Device.ANY_TAG) };
 
       NIORecvRequest matchingRecv = null;
 
@@ -374,8 +382,9 @@ public class NIODevice
     private HashMap<Key, NIORecvRequest> map =
         new HashMap<Key, NIORecvRequest> ();
 
-    NIORecvRequest rem(int context, UUID srcUUID, int tag) {
-      Key key = new Key(context, srcUUID, tag);
+    NIORecvRequest rem(int context, UUID dstUUID, UUID srcUUID, int tag) {
+
+      Key key = new Key(context, dstUUID, srcUUID, tag);
       NIORecvRequest matchingSend = get(key);
 
       if (matchingSend != null) {
@@ -383,9 +392,35 @@ public class NIODevice
         for (int i = 0; i < keys.length; i++) {
           rem(i, keys[i], matchingSend);
         }
-      }
-
+      }     
+      
       return matchingSend;
+    }
+    
+    NIORecvRequest remForIprobeAndFetch(int context, UUID dstUUID, UUID srcUUID, int tag) {
+
+      Key key = new Key(context, dstUUID, srcUUID, tag);
+      NIORecvRequest request = get(key);
+
+      if ( request != null ) {
+        
+        if (((request.sBufSize + request.dBufSize) <= psl)
+                && request.commMode == STD_COMM_MODE) {
+          
+          Key[] keys = request.arrKeys;
+          for (int i = 0; i < keys.length; i++) {
+            rem(i, keys[i], request);
+          }
+          request.notifyMe() ;
+          return request;
+        }
+        else if ((((request.sBufSize + request.dBufSize) > psl) && request.commMode == STD_COMM_MODE)
+          || (request.commMode == SYNC_COMM_MODE)) {
+          return request;
+        }
+      }
+      
+      return request;
     }
 
     private NIORecvRequest get(Key key) {
@@ -435,53 +470,85 @@ public class NIODevice
       }
     }
 
-    NIORecvRequest check(int context, UUID srcUUID, int tag) {
-      Key key = new Key(context, srcUUID, tag);
+    NIORecvRequest check(int context, UUID dstUUID, UUID srcUUID, int tag) {
+      Key key = new Key(context, dstUUID, srcUUID, tag);
       return get(key);
     }
 
     void add(NIORecvRequest request) {
 
-      request.arrKeys = new NIODevice.Key[] {
-          new NIODevice.Key(request.context, request.srcUUID, request.tag),
-          new NIODevice.Key(request.context,
-                            request.srcUUID, xdev.Device.ANY_TAG),
-          new NIODevice.Key(request.context, xdev.Device.ANY_SRC.uuid(),
-                            request.tag),
-          new NIODevice.Key(request.context, xdev.Device.ANY_SRC.uuid(),
-                            xdev.Device.ANY_TAG)
-      };
+      /*
+       * Checking if Hybrid device is enabled then source and destination of 
+       * message in key should be Hybrid source and destination, not those of 
+       * Network souruce and destination.
+       * 50 context is reserved for finish method message so that message should
+       * always be treat as NIO message, as it is used to finshi NIO device.
+       */
+      
+      
+      if (isHybrid && (request.context != 50)) {
+        request.arrKeys = new NIODevice.Key[] {
+            new NIODevice.Key(request.context, request.dstHybUUID,
+                request.srcHybUUID, request.tag),
+            new NIODevice.Key(request.context, request.dstHybUUID,
+                request.srcHybUUID, xdev.Device.ANY_TAG),
+            new NIODevice.Key(request.context, request.dstHybUUID,
+                xdev.Device.ANY_SRC.uuid(), request.tag),
+            new NIODevice.Key(request.context, request.dstHybUUID,
+                xdev.Device.ANY_SRC.uuid(), xdev.Device.ANY_TAG) };
+      //  System.out.println(" ArrQue.add() =>  HYB Src:"+request.srcHybUUID+" HYB Dst:"+request.dstHybUUID +
+      //    " tag:"+request.tag+" Context:"+request.context+" isHybrid:"+isHybrid) ;
+      } else {
 
+        request.arrKeys = new NIODevice.Key[] {
+            new NIODevice.Key(request.context, request.dstUUID,
+                request.srcUUID, request.tag),
+            new NIODevice.Key(request.context, request.dstUUID,
+                request.srcUUID, xdev.Device.ANY_TAG),
+            new NIODevice.Key(request.context, request.dstUUID,
+                xdev.Device.ANY_SRC.uuid(), request.tag),
+            new NIODevice.Key(request.context, request.dstUUID,
+                xdev.Device.ANY_SRC.uuid(), xdev.Device.ANY_TAG) };
+        
+      }
       for (int i = 0; i < request.arrKeys.length; i++) {
         add(i, request.arrKeys[i], request);
       }
-
     }
 
   }
 
   class Key {
+    /*
+     * key is updated to have four tuples, as in Hybrid communication source,
+     * destination, tag and context are minimum requirements to uniqely identify 
+     * the message. So key mechanism of NIODevice is updated to meet requirements. 
+     * All addition and removal from the message queues is based on the 4-tuple key
+     */
 
     private int context, tag;
 
     private UUID srcUUID;
+    private UUID dstUUID;
 
-    Key(int context, UUID srcUUID, int tag) {
+    Key(int context, UUID dstUUID, UUID srcUUID, int tag) {
       this.context = context;
+      this.dstUUID = dstUUID;
       this.srcUUID = srcUUID;
       this.tag = tag;
     }
 
     public int hashCode() {
-      return tag + context * 5 + srcUUID.hashCode() * 17;
+      return tag + context * 5 + srcUUID.hashCode() * 17 + dstUUID.hashCode()
+          * 19;
     }
 
     public boolean equals(Object obj) {
 
       if (obj instanceof Key) {
         Key other = (Key) obj;
-        return (other.context == context) && (srcUUID.equals(other.srcUUID))
-            && (other.tag == tag);
+        return (other.context == context) && (dstUUID.equals(other.dstUUID))
+            && (srcUUID.equals(other.srcUUID)) && (other.tag == tag);
       }
 
       return false;
@@ -495,13 +562,32 @@ public class NIODevice
    * Name of machine where this xdev process is running
    */
   String localHostName = null;
+    /*
+   * isHybrid switch is useful for using NIODevice within Hybrid Device. 
+   * It is set to true at the end of Hybrid Device init mehtod.
+   * isHybird switch is checked before adding and removing any message in the 
+   * Arrive Queueu and Recv Queue. If isHybrid switch is ON then in the message 
+   * key Hybrid Source and Destination are used else NIO Source and destination 
+   * are used.
+   */
+  public static boolean isHybrid = false;
+
 
   /* Server Socket Channel */
   ServerSocketChannel writableServerChannel = null;
 
   ServerSocketChannel readableServerChannel = null;
 
-  ByteBuffer rcb = ByteBuffer.allocate(45);
+  /*
+   * Initially CTRL_MSG_LENGTH was set to 45, to use NIODevice within Hybird
+   * device its CTRL_MSG_LENGTH is increased by 32, so it is 77 now. Hybrid
+   * Source and Destination is added in the message that means two UUID values
+   * so 32 bytes are required. NIODevice works fine on CTRL_MSG_LENGTH=77 as
+   * well, first 45 bytes will be used and rest of the 32 bytes will be null.
+   */
+  public static int CTRL_MSG_LENGTH = 77;
+
+  ByteBuffer rcb = ByteBuffer.allocate(CTRL_MSG_LENGTH);
 
   ByteBuffer rendezBuffer = ByteBuffer.allocate(8);
 
@@ -535,11 +621,11 @@ public class NIODevice
 
   private final int ACK_LENGTH = 17;
 
-  private final int CTRL_MSG_LENGTH = 45;
-  
-  int SEND_OVERHEAD = CTRL_MSG_LENGTH + 4 ;
+  // private final int CTRL_MSG_LENGTH = 45;
 
-  int RECV_OVERHEAD = 0; 
+  int SEND_OVERHEAD = CTRL_MSG_LENGTH + 4;
+
+  int RECV_OVERHEAD = 0;
 
   private final int STD_COMM_MODE = 3;
 
@@ -1226,18 +1312,138 @@ public class NIODevice
 
     try {
       sem.acquire();
+	  }    catch (Exception e) {
+	  	throw new XDevException(e);
+      }
+	  
+    NIORecvRequest request = arrQue.check(context, dstUUID, srcUUID, tag);
+		   
+		   if (request != null) {
+		           //now this is a tricky one ...
+	        status = new mpjdev.Status(request.srcUUID, //srcID.rank(),
+			request.tag, -1, request.type, 
+			request.numEls); 
+	  }
+	  sem.signal();
+	  return status;
+  }
+
+  /**
+   * Non-Blocking iprobeAndFetch method.
+   * 
+   * @param srcID
+   * @param dstID
+   * @param tag
+   * @param context
+   * @return mpjdev.Status
+   */
+  public mpjdev.Status iprobeAndFetch(ProcessID srcID, ProcessID dstID, int tag,
+      int context, mpjbuf.Buffer buf) throws XDevException {
+
+    UUID dstUUID = dstID.uuid(), srcUUID = srcID.uuid();
+    
+    mpjdev.Status status = null;
+    
+    if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
+      logger.debug("---iprobe---");
+      logger.debug("srcUUID:" + srcUUID + "tag:" + tag);
+      logger.debug("id.uuid():" + id.uuid());
+      logger.debug("ANY_SOURCE:" + ANY_SOURCE);
+      logger.debug("Looking whether this req has been posted or not");
     }
-    catch (Exception e) {
+    try {
+      sem.acquire();
+    } catch (Exception e) {
       throw new XDevException(e);
     }
 
-    NIORecvRequest request = arrQue.check(context, srcUUID, tag);
+    NIORecvRequest request = arrQue.remForIprobeAndFetch(context, dstUUID, srcUUID, tag);
 
     if (request != null) {
-        //now this is a tricky one ...
-        status = new mpjdev.Status(request.srcUUID, //srcID.rank(),
-                                   request.tag, -1, request.type,
-                                   request.numEls);
+      status = new mpjdev.Status(request.srcHybUUID, 
+          request.tag, -1, request.type, request.numEls);
+            
+      request.status = status;
+      
+      if (((request.sBufSize + request.dBufSize) <= psl)
+                && request.commMode == STD_COMM_MODE) {
+        sem.signal();
+        if (request.sBufSize > 0) {
+          request.staticBuffer = ((NIOBuffer) buf.getStaticBuffer()).getBuffer();
+          ByteBuffer eagerBuffer = ((NIOBuffer) request.eagerBuffer).getBuffer();
+          request.staticBuffer.position(0);
+          request.staticBuffer.limit(request.sBufSize);
+          eagerBuffer.limit(request.sBufSize);
+          eagerBuffer.position(0);
+          request.staticBuffer.put(eagerBuffer);
+          BufferFactory.destroy(request.eagerBuffer);
+        } // end if
+
+        if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
+          logger.debug("setting the buf size " + request.sBufSize);
+        }
+
+        buf.setSize(request.sBufSize);
+
+        if (request.dBufSize > 0) {
+          buf.setDynamicBuffer(request.dynamicBuffer);
+        }
+
+        if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
+          logger.debug("removed ");
+        }
+        return status;
+      }
+      else if ((((request.sBufSize + request.dBufSize) > psl) && request.commMode == STD_COMM_MODE)
+          || (request.commMode == SYNC_COMM_MODE)) {
+        sem.signal();
+        mpjdev.Request req = irecv(buf, new ProcessID(request.srcUUID), tag, context, status);
+       
+        return req.iwait();
+      }
+    }
+    //System.out.println (" niodev: incomplete Request, releasing lock in Fetch ");
+    sem.signal();
+    return status;   
+     
+  }
+  
+  /**
+   * Non-Blocking overloaded probe method.
+   * 
+   * @param srcID
+   * @param dstID
+   * @param tag
+   * @param context
+   * @return mpjdev.Status
+   */
+   
+    public mpjdev.Status iprobe(ProcessID srcID, ProcessID dstID, int tag,
+      int context) throws XDevException {
+
+    UUID dstUUID = dstID.uuid(), srcUUID = srcID.uuid();
+
+    mpjdev.Status status = null;
+
+    if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
+      logger.debug("---iprobe---");
+      logger.debug("srcUUID:" + srcUUID + "tag:" + tag);
+      logger.debug("id.uuid():" + id.uuid());
+      logger.debug("ANY_SOURCE:" + ANY_SOURCE);
+      logger.debug("Looking whether this req has been posted or not");
+    }
+    try {
+      sem.acquire();
+    } catch (Exception e) {
+      throw new XDevException(e);
+    }
+
+    NIORecvRequest request = arrQue.check(context, dstUUID, srcUUID, tag);
+
+    if (request != null) {
+      // now this is a tricky one ...
+      status = new mpjdev.Status(request.srcHybUUID, // srcID.rank(),
+          request.tag, -1, request.type, request.numEls);
     }
 
     sem.signal();
@@ -1278,7 +1484,7 @@ public class NIODevice
 
   private synchronized int hashCode(int tag, int context, int srcHash,
                                     int dstHash) {
-    return tag + context * 5 + dstHash * 11 + srcHash * 17;
+    return tag + context * 5 + dstHash * 11 + srcHash * 17 + dstHash * 19;
   }
 
   /**
@@ -1319,7 +1525,8 @@ public class NIODevice
         e.printStackTrace() ;	      
       }
 
-      NIORecvRequest recvRequest = recvQueue.rem(context, srcUUID, tag);
+      NIORecvRequest recvRequest = recvQueue
+          .rem(context, dstUUID, srcUUID, tag);
 
       NIOSendRequest sendRequest = new NIOSendRequest(tag, //NO_ACK_RECEIVED,
           id(), dstID, buf, context, STD_COMM_MODE, -1);
@@ -1478,7 +1685,8 @@ public class NIODevice
       sem.acquire();
       }catch(Exception e){}
 
-      NIORecvRequest recvRequest = recvQueue.rem(context, srcUUID, tag);
+      NIORecvRequest recvRequest = recvQueue
+          .rem(context, dstUUID, srcUUID, tag);
 
       NIOSendRequest sendRequest = new NIOSendRequest(tag, 
           id(), dstID, buf, context, SYNC_COMM_MODE, -1);
@@ -1650,7 +1858,21 @@ public class NIODevice
     request.staticBuffer.putInt(request.context);
     request.staticBuffer.putInt(request.numEls);
     request.staticBuffer.putInt(request.sendCounter);
-    request.staticBuffer.put( (byte) request.type.getCode());
+    request.staticBuffer.put((byte) request.type.getCode());
+    /*
+     * Checking if Hybrid device is enabled then source and destination of 
+     * message should be Hybrid source and destination, not those of 
+     * Network souruce and destination. So UUIDs of Hybrid source and destination 
+     * should be sent in the Ctrl message.
+     */
+    if (isHybrid) {
+      request.staticBuffer.putLong(request.srcHybUUID.getMostSignificantBits());
+      request.staticBuffer
+          .putLong(request.srcHybUUID.getLeastSignificantBits());
+      request.staticBuffer.putLong(request.dstHybUUID.getMostSignificantBits());
+      request.staticBuffer
+          .putLong(request.dstHybUUID.getLeastSignificantBits());
+    }
 
     request.staticBuffer.limit( request.bufoffset) ; 
     request.staticBuffer.position( 0 );
@@ -1700,12 +1922,27 @@ public class NIODevice
     request.staticBuffer.putInt(request.context);
     request.staticBuffer.putInt(request.numEls);
     request.staticBuffer.putInt(request.sendCounter);
-    request.staticBuffer.put( (byte) request.type.getCode() );
-					
-    //stop = System.nanoTime() ; 
-    //intv = stop - strt ;
-    //strt = stop;
-    //logger.debug("isend_packing_time_route1 <"+intv/1000);
+    request.staticBuffer.put((byte) request.type.getCode());
+    
+    /*
+     * Checking if Hybrid device is enabled then source and destination of 
+     * message should be Hybrid source and destination, not those of 
+     * Network souruce and destination. So UUIDs of Hybrid source and destination 
+     * should be sent in the eager message.
+     */
+    if (isHybrid) {
+      request.staticBuffer.putLong(request.srcHybUUID.getMostSignificantBits());
+      request.staticBuffer
+          .putLong(request.srcHybUUID.getLeastSignificantBits());
+      request.staticBuffer.putLong(request.dstHybUUID.getMostSignificantBits());
+      request.staticBuffer
+          .putLong(request.dstHybUUID.getLeastSignificantBits());
+    }
+
+    // stop = System.nanoTime() ;
+    // intv = stop - strt ;
+    // strt = stop;
+    // logger.debug("isend_packing_time_route1 <"+intv/1000);
 
     /* Writing the static section of the buffer */
     if (request.sBufSize > 0) {
@@ -1874,7 +2111,7 @@ public class NIODevice
 
 	request.inCompletedList = false;  
 	size-- ; 
-	System.out.println(" size "+size); 
+	//System.out.println(" size "+size); 
       }
     }
 
@@ -1904,7 +2141,7 @@ public class NIODevice
       
       oldFront.inCompletedList = false ; 
       size -- ;
-	System.out.println(" size "+size); 
+	//System.out.println(" size "+size); 
 
       return oldFront ;  
     }
@@ -1927,7 +2164,7 @@ public class NIODevice
         back = request ; 
       }
       size++ ;
-	System.out.println(" size "+size); 
+	// System.out.println(" size "+size); 
       request.inCompletedList = true ; 
       notify(); 
     }
@@ -1997,10 +2234,10 @@ public class NIODevice
    */
   public mpjdev.Status recv(mpjbuf.Buffer buf, ProcessID srcID,
                             int tag, int context) throws XDevException {
-    //System.out.println("recv calling "+tag);
+    
     mpjdev.Status status = new mpjdev.Status(srcID.uuid(), tag, -1);
     Request request = irecv(buf, srcID, tag, context, status);
-    //System.out.println("recv called "+tag);
+    
     return request.iwait();
 
   }
@@ -2018,7 +2255,25 @@ public class NIODevice
 
     UUID dstUUID = id.uuid();
     UUID srcUUID = srcID.uuid();
- 
+    UUID srcHybUUID = null, dstHybUUID = null;
+
+    if (isHybrid) {
+      ((NIOBuffer) buf.getStaticBuffer()).getBuffer().position(0);
+      long msb=0L, lsb=0L;
+      msb = ((NIOBuffer) buf.getStaticBuffer()).getBuffer().getLong();
+      lsb = ((NIOBuffer) buf.getStaticBuffer()).getBuffer().getLong();
+      srcHybUUID = new UUID(msb, lsb);
+      msb = ((NIOBuffer) buf.getStaticBuffer()).getBuffer().getLong();
+      lsb = ((NIOBuffer) buf.getStaticBuffer()).getBuffer().getLong();
+      dstHybUUID = new UUID(msb, lsb);
+
+      try {
+        buf.clear();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+
     if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
       logger.info("---irecv---<" + tag + ">");
       logger.debug("Looking whether this req has been posted or not");
@@ -2035,19 +2290,27 @@ public class NIODevice
     NIORecvRequest request = null;
 
     try {
-      request = arrQue.rem(context, srcUUID, tag);
-    }
-    catch (Exception e) {
-      throw new XDevException(e); 
+    /*
+     * Checking if Hybrid device is enabled then source and destination of 
+     * message should be Hybrid source and destination, not those of 
+     * Network souruce and destination. Key of message will be Hybrid Source and
+     * Destination.
+     */
+      if (isHybrid) {
+        request = arrQue.rem(context, dstHybUUID, srcHybUUID, tag);
+      } else {
+        request = arrQue.rem(context, dstUUID, srcUUID, tag);
+      }
+    } catch (Exception e) {
+      throw new XDevException(e);
     }
 
     if (request != null) {
+      // stop = System.nanoTime() ;
+      // intv = stop - strt ;
+      // strt = stop;
+      // logger.debug("irecv_determing_its_posted <"+intv/1000);
 
-      //stop = System.nanoTime() ; 
-      //intv = stop - strt ;
-      //strt = stop;
-      //logger.debug("irecv_determing_its_posted <"+intv/1000);
-      
       /*
        * some stuff is only known when the recv is posted ...so setting
        * that kinda stuff in the next few lines
@@ -2170,6 +2433,17 @@ public class NIODevice
                                  buf, context, status,
                                  ++recvCounter,
                                  nextSequenceNum++);
+
+    /*
+     * If Hybrid device is being used then Initialize Hybrid Souce and 
+     * Destination fields in Request object.
+     */
+    if (isHybrid) {
+      request.srcHybUUID = srcHybUUID;
+      request.dstHybUUID = dstHybUUID;
+    }
+    
+    
 
     if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
       logger.debug("request.staticBuffer (in recv) " + request.staticBuffer);
@@ -2313,8 +2587,14 @@ public class NIODevice
    * @throws IOException If some I/O error occurs
    */
   public synchronized void finish() throws XDevException {
-	  
-    //System.out.println(" finish starts");
+    /*
+     * Calling NIO device finish method. in NIO finish method all the 
+     * communication is purely for NIO device. No messages of Hybrid device is 
+     * expected, setting the switch to false. 
+     */
+     
+    isHybrid = false;
+    
     synchronized (finishLock) {
       if (finished) {
         return;
@@ -2356,7 +2636,7 @@ public class NIODevice
     }
     else {
       if (procTree.parent == -1) {
-        System.out.println("non root's node parent doesn't exist");
+       // System.out.println("non root's node parent doesn't exist");
       }
 
       for (int i = 0; i < procTree.child.length; i++) {
@@ -2736,7 +3016,19 @@ public class NIODevice
     byte t = rcb.get();
     mpjbuf.Type type = mpjbuf.Type.getType(t);
     UUID srcUUID = new UUID(msb, lsb);
-
+    UUID srcHybUUID = null, dstHybUUID = null;
+   
+   
+    // for Hybrid device    
+    if (isHybrid) {
+      msb = rcb.getLong();
+      lsb = rcb.getLong();
+      srcHybUUID = new UUID(msb, lsb);
+      msb = rcb.getLong();
+      lsb = rcb.getLong();
+      dstHybUUID = new UUID(msb, lsb);
+    }
+    
     rcb.clear();
 
     if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
@@ -2755,7 +3047,14 @@ public class NIODevice
 
     sem.acquire();
 
-    NIORecvRequest request = recvQueue.rem(context, srcUUID, tag);
+    NIORecvRequest request = null;
+
+    if (isHybrid) {
+      request = recvQueue.rem(context, dstHybUUID, srcHybUUID, tag);
+
+    } else {
+      request = recvQueue.rem(context, id().uuid(), srcUUID, tag);
+    }
 
     if (request != null) {
 
@@ -2763,8 +3062,14 @@ public class NIODevice
        * Rendezous, recv posted, message arrived, would
        * write control message back
        */
+      if (isHybrid) {
+        // TODO check if this is already populated
+        request.srcHybUUID = srcHybUUID;
+        request.dstHybUUID = dstHybUUID;
+      }
 
       request.srcUUID = srcUUID;
+      request.dstUUID = id().uuid();
       request.tag = tag;
       request.numEls = numEls;
       request.type = type;
@@ -2804,8 +3109,13 @@ public class NIODevice
                                  numEls, type,
                                  sendCounter, ++recvCounter, srcUUID);
 
-    if ( ( ( (staBufferSize + dynaBufferSize) <= psl) &&
-          commMode == STD_COMM_MODE)) {
+    // for Hybrid Device
+    if (isHybrid) {
+      request.srcHybUUID = srcHybUUID;
+      request.dstHybUUID = dstHybUUID;
+    }
+
+    if ((((staBufferSize + dynaBufferSize) <= psl) && commMode == STD_COMM_MODE)) {
 
       if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
         logger.debug("setting the request.code to RECV_IN_DEV_MEMORY");
