@@ -7,6 +7,7 @@
     <property name="mpjbuf.dir" value="src/mpjbuf"/>
     <property name="xdev.dir" value="src/xdev/"/>	
     <property name="niodev.dir" value="src/xdev/niodev"/>
+    <property name="hybdev.dir" value="src/xdev/hybdev"/>
     <property name="smpdev.dir" value="src/xdev/smpdev"/>   
     <property name="lib.dir" value="lib/"/>   
     <property name="src.dir" value="src"/>   
@@ -89,8 +90,8 @@
 
    <jar destfile="${lib.dir}/mpj.jar" basedir="src"
           includes="mpi/*.class mpjbuf/*.class mpjdev/*.class xdev/*.class
-	  	    xdev/niodev/*.class xdev/mxdev/*.class">
-	  <manifest>
+	  	    xdev/niodev/*.class xdev/mxdev/*.class xdev/hybdev/*.class ">
+			<manifest>
             <attribute name="Class-path" value="log4j-1.2.11.jar"/>
           </manifest>
     </jar>
@@ -140,8 +141,15 @@
             <attribute name="Class-path" value="log4j-1.2.11.jar"/> 
           </manifest>  
      </jar>
-
-     <jar destfile="${lib.dir}/mxdev.jar" basedir="src"
+		
+		<jar destfile="${lib.dir}/hybdev.jar" basedir="src"
+          includes="xdev/hybdev/*.class">
+				<manifest>
+            <attribute name="Class-path" value="log4j-1.2.11.jar"/> 
+        </manifest>  
+    </jar>
+		
+    <jar destfile="${lib.dir}/mxdev.jar" basedir="src"
           includes="xdev/mxdev/*.class">
 	  <manifest>
             <attribute name="Class-path" value="log4j-1.2.11.jar"/> 
