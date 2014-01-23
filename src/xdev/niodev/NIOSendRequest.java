@@ -48,6 +48,7 @@ public class NIOSendRequest
 
   int bytesWritten = 0;
   int bufoffset = 0;
+  int defaultNioOffset = 49;
 
   NIOSendRequest(int tag, ProcessID srcID,ProcessID dstID, mpjbuf.Buffer buf, 
                  int context, int commMode, int sendCounter ) 
@@ -73,6 +74,23 @@ public class NIOSendRequest
     this.sendCounter = sendCounter ;
     //this.rank_source = dstID.rank() ; //shouldn't this be srcID.rank()? 
     this.bufoffset = buf.offset(); 
+    
+    
+    /*if NIODevice is being used in Hybrid device then add Hybrid Source 
+     * and Destination 
+     */
+    if (NIODevice.isHybrid) {
+      ((NIOBuffer) buf.getStaticBuffer()).getBuffer().position( defaultNioOffset ) ;
+      long longUuids [] = new long [4];
+      for (int i=0;i<4;i++){
+        longUuids [i]= ((NIOBuffer) buf.getStaticBuffer()).getBuffer().getLong();
+      }
+      this.srcHybUUID = new UUID (longUuids[0], longUuids[1]) ;
+      this.dstHybUUID = new UUID (longUuids[2], longUuids[3]) ;
+      
+		}
+    //System.out.println(" SendRequest=> NIO Src:"+srcUUID+" NIO Dst:"+dstUUID+" tag:"+tag+
+    //" Context:"+context+" HYB Src:"+srcHybUUID+" HYB Dst:"+dstHybUUID) ;
 
     if(buf.getDynamicBuffer() != null && buf.getDynamicBuffer().length > 0) {
       this.dynamicBuffer = buf.getDynamicBuffer() ;
@@ -90,7 +108,6 @@ public class NIOSendRequest
         this.waitMe();
       }
     }
-
     Status status = new Status(rank_source, tag, -1);
     complete(status);
     this.alreadyCompleted = true ; 
