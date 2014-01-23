@@ -41,6 +41,8 @@ import xdev.Device;
 import xdev.ProcessID;
 import org.apache.log4j.Logger ; 
 
+import java.net.*;
+
 public class MPJDev {
 
   public static Comm WORLD = null;
@@ -68,6 +70,8 @@ public class MPJDev {
 
         if (device.equals("niodev")) {
           dev = new xdev.niodev.NIODevice();
+        }else if (device.equals("hybdev")) {
+          dev = new xdev.hybdev.HYBDevice();
         } else if (device.equals("mxdev")) {
           dev = new xdev.mxdev.MXDevice();
         } else if (device.equals("smpdev")) {
@@ -81,7 +85,7 @@ public class MPJDev {
 
     if (dev == null) {
       System.out.println("Specified device: " + args[2]);
-      System.out.println("Available devices, niodev, smpdev, gmdev");
+      System.out.println("Available devices, niodev, smpdev, hybdev, mxdev");
       System.out.println("Error, cant execute, correct the device first");
       return dev ;
     }
