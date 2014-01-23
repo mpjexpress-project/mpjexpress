@@ -36,8 +36,11 @@ import org.apache.log4j.Logger;
  */
 public class SMPDevice implements Device {
 
-    static Logger logger = Logger.getLogger("mpj");
-
+    public static Logger logger = Logger.getLogger("mpj");
+		public static int SEND_OVERHEAD=0;
+		public static int RECV_OVERHEAD=0;
+		
+		
     /**
      * init
      * The question that is coming to me mind again and again is ...
@@ -228,7 +231,32 @@ public class SMPDevice implements Device {
         
    // return null;	  
 }
-
+  /**
+   * Non-Blocking overloaded probe method.
+   * 
+   * @param srcID
+   * @param dstID
+   * @param tag
+   * @param context
+   * @return mpjdev.Status
+   */  
+  public mpjdev.Status iprobeAndFetch(ProcessID srcID, ProcessID dstID, int tag,
+          int context, mpjbuf.Buffer buf) throws XDevException {
+    
+    return xdev.smpdev.SMPDeviceImpl.WORLD.iprobeAndFetch( srcID, dstID,  tag,
+          context,  buf);
+     
+  }
+  /**
+   * This method does not have any definitation, 
+   * It is added in xdev.Device.java
+   * Network device should have its implementation only
+   * */
+  public mpjdev.Status iprobe(ProcessID srcID, ProcessID dstID, int tag,
+            int context) throws XDevException { 
+    return null;
+  }
+  
 public mpjdev.Request peek() throws XDevException {
     return null ; 
   }
@@ -334,15 +362,11 @@ static   CompletedList completedList = new CompletedList() ;
 }
 
 /// ending here the pasting :)
-public int
-
-getRecvOverhead() { 
-    return 0 ; 
+	public int getRecvOverhead() { 
+    return RECV_OVERHEAD ; 
   }
 
-public int
-
-getSendOverhead() { 
-    return 0 ; 
+	public int getSendOverhead() { 
+    return SEND_OVERHEAD ; 
   }
 }
