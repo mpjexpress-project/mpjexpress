@@ -66,7 +66,7 @@ public abstract class NIORequest
   int context=-1, tag, commMode, rank_source=0, sBufSize=0, dBufSize=0 ; 
   int sendCounter, recvCounter,numEls=-1 ; 
   
-  UUID dstUUID, srcUUID;
+  UUID dstUUID, srcUUID, dstHybUUID=null, srcHybUUID=null;
   mpjdev.Status status = null;
   mpjbuf.Buffer buffer = null;
   mpjbuf.Type type = null;
