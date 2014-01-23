@@ -94,15 +94,21 @@ public class MPJDaemon {
   private String mpjHomeDir = null ;  
   private String configFileContent = null ;
 
-  public MPJDaemon(String args[]) throws Exception {
-	  
-    InetAddress localaddr = InetAddress.getLocalHost();
-    String hostName = localaddr.getHostName();
-    MPJCONF_DIR_NAME = MPJCONF_DIR_NAME +"_"+hostName;
-    Map<String,String> map = System.getenv() ;
-    mpjHomeDir = map.get("MPJ_HOME");
-			    
-    createLogger(mpjHomeDir, hostName); 
+	// Hybrid variables
+	private static int RUNNING_JAR_FILE = 2;
+	private static int RUNNING_CLASS_FILE = 1;
+	private int nioProcs = -1;
+	private int nprocs = -1;
+
+	public MPJDaemon(String args[]) throws Exception {
+
+		InetAddress localaddr = InetAddress.getLocalHost();
+		String hostName = localaddr.getHostName();
+		MPJCONF_DIR_NAME = MPJCONF_DIR_NAME + "_" + hostName;
+		Map<String, String> map = System.getenv();
+		mpjHomeDir = map.get("MPJ_HOME");
+
+		createLogger(mpjHomeDir, hostName);
 
     if(DEBUG && logger.isDebugEnabled()) { 
       logger.debug("mpjHomeDir "+mpjHomeDir); 
@@ -112,7 +118,7 @@ public class MPJDaemon {
 	    
       if(DEBUG && logger.isDebugEnabled()) { 
         logger.debug (" args[0] " + args[0]);
-        logger.debug ("setting daemon port to" + args[0]);
+        logger.debug ("Setting daemon port to" + args[0]);
       }
 
       D_SER_PORT = new Integer(args[0]).intValue();
@@ -139,7 +145,9 @@ public class MPJDaemon {
                                      + CONF_FILE_NAME  ;
 
     /* ends here */
-
+		if (DEBUG && logger.isDebugEnabled()) {
+			logger.debug("Config File:" + configFileName);
+		}
     serverSocketInit();
     Thread selectorThreadStarter = new Thread(selectorThread);
     
@@ -212,8 +220,8 @@ public class MPJDaemon {
 
       bufferedReader = new BufferedReader(new InputStreamReader(in));
 
-      OutputHandler [] outputThreads = new OutputHandler[processes] ;  
-      p = new Process[processes] ;  
+			//OutputHandler[] outputThreads = new OutputHandler[processes];
+			//p = new Process[processes];
 
       /* XXX By Rizwan Hanif : Trying to wait for the confFile to be 
                                ready for reading */
@@ -222,14 +230,94 @@ public class MPJDaemon {
       while((tempLine = bufferedReader.readLine()) == null);
 
       if(DEBUG && logger.isDebugEnabled()) { 
-        logger.debug ("ConfFile ready with line = "+tempLine);
-      }
+        logger.debug ("ConfFile ready with line = "+tempLine); 
+		}
+      /* Switch for Hybrid Device to launch 
+       * For Hybrid device we only need to launch Hybrid Daemon from here.
+       * 
+       * */
+			if (deviceName.equals("hybdev")) {
+				if (DEBUG && logger.isDebugEnabled()) {
+          logger.debug(" MPJDaemon, in the Hybrid Dev switch");
+        }
+        
+				int jarOrClass = (applicationClassPathEntry.endsWith(".jar") ? RUNNING_JAR_FILE
+						: RUNNING_CLASS_FILE);
 
-      /* Step 1 ends here*/
+				// appArgs.set(2, Integer.toString(startingRank) );
+				/*
+				 * System.out.println (
+				 * "in MPJDaemon Hybrid section and calling HybridDaemon: \n className: "
+				 * +className.toString()+
+				 * " \n applicationClassPathEntry: "+applicationClassPathEntry
+				 * .toString()+ " \n jarOrClass: "+jarOrClass+
+				 * " \n nprocs: "+nprocs + " \n wdir: "+wdir.toString()+
+				 * " \n jvmArgs: "+jvmArgs.toString()+
+				 * " \n appArgs: "+appArgs.toString()+ " \n nioProcs: "+nioProcs
+				 * + " \n NIO Rank (netID): "+ startingRank +
+				 * " \n NIO Config File: "+ configFile);
+				 */
+        
+        if (DEBUG && logger.isDebugEnabled()) {
+					logger.debug("Number of processes:" + processes
+							+ "; Starting Rank:" + startingRank + "; at host: "
+							+ hostName);
+				} 
+				
+        HybridDaemon hybDaemon = new HybridDaemon(className,
+						applicationClassPathEntry, jarOrClass, nprocs, wdir,
+						jvmArgs, appArgs, nioProcs, startingRank,
+						configFileName);
+            
 
-      /* XXX BY RIZWAN HANIF: Step 2 Processing arguments for launching.  
-	  As all MPI Processes are identical so will be same for all*/
-      /* Step 2: Argument Processing */ 
+				
+        try {
+					bufferedReader.close();
+					in.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+        
+        MPJProcessPrintStream.stop();
+        
+        try {
+					if (DEBUG && logger.isDebugEnabled()) {
+						logger.debug("MPJDaemon-Hyb: Checking whether peerChannel is closed or what ?"
+								+ peerChannel.isOpen());
+					}
+
+					if (peerChannel.isOpen()) {
+						if (DEBUG && logger.isDebugEnabled()) {
+							logger.debug("MPJDaemon-Hyb: Closing it ..." + peerChannel);
+						}
+						peerChannel.close();
+					}
+
+					if (DEBUG && logger.isDebugEnabled()) {
+						logger.debug("MPJDaemon-Hyb: Was already closed, or i closed it");
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+        
+ 				//It restores the variable values so that next 
+        //job execution start from clean environment
+        restoreVariables();
+        
+        if (DEBUG && logger.isDebugEnabled()) {
+					logger.debug("\n\n ** Hybrid execution ends .. ** \n\n");
+				}
+        
+			} else {
+        OutputHandler[] outputThreads = new OutputHandler[processes];
+        p = new Process[processes];
+				/* Step 1 ends here */
+				/*
+				 * XXX BY RIZWAN HANIF: Step 2 Processing arguments for
+				 * launching. As all MPI Processes are identical so will be same
+				 * for all
+				 */
+				/* Step 2: Argument Processing */
 
       String[] jArgs = jvmArgs.toArray(new String[0]); 
       boolean now = false;
@@ -393,7 +481,7 @@ public class MPJDaemon {
       if(DEBUG && logger.isDebugEnabled()) { 
         logger.debug("\n\n ** .. execution ends .. ** \n\n");
       }
-
+	}
     } //end while(true)
   }
 	
@@ -845,23 +933,66 @@ public class MPJDaemon {
 				  }
                   lilBuffer2.clear();
 
-                } else if (read.equals("srk-")) {
-	       
-                  if(DEBUG && logger.isDebugEnabled()) { 
-                    logger.debug ("srk-");
-				  }
-                  int length = lilBuffer.getInt();
-                  if(DEBUG && logger.isDebugEnabled()) { 
-                    logger.debug ("size of starting rank should be 4" + length);
-				  }
-                  lilBuffer.clear();
-                  socketChannel.read(lilBuffer2);
-                  lilBuffer2.flip();
-                  startingRank = lilBuffer2.getInt();
-                  if(DEBUG && logger.isDebugEnabled()) { 
-                    logger.debug ("Starting rank of processes ==>" 
-                                                    + startingRank);
-				  }
+								} else if (read.equals("npr-")) { // for Hybrid
+																	// Device
+																	// NIO
+																	// processes
+									if (DEBUG && logger.isDebugEnabled()) {
+										logger.debug("npr-");
+									}
+									int length = lilBuffer.getInt();
+									if (DEBUG && logger.isDebugEnabled()) {
+										logger.debug("should be 4, isit ? -->"
+												+ length);
+									}
+									lilBuffer.clear();
+									socketChannel.read(lilBuffer2);
+									lilBuffer2.flip();
+									nioProcs = lilBuffer2.getInt();
+									if (DEBUG && logger.isDebugEnabled()) {
+										logger.debug("Num of NIO Processes ==>"
+												+ nioProcs);
+									}
+									lilBuffer2.clear();
+								} else if (read.equals("tpr-")) { // for Hybrid
+																	// Device
+																	// Total
+																	// Process
+									if (DEBUG && logger.isDebugEnabled()) {
+										logger.debug("tpr-");
+									}
+									int length = lilBuffer.getInt();
+									if (DEBUG && logger.isDebugEnabled()) {
+										logger.debug("should be 4, isit ? -->"
+												+ length);
+									}
+									lilBuffer.clear();
+									socketChannel.read(lilBuffer2);
+									lilBuffer2.flip();
+									nprocs = lilBuffer2.getInt();
+									if (DEBUG && logger.isDebugEnabled()) {
+										logger.debug("Num of Total Processes ==>"
+												+ nprocs);
+									}
+									lilBuffer2.clear();
+								} else if (read.equals("srk-")) {
+
+									if (DEBUG && logger.isDebugEnabled()) {
+										logger.debug("srk-");
+									}
+									int length = lilBuffer.getInt();
+									if (DEBUG && logger.isDebugEnabled()) {
+										logger.debug("size of starting rank should be 4"
+												+ length);
+									}
+									lilBuffer.clear();
+									socketChannel.read(lilBuffer2);
+									lilBuffer2.flip();
+									startingRank = lilBuffer2.getInt();
+									if (DEBUG && logger.isDebugEnabled()) {
+										logger.debug("Starting rank of processes ==>"
+												+ startingRank);
+									}
 
                   lilBuffer2.clear();
                 } else if (read.equals("arg-")) {
