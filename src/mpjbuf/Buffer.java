@@ -414,6 +414,10 @@ public class Buffer {
     public int offset() {
       return bufoffset ;	    
     }
+    
+    public void setOffset( int offSet) {
+      this.bufoffset=offSet ;	    
+    }
 
     /**
      * Creates a buffer with specified rawbuffer, and staring
