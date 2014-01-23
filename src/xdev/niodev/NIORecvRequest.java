@@ -138,8 +138,11 @@ public class NIORecvRequest
   }
 
   public Status iwait() {
-    if(alreadyCompleted) { 
-      return status ; 	    
+    if(alreadyCompleted) {
+		if (NIODevice.isHybrid) {
+			status.srcID = this.srcHybUUID;
+		}
+    return status ; 	    
     }
 
     this.waitMe();
@@ -150,7 +153,13 @@ public class NIORecvRequest
     //status.source = this.rank_source; [ we dont know rank at this level]
     status.numEls = this.numEls;
     status.type = this.type;
+    
+    if (NIODevice.isHybrid) {
+	 status.srcID = this.srcHybUUID;
+	}else{
     status.srcID = this.srcUUID;
+	}
+    
     complete(status);
     this.alreadyCompleted = true ; 
     return status;
