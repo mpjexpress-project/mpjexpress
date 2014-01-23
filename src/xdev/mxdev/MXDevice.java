@@ -403,6 +403,16 @@ public class MXDevice implements Device {
     status.srcID = pids[status.source].uuid(); 
     return status;	  
   }
+  
+  public mpjdev.Status iprobe(ProcessID srcID, ProcessID dstID, int tag,
+            int context) throws XDevException { 
+    return null;
+  }
+  
+  public mpjdev.Status iprobeAndFetch(ProcessID srcID, ProcessID dstID, int tag,
+    int context, mpjbuf.Buffer buf) throws XDevException {
+    return null;
+  }
 
   public mpjdev.Status iprobe(ProcessID srcID, int tag,
                                        int context) throws XDevException {
