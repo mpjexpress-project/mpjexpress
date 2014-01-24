@@ -1,11 +1,12 @@
 /*
  The MIT License
- //NIORequest.java
- Copyright (c) 2005 - 2008
-   1. Distributed Systems Group, University of Portsmouth (2005)
-   2. Aamir Shafi (2005 - 2008)
-   3. Bryan Carpenter (2005 - 2008)
-   4. Mark Baker (2005 - 2008)
+
+ Copyright (c) 2005 - 20013
+   1. SEECS National University of Sciences and Technology
+   2. Aamir Shafi (2005 - 2013)
+   3. Ansar Javed (2013 - 2013)
+   4. Mohsan Jameel (2013 - 2013)
+   5. Bibrak Qamar  (2013 - 2013)
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
