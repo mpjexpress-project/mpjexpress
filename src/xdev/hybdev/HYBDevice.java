@@ -373,15 +373,18 @@ public class HYBDevice implements Device {
         RawBuffer bcastSendRawBuffer = BufferFactory.create(bcastBufSize);
         mpjbuf.Buffer bcastSendBuffer = new mpjbuf.Buffer(bcastSendRawBuffer,
             SEND_OVERHEAD, bcastBufSize);
-        bcastSendBuffer.putSectionHeader(Type.LONG);
-        bcastSendBuffer.write(splittedUuids, 0, splittedUuids.length);
-        bcastSendBuffer.commit();
+        
         for (int i = 1; i < nioProcs; i++) {
+          bcastSendBuffer.putSectionHeader(Type.LONG);
+          bcastSendBuffer.write(splittedUuids, 0, splittedUuids.length);
+          bcastSendBuffer.commit();
+          
           updateBuffer(bcastSendBuffer, Npids[0], Npids[i], NET_SEND_OVERHEAD, SEND_OVERHEAD);
-          // sending to all in loop with a randomly decided tag and context
+          
           nioHybDev.send(bcastSendBuffer, Npids[i], 100, 1000);
+          
+          bcastSendBuffer.clear();
         }
-
         BufferFactory.destroy(bcastSendRawBuffer);
        
       }
