@@ -42,7 +42,7 @@ import java.net.*;
 import java.io.*;
 import java.lang.reflect.* ;
 
-public class Wrapper {
+public class Wrapper  extends Thread{
 
   String configFileName = null;
   int processes = 0;
@@ -52,8 +52,9 @@ public class Wrapper {
   String rank = null ; 
   String [] nargs = null ; 
   String hostName = null ;
-
-  public Wrapper() {
+  String args[] = null;
+  public Wrapper(ThreadGroup group,String name) {
+  super(group,name);
   }
 
   /**
@@ -116,9 +117,20 @@ public class Wrapper {
     }
 
   } 
-
+  public void run(){
+		try{
+	    execute(args);
+		}catch(Exception ex){ex.printStackTrace();}
+  }
   public static void main(String args[]) throws Exception {
-    Wrapper wrap = new Wrapper();
-    wrap.execute(args);
+   // Wrapper wrap = new Wrapper();
+   // wrap.execute(args);
+
+	ThreadGroup group = new ThreadGroup("MPI"+args[3]);
+	Wrapper wrap = new Wrapper(group,args[3]);
+	wrap.args = args;
+	//Thread runner = new Thread("Main",wrap,group);
+	wrap.start();
+	wrap.join();
   } 
 }
