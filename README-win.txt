@@ -137,6 +137,7 @@ your query/problem is still not resolved, contact us by emailing:
 
 1. MPJ Express mailing list: https://lists.sourceforge.net/lists/listinfo/mpjexpress-users
 2. Aamir Shafi (aamir.shafi@seecs.edu.pk)
-3. Bryan Carpenter (bryan.carpenter@port.ac.uk)
-4. Mark Baker (http://acet.rdg.ac.uk/~mab)
-5. Guillermo Lopez Taboada (http://www.des.udc.es/~gltaboada)
+3. Mohsan Jameel (mohsan.jameel@seecs.edu.pk)
+4. Bryan Carpenter (bryan.carpenter@port.ac.uk)
+5. Mark Baker (http://acet.rdg.ac.uk/~mab)
+6. Guillermo Lopez Taboada (http://www.des.udc.es/~gltaboada)
