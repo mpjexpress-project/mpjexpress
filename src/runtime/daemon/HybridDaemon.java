@@ -237,17 +237,26 @@ public class HybridDaemon {
     int CMD_WORDS = 8 ; 
 		int HYB_ARGS = 5;
 	
+     /* FIX ME: BY AMJAD AZIZ : 
+	    When launched in Debug Mode */
+    if(MPJDaemon.ADEBUG)
+      CMD_WORDS++;
+
     String[] aArgs = appArgs.toArray(new String[0]);
     String[] ex =
             new String[ (CMD_WORDS+jArgs.length+HYB_ARGS+aArgs.length) ];
-    ex[0] = "java";
+   if(MPJDaemon.APROFILE)
+   		 	ex[0] = "tau_java";
+    		else	
+    			ex[0] = "java";
 	
     for(int i=0 ; i< jArgs.length ; i++) {
       ex[i+1] = jArgs[i];
     }
 
     int indx = jArgs.length+1;
-	
+    if(MPJDaemon.ADEBUG)
+    ex[indx++] = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address="+MPJDaemon.startingDebugPort;
     ex[indx] = "runtime.daemon.HybridStarter" ; indx++ ; 
     ex[indx] = wdir; indx++ ; 
     ex[indx] = Integer.toString(SMPProcesses); indx++ ; 
