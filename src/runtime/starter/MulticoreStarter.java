@@ -319,7 +319,8 @@ synchronized(monitor) {
      for (num = 0; num < nprocs; num++) {
 
        //procs[num] = new Thread(ab[num]);
-       smpProcess[num] = new SMPDevProcess("smp-threadgroup"+num); 
+      // smpProcess[num] = new SMPDevProcess("smp-threadgroup"+num); 
+	smpProcess[num] = new SMPDevProcess("MPI"+num);
        procs[num] = new Thread(smpProcess[num],ab[num],""+nprocs); 
        String name = String.valueOf(num);
        procs[num].setName(name);
