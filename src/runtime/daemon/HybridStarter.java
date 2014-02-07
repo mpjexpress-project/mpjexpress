@@ -281,10 +281,14 @@ public class HybridStarter {
      int nprocs = processes;
      Thread procs[] = new Thread[nprocs];
      //System.out.println("nprocs " + nprocs);
-     for (num = 0; num < nprocs; num++) {
+ 	 // FIX ME By Aleem Akhtar :
+	 // setting all threads thred group to MPI${rank}.
+	 //so that we can differeniate them from other threads i.e. system threads  
+    for (num = 0; num < nprocs; num++) {
        //procs[num] = new Thread(ab[num]);
-       smpProcess[num] = new  SMPDevProcess("smp-threadgroup"+num); 
-       procs[num] = new Thread(smpProcess[num],ab[num],""+nprocs); 
+      // smpProcess[num] = new  SMPDevProcess("smp-threadgroup"+num); 
+        smpProcess[num] = new  SMPDevProcess("MPI"+num);
+	procs[num] = new Thread(smpProcess[num],ab[num],""+nprocs); 
        String name = String.valueOf(num);
        procs[num].setName(name);
        procs[num].start();
