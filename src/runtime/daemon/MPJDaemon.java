@@ -94,6 +94,11 @@ public class MPJDaemon {
   private String mpjHomeDir = null ;  
   private String configFileContent = null ;
 
+	// Debugger Variables
+	static public boolean ADEBUG = false ; //  for debugging user programs.
+	static public boolean APROFILE = false; // for profiling user programs.
+ 	static public int startingDebugPort = 25000;
+
 	// Hybrid variables
 	private static int RUNNING_JAR_FILE = 2;
 	private static int RUNNING_CLASS_FILE = 1;
@@ -370,14 +375,28 @@ public class MPJDaemon {
 	  /* FIX ME BY RIZWAN HANIF : 
 	      making arguments to launch MPI Processes*/
 	  int N_ARG_COUNT = 7 ; 
-      String[] ex = new String[(N_ARG_COUNT+jArgs.length+aArgs.length)]; 
+
+	if(ADEBUG)
+	N_ARG_COUNT++;
+	if(APROFILE)
+	N_ARG_COUNT++;
+
+	String[] ex = new String[(N_ARG_COUNT+jArgs.length+aArgs.length)]; 
       ex[0] = "java";
       //System.arraycopy ... can be used ..here ...
+	 
+	int increment = 1;
+	if(APROFILE)
+	increment++;
       for(int i=0 ; i<jArgs.length ; i++) { 
-          ex[i+1] = jArgs[i]; 	
+          ex[i+increment] = jArgs[i]; 	
         }
 		
-      int indx = jArgs.length+1; 
+       int debug_argument_index=0;	
+      int indx = jArgs.length+increment; 
+      if(ADEBUG) {
+       debug_argument_index = indx; indx++;
+      }
 	
       ex[indx] = "runtime.daemon.Wrapper" ; indx++ ;
       ex[indx] = configFileName; indx++ ; 
@@ -398,8 +417,16 @@ public class MPJDaemon {
       for (int j = 0; j < processes; j++) {
            String rank = new String(""+(startingRank+j));
            ex[rank_argument_index] = rank;
-
-           if(DEBUG && logger.isDebugEnabled()) { 
+	   if(APROFILE){
+		 ex[0] = "tau_java";// -tau:node="+rank;
+		 ex[1] = "-tau:node="+rank;
+		   			}
+           if(ADEBUG) {
+	  // System.out.println("Launching in debug mode");
+	   ex[debug_argument_index] = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address="+(startingDebugPort+j*2);
+	   }
+		
+	   if(DEBUG && logger.isDebugEnabled()) { 
 			  for (int i = 0; i < ex.length; i++) {
 				  logger.debug(i+": "+ ex[i]);
 				}  
@@ -995,7 +1022,46 @@ public class MPJDaemon {
 									}
 
                   lilBuffer2.clear();
-                } else if (read.equals("arg-")) {
+                } else if (read.equals("dbg-")) {	// For Debugger
+	             ADEBUG = true;
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("dbg-");
+				  }
+                  int length = lilBuffer.getInt();
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("size of debug port should be 4" + length);
+				  }
+                  lilBuffer.clear();
+                  socketChannel.read(lilBuffer2);
+                  lilBuffer2.flip();
+                  startingDebugPort = lilBuffer2.getInt();
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("Starting debug port of processes ==>" 
+                                                    + startingDebugPort);
+				  }
+
+                  lilBuffer2.clear();
+                } 
+
+		  else if (read.equals("prf-")) {   // For Profiler
+	           APROFILE = true;
+                  int length = lilBuffer.getInt();
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("Profile Name length -->" + length);
+				  }
+                  lilBuffer.clear();
+                  buffer.limit(length);
+                  socketChannel.read(buffer);
+                  byte[] byteArray = new byte[length];
+                  buffer.flip();
+                  buffer.get(byteArray, 0, length);
+				  String profilename = new String(byteArray);
+                  if(DEBUG && logger.isDebugEnabled()) { 
+                    logger.debug ("Profile Name :<" + profilename + ">");
+				  }
+                  buffer.clear();
+                }
+		  else if (read.equals("arg-")) {
 
                   if(DEBUG && logger.isDebugEnabled()) { 
                     logger.debug ("arg-");
