@@ -1,3 +1,13 @@
+Version 0.40
+------------
+
+1. This release mainly introduces support for MPJ Express Debugger in MPJ
+   Express Project. MPJ Express Debugger is an Eclipse based plugin.
+
+2. MPJ Express Debugger support added in MPJ Express Runtime. WriteFile
+   method is added in MPJRun.java to write configuration file in user 
+   directory for working of MPJ Express Debugger.
+
 Version 0.39
 ------------
 
