@@ -95,13 +95,20 @@ public class MPJRun {
   String applicationClassPathEntry = null ; 
   ByteBuffer buffer = null;
   
+	// Debugger and Profiler variables
+	static final int DEFAULT_DEBUG_PORT = 25000; // Defalut Debug port 
+ 	static private final String CONF_FILE_NAME = "mpjdev.conf";
+	public  static  int DEBUG_PORT = DEFAULT_DEBUG_PORT;
+	static public boolean ADEBUG = false ;	
+	static public boolean APROFILE = false; 
+
 	// variables for Hybrid device
   private int netID = -1;
   private int noOfMachines= -1;
 	private int nioProcs= -1;	
 
   static final boolean DEBUG = false ; 
-  static final String VERSION = "0.39" ; 
+  static final String VERSION = "0.40" ; 
   private static int RUNNING_JAR_FILE = 2 ; 
   private static int RUNNING_CLASS_FILE = 1 ; 
 
@@ -170,6 +177,10 @@ public class MPJRun {
 			//for NIO/MX device
 			assignTasks();
 		}
+
+	if(ADEBUG) {
+        writeFile(CONF_FILE_CONTENTS+"\n");
+    }
     urlArray = applicationClassPathEntry.getBytes();
 
     peerChannels = new Vector<SocketChannel>();
@@ -371,7 +382,20 @@ public class MPJRun {
     buffer.put(CONF_FILE_CONTENTS.getBytes(), 0, 
                                        CONF_FILE_CONTENTS.getBytes().length); 
 
-    buffer.put("dev-".getBytes());
+    /* When launched in Debug Mode */
+    if(ADEBUG) {
+     buffer.put("dbg-".getBytes());
+     buffer.putInt(4); // For debug port ... 
+     buffer.putInt(DEBUG_PORT);
+    }
+    /* When launched in Profile Mode */
+    if(APROFILE){
+	buffer.put("prf-".getBytes());
+	buffer.putInt("TAU".getBytes().length);
+	buffer.put("TAU".getBytes(),0,"TAU".getBytes().length);
+	}
+
+	buffer.put("dev-".getBytes());
     buffer.putInt(deviceName.getBytes().length);
     buffer.put(deviceName.getBytes(), 0, deviceName.getBytes().length); 
 	  
@@ -518,7 +542,15 @@ public class MPJRun {
         D_SER_PORT = new Integer(args[i+1]).intValue();
         i++;
       }
-
+	else if (args[i].equals("-debug")) {
+        DEBUG_PORT = new Integer(args[i+1]).intValue();
+        i++;
+	ADEBUG = true;
+      }
+ 	else if (args[i].equals("-profile")) {
+        //i++;
+		APROFILE = true;
+      }
       else if (args[i].equals("-headnodeip")) {
 	hostIP = args[i+1] ;
 	i++;
@@ -704,23 +736,26 @@ public class MPJRun {
       }
 
       for (int i = 0; i < nprocs; i++) {
-        procsPerMachineTable.put( (String) machineVector.get(i),
+        procsPerMachineTable.put( InetAddress.getByName((String) machineVector.get(i)).getHostAddress(),
                                  new Integer(1));
 	 
-	if(deviceName.equals("niodev")) { 
-          CONF_FILE_CONTENTS += ";"+(String) machineVector.get(i)+"@"
-                                    + MPJ_SERVER_PORT + "@" + (rank++) ;
+				if(deviceName.equals("niodev")) { 
+					          CONF_FILE_CONTENTS += ";"+InetAddress.getByName((String) machineVector.get(i)).getHostAddress()+"@"
+                                    + MPJ_SERVER_PORT + "@" + (rank++) 
+					+ "@" + (DEBUG_PORT);
 				} else if(deviceName.equals("hybdev")) { 
-						CONF_FILE_CONTENTS += ";"+(String) machineVector.get(i)+"@"
-																					+ MPJ_SERVER_PORT + "@" + (rank++) ;
-	} else if(deviceName.equals("mxdev")) { 
-          CONF_FILE_CONTENTS += ";"+(String) machineVector.get(i)+"@"
-                                    + mxBoardNum + "@" + (rank++) ;
-	} 
-	
-        if(DEBUG && logger.isDebugEnabled()) { 
-          logger.debug("procPerMachineTable==>" + procsPerMachineTable);
-	}
+						  CONF_FILE_CONTENTS += ";"+InetAddress.getByName((String) machineVector.get(i)).getHostAddress()+"@"
+                                    + MPJ_SERVER_PORT + "@" + (rank++) 
+					+ "@" + (DEBUG_PORT);
+				} else if(deviceName.equals("mxdev")) { 
+						  CONF_FILE_CONTENTS += ";"+InetAddress.getByName((String) machineVector.get(i)).getHostAddress()+"@"
+                                    + mxBoardNum + "@" + (rank++) 
+					+ "@" + (DEBUG_PORT);
+				}
+				
+				if(DEBUG && logger.isDebugEnabled()) { 
+					logger.debug("procPerMachineTable==>" + procsPerMachineTable);
+				}
       }
 
     /* number of processes are greater than compute nodes available. we'll 
@@ -741,49 +776,52 @@ public class MPJRun {
       if(DEBUG && logger.isDebugEnabled()) { 
 	  logger.debug("remainder " + remainder);
       }
-
-      for (int i = 0; i < noOfMachines; i++) {
-	      
+      for (int i = 0; i < noOfMachines; i++) { 
         if (i < remainder) {
 		
-          procsPerMachineTable.put( (String) machineVector.get(i),
+         procsPerMachineTable.put( InetAddress.getByName((String) machineVector.get(i)).getHostAddress(),
                                    new Integer(divisor + 1));
           if(DEBUG && logger.isDebugEnabled()) { 
             logger.debug("procPerMachineTable==>" + procsPerMachineTable);
-	  }
+					}
 	  
           for (int j = 0; j < (divisor + 1); j++) {
-            if(deviceName.equals("niodev")) { 		  
-							CONF_FILE_CONTENTS += ";"+(String) machineVector.get(i)+"@"+
-																	(MPJ_SERVER_PORT + (j * 2)) + "@" + (rank++) ;
-						} if(deviceName.equals("hybdev")) { 		  
-              CONF_FILE_CONTENTS += ";"+(String) machineVector.get(i)+"@"+
-                                (MPJ_SERVER_PORT + (j * 2)) + "@" + (rank++) ;
-	    } else if(deviceName.equals("mxdev")) { 
-              CONF_FILE_CONTENTS += ";" +  (String) machineVector.get(i) + "@" +
-                                (mxBoardNum+j) + "@" + (rank++) ;
-	    }
+				if(deviceName.equals("niodev")) {
+					CONF_FILE_CONTENTS += ";"+InetAddress.getByName((String) machineVector.get(i)).getHostAddress()+"@"+
+                               		(MPJ_SERVER_PORT + (j * 2)) + "@" + (rank++) 
+					+ "@" + (DEBUG_PORT+j*2);
+				} if(deviceName.equals("hybdev")) { 		  
+					CONF_FILE_CONTENTS += ";"+InetAddress.getByName((String) machineVector.get(i)).getHostAddress()+"@"+
+                                	(MPJ_SERVER_PORT + (j * 2)) + "@" + (rank++) 
+					+ "@" + (DEBUG_PORT+j*2);
+				} else if(deviceName.equals("mxdev")) { 
+					CONF_FILE_CONTENTS += ";" +  InetAddress.getByName((String) machineVector.get(i)).getHostAddress() + "@" +
+                                	(mxBoardNum+j) + "@" + (rank++) 
+					+ "@" + (DEBUG_PORT+j*2);
+				}
           }
         } else if (divisor > 0) {
-          procsPerMachineTable.put( (String) machineVector.get(i),
+         procsPerMachineTable.put( InetAddress.getByName((String) machineVector.get(i)).getHostAddress(),
                                    new Integer(divisor));
 	  
           if(DEBUG && logger.isDebugEnabled()) { 
             logger.debug("procPerMachineTable==>" + procsPerMachineTable);
-	  }
+					}
 
           for (int j = 0; j < divisor; j++) {
-            if(deviceName.equals("niodev")) { 		  
-              CONF_FILE_CONTENTS += ";" + (String) machineVector.get(i) + "@" +
-                             (MPJ_SERVER_PORT + (j * 2)) + "@" + (rank++) ;
-	    } else if(deviceName.equals("mxdev")) { 
-              CONF_FILE_CONTENTS += ";" + (String) machineVector.get(i) + "@" +
-                                          (mxBoardNum+j) + "@" + (rank++) ;
-	    }
+            		if(deviceName.equals("niodev")) { 		  
+              			CONF_FILE_CONTENTS += ";" + InetAddress.getByName((String) machineVector.get(i)).getHostAddress() + "@" +
+                        	(MPJ_SERVER_PORT + (j * 2)) + "@" + (rank++) 
+				+ "@" + (DEBUG_PORT+j*2);
+			} else if(deviceName.equals("mxdev")) { 
+              			CONF_FILE_CONTENTS += ";" + InetAddress.getByName((String) machineVector.get(i)).getHostAddress() + "@" +
+                                (mxBoardNum+j) + "@" + (rank++) 
+				+ "@" + (DEBUG_PORT+j*2);
+			}
           }
         }
       }
-    } 
+    }
   }
 
 	//________________ HD _________________________
@@ -808,9 +846,15 @@ public class MPJRun {
     //One NIO Process per machine is being implemented, SMP Threads per node will be decided in SMPDev
 		for (int i = 0; i < nioProcs; i++) {
 			procsPerMachineTable.put( (String) machineVector.get(i), 1);						//np because each node will have at max 1 NIODev Process and np is required on each node to calculate SMP processes required at that node    
-					CONF_FILE_CONTENTS += ";"+(String) machineVector.get(i)+"@"
-																				+ MPJ_SERVER_PORT + "@" + (netID++) ;
+					CONF_FILE_CONTENTS += ";"+(String) machineVector.get(i)+"@"+ MPJ_SERVER_PORT + "@" + (netID++) ;
+		procsPerMachineTable.put( InetAddress.getByName((String) machineVector.get(i)).getHostAddress(),
+                                   new Integer(1)); //np because each node will have at max 1 NIODev Process and np is required on each node to calculate SMP processes required at that node 
+								   
+					CONF_FILE_CONTENTS += ";"+InetAddress.getByName((String) machineVector.get(i)).getHostAddress()+"@"+
+                                	(MPJ_SERVER_PORT )  + "@" + (netID++)
+					+ "@" + (DEBUG_PORT);
 		}
+
 		if(DEBUG && logger.isDebugEnabled()) {
 			logger.debug("procPerMachineTable==>" + procsPerMachineTable);
 		}
@@ -1026,7 +1070,18 @@ public class MPJRun {
       //e.printStackTrace();
     }
   }
+  
+  private void writeFile(String configurationFileData) {
+   try {
+    BufferedWriter out = new BufferedWriter(new FileWriter(System.getProperty("user.home")+File.separator+CONF_FILE_NAME));
+    out.write(configurationFileData);
+    out.close();
+    } catch (IOException e) {
+                
+            }
 
+   
+  }
   private void doConnect(SocketChannel peerChannel) {
   if(DEBUG && logger.isDebugEnabled())
     logger.debug("---doConnect---");
@@ -1233,8 +1288,8 @@ public class MPJRun {
       }
       catch (Exception ioe1) {
 	  if(DEBUG && logger.isDebugEnabled())
-        logger.debug("Exception in selector thread ");
-        ioe1.printStackTrace();
+       // logger.debug("Exception in selector thread ");
+        //ioe1.printStackTrace();
         System.exit(0);
       }
 	  if(DEBUG && logger.isDebugEnabled())
