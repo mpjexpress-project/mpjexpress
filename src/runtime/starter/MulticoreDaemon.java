@@ -209,10 +209,16 @@ public class MulticoreDaemon {
     }
 
     int CMD_WORDS = 8 ; 
-	
+	/* FIX ME BY AMJAD AZIZ : 
+	    When launched in Debug Mode */
+    if(MPJRun.ADEBUG)
+      CMD_WORDS++;
     String[] aArgs = appArgs.toArray(new String[0]);
     String[] ex =
             new String[ (CMD_WORDS+jArgs.length+aArgs.length) ];
+    if(MPJRun.APROFILE)
+    ex[0] = "tau_java";
+    else	
     ex[0] = "java";
 	
     for(int i=0 ; i< jArgs.length ; i++) {
@@ -220,7 +226,10 @@ public class MulticoreDaemon {
     }
 
     int indx = jArgs.length+1;
-	
+	/* FIX ME BY AMJAD AZIZ : 
+	    When launched in Debug Mode */
+    if(MPJRun.ADEBUG)
+    ex[indx++] = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address="+MPJRun.DEBUG_PORT;
     ex[indx] = "runtime.starter.MulticoreStarter" ; indx++ ; 
     ex[indx] = wdir; indx++ ; 
     ex[indx] = Integer.toString(processes); indx++ ; 
