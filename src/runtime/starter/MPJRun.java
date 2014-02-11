@@ -25,7 +25,7 @@
  DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
  THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ */
 /*
  * File         : MPJRun.java 
  * Author       : Aamir Shafi, Bryan Carpenter
@@ -42,40 +42,40 @@ import java.net.*;
 import java.io.*;
 import java.util.*;
 
-import org.apache.log4j.Logger ;
-import org.apache.log4j.PropertyConfigurator ;
-import org.apache.log4j.PatternLayout ;
-import org.apache.log4j.FileAppender ;
-import org.apache.log4j.Level ;
-import org.apache.log4j.DailyRollingFileAppender ;
-import org.apache.log4j.spi.LoggerRepository ;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.DailyRollingFileAppender;
+import org.apache.log4j.spi.LoggerRepository;
 
-import java.util.jar.Attributes ;
-import java.util.jar.JarFile ;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
 
-import runtime.MPJRuntimeException ;
+import runtime.MPJRuntimeException;
 
 public class MPJRun {
 
   final int DEFAULT_MPJ_SERVER_PORT = 20000;
-  final int DEFAULT_S_PORT = 15000; 
-  final String DEFAULT_MACHINES_FILE_NAME = "machines"; 
-  final int DEFAULT_PROTOCOL_SWITCH_LIMIT = 128*1024; //128K
+  final int DEFAULT_S_PORT = 15000;
+  final String DEFAULT_MACHINES_FILE_NAME = "machines";
+  final int DEFAULT_PROTOCOL_SWITCH_LIMIT = 128 * 1024; // 128K
 
-  private String CONF_FILE_CONTENTS  = "#temp line" ;
+  private String CONF_FILE_CONTENTS = "#temp line";
   private int MPJ_SERVER_PORT = DEFAULT_MPJ_SERVER_PORT;
-  private int mxBoardNum = 0 ; 
-  private int D_SER_PORT = getPortFromWrapper() ;
-  private int endPointID = 0 ;
-  private int S_PORT = DEFAULT_S_PORT; 
+  private int mxBoardNum = 0;
+  private int D_SER_PORT = getPortFromWrapper();
+  private int endPointID = 0;
+  private int S_PORT = DEFAULT_S_PORT;
   String machinesFile = DEFAULT_MACHINES_FILE_NAME;
   private int psl = DEFAULT_PROTOCOL_SWITCH_LIMIT;
 
-  ArrayList<String> jvmArgs = new ArrayList<String>() ; 
-  ArrayList<String> appArgs = new ArrayList<String>() ; 
-  String[] jArgs = null ;  
-  String[] aArgs = null ;
-  static Logger logger = null ; 
+  ArrayList<String> jvmArgs = new ArrayList<String>();
+  ArrayList<String> appArgs = new ArrayList<String>();
+  String[] jArgs = null;
+  String[] aArgs = null;
+  static Logger logger = null;
   private volatile boolean wait = true;
   private Vector<SocketChannel> peerChannels;
   private Selector selector = null;
@@ -83,103 +83,98 @@ public class MPJRun {
   private String hostIP = null;
   private Thread selectorThreadStarter = null;
   private Vector machineVector = new Vector();
-  int nprocs = Runtime.getRuntime().availableProcessors() ; 
+  int nprocs = Runtime.getRuntime().availableProcessors();
   String deviceName = "multicore";
   String mpjHomeDir = null;
   byte[] urlArray = null;
   Hashtable procsPerMachineTable = new Hashtable();
-  int endCount = 0; 
-  int streamEndedCount = 0 ;
+  int endCount = 0;
+  int streamEndedCount = 0;
   String wdir;
-  String className = null ; 
-  String applicationClassPathEntry = null ; 
+  String className = null;
+  String applicationClassPathEntry = null;
   ByteBuffer buffer = null;
-  
-	// Debugger and Profiler variables
-	static final int DEFAULT_DEBUG_PORT = 25000; // Defalut Debug port 
- 	static private final String CONF_FILE_NAME = "mpjdev.conf";
-	public  static  int DEBUG_PORT = DEFAULT_DEBUG_PORT;
-	static public boolean ADEBUG = false ;	
-	static public boolean APROFILE = false; 
 
-	// variables for Hybrid device
+  // Debugger and Profiler variables
+  static final int DEFAULT_DEBUG_PORT = 25000; // Defalut Debug port
+  static private final String CONF_FILE_NAME = "mpjdev.conf";
+  public static int DEBUG_PORT = DEFAULT_DEBUG_PORT;
+  static public boolean ADEBUG = false;
+  static public boolean APROFILE = false;
+
+  // variables for Hybrid device
   private int netID = -1;
-  private int noOfMachines= -1;
-	private int nioProcs= -1;	
+  private int noOfMachines = -1;
+  private int nioProcs = -1;
 
-  static final boolean DEBUG = false ; 
-  static final String VERSION = "0.40" ; 
-  private static int RUNNING_JAR_FILE = 2 ; 
-  private static int RUNNING_CLASS_FILE = 1 ; 
+  static final boolean DEBUG = false;
+  static final String VERSION = "0.40";
+  private static int RUNNING_JAR_FILE = 2;
+  private static int RUNNING_CLASS_FILE = 1;
 
   /**
    * Every thing is being inside this constructor :-)
    */
   public MPJRun(String args[]) throws Exception {
 
-    java.util.logging.Logger logger1 = 
-    java.util.logging.Logger.getLogger("");
+    java.util.logging.Logger logger1 = java.util.logging.Logger.getLogger("");
 
-
-    //remove all existing log handlers: remove the ERR handler
+    // remove all existing log handlers: remove the ERR handler
     for (java.util.logging.Handler h : logger1.getHandlers()) {
       logger1.removeHandler(h);
     }
-		  
-    Map<String,String> map = System.getenv() ;
+
+    Map<String, String> map = System.getenv();
     mpjHomeDir = map.get("MPJ_HOME");
 
-    createLogger(args) ; 
+    createLogger(args);
 
-    if(DEBUG && logger.isDebugEnabled()) {
-      logger.info(" --MPJRun invoked--"); 
-      logger.info(" adding shutdown hook thread"); 
+    if (DEBUG && logger.isDebugEnabled()) {
+      logger.info(" --MPJRun invoked--");
+      logger.info(" adding shutdown hook thread");
     }
 
-	    
-    if(DEBUG && logger.isDebugEnabled()) {
-      logger.info("processInput called ..."); 
+    if (DEBUG && logger.isDebugEnabled()) {
+      logger.info("processInput called ...");
     }
 
     processInput(args);
 
     /* the code is running in the multicore configuration */
-    if(deviceName.equals("multicore")) {
-       
-      System.out.println("MPJ Express ("+VERSION+") is started in the "+
-                                              "multicore configuration"); 
-      if(DEBUG && logger.isDebugEnabled()) {
-        logger.info("className "+className) ; 
+    if (deviceName.equals("multicore")) {
+
+      System.out.println("MPJ Express (" + VERSION + ") is started in the "
+          + "multicore configuration");
+      if (DEBUG && logger.isDebugEnabled()) {
+        logger.info("className " + className);
       }
 
-      int jarOrClass = (applicationClassPathEntry.endsWith(".jar")?
-                                  RUNNING_JAR_FILE:RUNNING_CLASS_FILE);
-       
-      MulticoreDaemon multicoreDaemon =
-          new MulticoreDaemon(className, applicationClassPathEntry, jarOrClass, 
-	                           nprocs, wdir, jvmArgs, appArgs) ;
-      return ;
+      int jarOrClass = (applicationClassPathEntry.endsWith(".jar") ? RUNNING_JAR_FILE
+          : RUNNING_CLASS_FILE);
+
+      MulticoreDaemon multicoreDaemon = new MulticoreDaemon(className,
+          applicationClassPathEntry, jarOrClass, nprocs, wdir, jvmArgs, appArgs);
+      return;
 
     } else { /* cluster configuration */
-      System.out.println("MPJ Express ("+VERSION+") is started in the "+
-                                              "cluster configuration"); 
+      System.out.println("MPJ Express (" + VERSION + ") is started in the "
+          + "cluster configuration");
     }
 
     readMachineFile();
-    machinesSanityCheck() ;
-    
-    //for Hybrid device number of processes per node assignment is 
-      //changed from that of NIO/MX dev
-    if (deviceName.equals("hybdev")){				
-			assignTasksHyb();
-		}
-    else{
-			//for NIO/MX device
-			assignTasks();
-		}
+    machinesSanityCheck();
 
-	if(ADEBUG) {
-        writeFile(CONF_FILE_CONTENTS+"\n");
+    // for Hybrid device number of processes per node assignment is
+    // changed from that of NIO/MX dev
+    if (deviceName.equals("hybdev")) {
+      assignTasksHyb();
+    } else {
+      // for NIO/MX device
+      assignTasks();
+    }
+
+    if (ADEBUG) {
+      writeFile(CONF_FILE_CONTENTS + "\n");
     }
     urlArray = applicationClassPathEntry.getBytes();
 
@@ -188,265 +183,261 @@ public class MPJRun {
     clientSocketInit();
     selectorThreadStarter = new Thread(selectorThread);
 
-    if(DEBUG && logger.isDebugEnabled()) {
+    if (DEBUG && logger.isDebugEnabled()) {
       logger.debug("Starting the selector thread ");
     }
 
     selectorThreadStarter.start();
 
-    //wait till this client has connected to all daemons
+    // wait till this client has connected to all daemons
     Wait();
 
-    int peersStartingRank = 0; 
+    int peersStartingRank = 0;
 
     for (int j = 0; j < peerChannels.size(); j++) {
 
       SocketChannel socketChannel = peerChannels.get(j);
-      
-      if(DEBUG && logger.isDebugEnabled()) { 
-	     logger.debug("procsPerMachineTable " + procsPerMachineTable);
+
+      if (DEBUG && logger.isDebugEnabled()) {
+        logger.debug("procsPerMachineTable " + procsPerMachineTable);
       }
 
-      /* FIXME: should we not be checking all IP addresses of remote 
-                machine? Does it make sense? */
+      /*
+       * FIXME: should we not be checking all IP addresses of remote machine?
+       * Does it make sense?
+       */
 
-      String hAddress = 
-                     socketChannel.socket().getInetAddress().getHostAddress();
+      String hAddress = socketChannel.socket().getInetAddress()
+          .getHostAddress();
       String hName = socketChannel.socket().getInetAddress().getHostName();
 
-      Integer nProcessesInt = ((Integer) procsPerMachineTable.get(hName)) ; 
+      Integer nProcessesInt = ((Integer) procsPerMachineTable.get(hName));
 
-      if(nProcessesInt == null) { 
-        nProcessesInt = ((Integer) procsPerMachineTable.get(hAddress)) ;     
-      } 
+      if (nProcessesInt == null) {
+        nProcessesInt = ((Integer) procsPerMachineTable.get(hAddress));
+      }
 
       int nProcesses = nProcessesInt.intValue();
-	  /* FIX ME By Amjad Aziz & Rizwan Hanif
-	  *  sending the starting rank to peer process i.e Daemon*/
-      
-			//------------------------------------ Hybrid -----------------------------
-			if (deviceName.equals("hybdev")) {
-				//starting NETID of hybrid device should be adjusted according to node 
-        //(NioProcessCount, StartingRank)
-        pack(nProcesses, j); 		
-			}
-			else{
-        //giving starting rank for processes on one compute node 
-				pack(nProcesses, peersStartingRank); 
-				peersStartingRank += nProcesses;						
+      /*
+       * FIX ME By Amjad Aziz & Rizwan Hanif sending the starting rank to peer
+       * process i.e Daemon
+       */
+
+      // ------------------------------------ Hybrid
+      // -----------------------------
+      if (deviceName.equals("hybdev")) {
+        // starting NETID of hybrid device should be adjusted according to node
+        // (NioProcessCount, StartingRank)
+        pack(nProcesses, j);
+      } else {
+        // giving starting rank for processes on one compute node
+        pack(nProcesses, peersStartingRank);
+        peersStartingRank += nProcesses;
       }
-			if(DEBUG && logger.isDebugEnabled()) { 
-	    logger.debug("Sending to " + socketChannel);
+      if (DEBUG && logger.isDebugEnabled()) {
+        logger.debug("Sending to " + socketChannel);
       }
 
-      int w = 0 ; 
-      while(buffer.hasRemaining()) {
-	  if((w += socketChannel.write(buffer)) == -1) {
-	  //throw an exception ...
-	  } 
+      int w = 0;
+      while (buffer.hasRemaining()) {
+        if ((w += socketChannel.write(buffer)) == -1) {
+          // throw an exception ...
+        }
       }
-      if(DEBUG && logger.isDebugEnabled()) { 
-		logger.debug("Wrote bytes-->"+w+"to process"+j);
+      if (DEBUG && logger.isDebugEnabled()) {
+        logger.debug("Wrote bytes-->" + w + "to process" + j);
       }
 
       buffer.clear();
 
     }
 
-    if(DEBUG && logger.isDebugEnabled()) { 
+    if (DEBUG && logger.isDebugEnabled()) {
       logger.debug("procsPerMachineTable " + procsPerMachineTable);
     }
 
     addShutdownHook();
 
     /* waiting to get the answer from the daemons that the job has finished. */
-    if(DEBUG && logger.isDebugEnabled()) {
-      logger.debug(" returned from addShutdownHook and putting in wait " );
+    if (DEBUG && logger.isDebugEnabled()) {
+      logger.debug(" returned from addShutdownHook and putting in wait ");
     }
-    
+
     Wait();
-    
-    if(DEBUG && logger.isDebugEnabled()) {
+
+    if (DEBUG && logger.isDebugEnabled()) {
       logger.debug(" done with wait, calling finish() method ");
     }
-    
-//		System.out.println("Calling the finish method");
-		
-		if(DEBUG && logger.isDebugEnabled())
+
+    // System.out.println("Calling the finish method");
+
+    if (DEBUG && logger.isDebugEnabled())
       logger.debug("Calling the finish method now");
 
     this.finish();
 
   }
-	  
-  /* 
-   * 1.  Application Classpath Entry (cpe-). This is a String classpath entry 
-         which will be appended by the MPJ Express daemon before starting
-         a user process (JVM). In the case of JAR file, it's the absolute
-         path and name. In the case of a class file, its the name of the 
-         working directory where mpjrun command was launched. 
-   * 2.  num- [# of processes] to be started by a particular MPJ Express
-         daemon.
-   * 3.  srk- [starting #(rank) of process] to be started by a 
-         particular MPJ Express daemon.	
-   * 4.  arg- args to JVM
-   * 5.  wdr- Working Directory 
-   * 6.  cls- Classname to be executed. In the case of JAR file, this 
-         name is taken from the manifest file. In the case of class file, 
-         the class name is specified on the command line by the user.
-   * 7.  cfn- Configuration File name. This is a ';' delimeted string of 
-         config file contents
-   * 8.  dev-: what device to use?
-   * 9.  app-: Application arguments ..
-   * 10. GO_FOR_IT_SIGNAL
-   */ 
-  private void pack(int nProcesses,int start_rank) {
-    
-    buffer = ByteBuffer.allocate(CONF_FILE_CONTENTS.getBytes().length+1000);
 
-    if(DEBUG && logger.isDebugEnabled()) {
+  /*
+   * 1. Application Classpath Entry (cpe-). This is a String classpath entry
+   * which will be appended by the MPJ Express daemon before starting a user
+   * process (JVM). In the case of JAR file, it's the absolute path and name. In
+   * the case of a class file, its the name of the working directory where
+   * mpjrun command was launched. 2. num- [# of processes] to be started by a
+   * particular MPJ Express daemon. 3. srk- [starting #(rank) of process] to be
+   * started by a particular MPJ Express daemon. 4. arg- args to JVM 5. wdr-
+   * Working Directory 6. cls- Classname to be executed. In the case of JAR
+   * file, this name is taken from the manifest file. In the case of class file,
+   * the class name is specified on the command line by the user. 7. cfn-
+   * Configuration File name. This is a ';' delimeted string of config file
+   * contents 8. dev-: what device to use? 9. app-: Application arguments .. 10.
+   * GO_FOR_IT_SIGNAL
+   */
+  private void pack(int nProcesses, int start_rank) {
+
+    buffer = ByteBuffer.allocate(CONF_FILE_CONTENTS.getBytes().length + 1000);
+
+    if (DEBUG && logger.isDebugEnabled()) {
       logger.debug("buffer (initial)" + buffer);
     }
     buffer.put("cpe-".getBytes());
 
-    if(DEBUG && logger.isDebugEnabled()) {
+    if (DEBUG && logger.isDebugEnabled()) {
       logger.debug("buffer (after putting url-) " + buffer);
     }
     buffer.putInt(urlArray.length);
 
-    if(DEBUG && logger.isDebugEnabled()) {
+    if (DEBUG && logger.isDebugEnabled()) {
       logger.debug("buffer urlArray.length)" + buffer);
     }
 
     buffer.put(urlArray, 0, urlArray.length);
 
-    if(DEBUG && logger.isDebugEnabled()) {
+    if (DEBUG && logger.isDebugEnabled()) {
       logger.debug("buffer urlArray itself " + buffer);
     }
 
     buffer.put("num-".getBytes());
-	 
-    if(DEBUG && logger.isDebugEnabled()) {
+
+    if (DEBUG && logger.isDebugEnabled()) {
       logger.debug("buffer " + buffer);
     }
 
     buffer.putInt(4);
 
-    if(DEBUG && logger.isDebugEnabled()) {
+    if (DEBUG && logger.isDebugEnabled()) {
       logger.debug("buffer(after writing 4) " + buffer);
       logger.debug("nProcesses " + nProcesses);
     }
 
     buffer.putInt(nProcesses);
 
-    if(DEBUG && logger.isDebugEnabled()) {
+    if (DEBUG && logger.isDebugEnabled()) {
       logger.debug("buffer(after nProcesses) " + buffer);
     }
-	buffer.put("srk-".getBytes());
-	 
-    if(DEBUG && logger.isDebugEnabled()) {
+    buffer.put("srk-".getBytes());
+
+    if (DEBUG && logger.isDebugEnabled()) {
       logger.debug("buffer " + buffer);
     }
-	buffer.putInt(4);
+    buffer.putInt(4);
 
-    if(DEBUG && logger.isDebugEnabled()) {
+    if (DEBUG && logger.isDebugEnabled()) {
       logger.debug("buffer(after writing 4) " + buffer);
       logger.debug("start_rank " + start_rank);
     }
     buffer.putInt(start_rank);
-    if(DEBUG && logger.isDebugEnabled()) {
+    if (DEBUG && logger.isDebugEnabled()) {
       logger.debug("buffer(after start_rank) " + buffer);
     }
     buffer.put("arg-".getBytes());
-    buffer.putInt(jArgs.length); 
-    for(int j=0 ; j<jArgs.length ; j++) {
+    buffer.putInt(jArgs.length);
+    for (int j = 0; j < jArgs.length; j++) {
       buffer.putInt(jArgs[j].getBytes().length);
       buffer.put(jArgs[j].getBytes(), 0, jArgs[j].getBytes().length);
     }
 
-    if(wdir == null) { 
-      wdir = System.getProperty("user.dir") ;
+    if (wdir == null) {
+      wdir = System.getProperty("user.dir");
     }
 
     buffer.put("wdr-".getBytes());
     buffer.putInt(wdir.getBytes().length);
-    buffer.put(wdir.getBytes(), 0, wdir.getBytes().length); 
-    
+    buffer.put(wdir.getBytes(), 0, wdir.getBytes().length);
+
     buffer.put("cls-".getBytes());
     buffer.putInt(className.getBytes().length);
-    buffer.put(className.getBytes(), 0, className.getBytes().length); 
+    buffer.put(className.getBytes(), 0, className.getBytes().length);
 
     /* these are contents of the config file stored in a single String */
     buffer.put("cfn-".getBytes());
     buffer.putInt(CONF_FILE_CONTENTS.getBytes().length);
-    buffer.put(CONF_FILE_CONTENTS.getBytes(), 0, 
-                                       CONF_FILE_CONTENTS.getBytes().length); 
+    buffer.put(CONF_FILE_CONTENTS.getBytes(), 0,
+        CONF_FILE_CONTENTS.getBytes().length);
 
     /* When launched in Debug Mode */
-    if(ADEBUG) {
-     buffer.put("dbg-".getBytes());
-     buffer.putInt(4); // For debug port ... 
-     buffer.putInt(DEBUG_PORT);
+    if (ADEBUG) {
+      buffer.put("dbg-".getBytes());
+      buffer.putInt(4); // For debug port ...
+      buffer.putInt(DEBUG_PORT);
     }
     /* When launched in Profile Mode */
-    if(APROFILE){
-	buffer.put("prf-".getBytes());
-	buffer.putInt("TAU".getBytes().length);
-	buffer.put("TAU".getBytes(),0,"TAU".getBytes().length);
-	}
+    if (APROFILE) {
+      buffer.put("prf-".getBytes());
+      buffer.putInt("TAU".getBytes().length);
+      buffer.put("TAU".getBytes(), 0, "TAU".getBytes().length);
+    }
 
-	buffer.put("dev-".getBytes());
+    buffer.put("dev-".getBytes());
     buffer.putInt(deviceName.getBytes().length);
-    buffer.put(deviceName.getBytes(), 0, deviceName.getBytes().length); 
-	  
-		
-		//for Hybrid, passing on NIO process count
-		if (deviceName.equals("hybdev")){
-				
-			buffer.put("npr-".getBytes());			//npr stands for NIO Processes
-		 
-			if(DEBUG && logger.isDebugEnabled()) {
-				logger.debug("buffer " + buffer);
-			}
+    buffer.put(deviceName.getBytes(), 0, deviceName.getBytes().length);
 
-			buffer.putInt(4);
+    // for Hybrid, passing on NIO process count
+    if (deviceName.equals("hybdev")) {
 
-			if(DEBUG && logger.isDebugEnabled()) {
-				logger.debug("buffer(after writing 4) " + buffer);
-				logger.debug("NIO Processes " + nioProcs);
-			}
+      buffer.put("npr-".getBytes()); // npr stands for NIO Processes
 
-			buffer.putInt(nioProcs);
+      if (DEBUG && logger.isDebugEnabled()) {
+        logger.debug("buffer " + buffer);
+      }
 
-			if(DEBUG && logger.isDebugEnabled()) {
-				logger.debug("buffer(after NioProcesses) " + buffer);
-			}
+      buffer.putInt(4);
 
-			buffer.put("tpr-".getBytes());
-		 
-			if(DEBUG && logger.isDebugEnabled()) {
-				logger.debug("buffer " + buffer);
-			}
+      if (DEBUG && logger.isDebugEnabled()) {
+        logger.debug("buffer(after writing 4) " + buffer);
+        logger.debug("NIO Processes " + nioProcs);
+      }
 
-			buffer.putInt(4);
+      buffer.putInt(nioProcs);
 
-			if(DEBUG && logger.isDebugEnabled()) {
-				logger.debug("buffer(after writing 4) " + buffer);
-				logger.debug("Total Processes(np) " + nprocs);
-			}
+      if (DEBUG && logger.isDebugEnabled()) {
+        logger.debug("buffer(after NioProcesses) " + buffer);
+      }
 
-			buffer.putInt(nprocs);
+      buffer.put("tpr-".getBytes());
 
-			if(DEBUG && logger.isDebugEnabled()) {
-				logger.debug("buffer(after Total Processes i.e. np) " + buffer);
-			}
-		} //-------------------------------------end Hybrid Dev specific buffer
-	
-		
+      if (DEBUG && logger.isDebugEnabled()) {
+        logger.debug("buffer " + buffer);
+      }
+
+      buffer.putInt(4);
+
+      if (DEBUG && logger.isDebugEnabled()) {
+        logger.debug("buffer(after writing 4) " + buffer);
+        logger.debug("Total Processes(np) " + nprocs);
+      }
+
+      buffer.putInt(nprocs);
+
+      if (DEBUG && logger.isDebugEnabled()) {
+        logger.debug("buffer(after Total Processes i.e. np) " + buffer);
+      }
+    } // -------------------------------------end Hybrid Dev specific buffer
+
     buffer.put("app-".getBytes());
-    buffer.putInt(aArgs.length); 
+    buffer.putInt(aArgs.length);
 
-    for(int j=0 ; j<aArgs.length ; j++) {
+    for (int j = 0; j < aArgs.length; j++) {
       buffer.putInt(aArgs[j].getBytes().length);
       buffer.put(aArgs[j].getBytes(), 0, aArgs[j].getBytes().length);
     }
@@ -457,54 +448,50 @@ public class MPJRun {
   }
 
   private void createLogger(String[] args) throws MPJRuntimeException {
-  
-    if(DEBUG && logger == null) {
 
-      DailyRollingFileAppender fileAppender = null ;
+    if (DEBUG && logger == null) {
+
+      DailyRollingFileAppender fileAppender = null;
 
       try {
-	fileAppender = new DailyRollingFileAppender(
-			    new PatternLayout(
-			    " %-5p %c %x - %m\n" ),
-			    mpjHomeDir+"/logs/mpjrun.log",
-			    "yyyy-MM-dd-a" );
+        fileAppender = new DailyRollingFileAppender(new PatternLayout(
+            " %-5p %c %x - %m\n"), mpjHomeDir + "/logs/mpjrun.log",
+            "yyyy-MM-dd-a");
 
-	Logger rootLogger = Logger.getRootLogger() ;
-	rootLogger.addAppender( fileAppender);
-	LoggerRepository rep =  rootLogger.getLoggerRepository() ;
-	rootLogger.setLevel ((Level) Level.ALL );
-	//rep.setThreshold((Level) Level.OFF ) ;
-	logger = Logger.getLogger( "runtime" );
+        Logger rootLogger = Logger.getRootLogger();
+        rootLogger.addAppender(fileAppender);
+        LoggerRepository rep = rootLogger.getLoggerRepository();
+        rootLogger.setLevel((Level) Level.ALL);
+        // rep.setThreshold((Level) Level.OFF ) ;
+        logger = Logger.getLogger("runtime");
+      } catch (Exception e) {
+        throw new MPJRuntimeException(e);
       }
-      catch(Exception e) {
-	throw new MPJRuntimeException(e) ;
-      }
-    }  
+    }
   }
 
-  private void printUsage() { 
-    System.out.println(   
-      "mpjrun.[bat/sh] [options] class [args...]"+
-      "\n                (to execute a class)"+
-      "\nmpjrun.[bat/sh] [options] -jar jarfile [args...]"+
-      "\n                (to execute a jar file)"+
-      "\n\nwhere options include:"+
-      "\n   -np val            -- <# of cores>"+ 
-      "\n   -dev val           -- multicore"+
-      "\n   -dport val         -- <read from wrapper.conf>"+ 
-      "\n   -wdir val          -- $MPJ_HOME/bin"+ 
-      "\n   -mpjport val       -- 20000"+  
-      "\n   -mxboardnum val    -- 0"+  
-      "\n   -headnodeip val    -- ..."+
-      "\n   -psl val           -- 128Kbytes"+ 
-      "\n   -machinesfile val  -- machines"+ 
-      "\n   -h                 -- print this usage information"+ 
-      "\n   ...any JVM arguments..."+
- "\n Note: Value on the right in front of each option is the default value"+ 
- "\n Note: 'MPJ_HOME' variable must be set");
+  private void printUsage() {
+    System.out
+        .println("mpjrun.[bat/sh] [options] class [args...]"
+            + "\n                (to execute a class)"
+            + "\nmpjrun.[bat/sh] [options] -jar jarfile [args...]"
+            + "\n                (to execute a jar file)"
+            + "\n\nwhere options include:"
+            + "\n   -np val            -- <# of cores>"
+            + "\n   -dev val           -- multicore"
+            + "\n   -dport val         -- <read from wrapper.conf>"
+            + "\n   -wdir val          -- $MPJ_HOME/bin"
+            + "\n   -mpjport val       -- 20000"
+            + "\n   -mxboardnum val    -- 0"
+            + "\n   -headnodeip val    -- ..."
+            + "\n   -psl val           -- 128Kbytes"
+            + "\n   -machinesfile val  -- machines"
+            + "\n   -h                 -- print this usage information"
+            + "\n   ...any JVM arguments..."
+            + "\n Note: Value on the right in front of each option is the default value"
+            + "\n Note: 'MPJ_HOME' variable must be set");
 
   }
-  
 
   /**
    * Parses the input ...
@@ -512,145 +499,140 @@ public class MPJRun {
   private void processInput(String args[]) {
 
     if (args.length < 1) {
-      printUsage() ;
-      System.exit(0);  
+      printUsage();
+      System.exit(0);
     }
- 
+
     boolean append = false;
-    boolean parallelProgramNotYetEncountered = true ; 
-    
+    boolean parallelProgramNotYetEncountered = true;
+
     for (int i = 0; i < args.length; i++) {
 
-      if(args[i].equals("-np")) {
+      if (args[i].equals("-np")) {
 
-        try {  
-          nprocs = new Integer(args[i+1]).intValue();
-	} 
-	catch(NumberFormatException e) {
-	  nprocs = Runtime.getRuntime().availableProcessors();
-	}
+        try {
+          nprocs = new Integer(args[i + 1]).intValue();
+        } catch (NumberFormatException e) {
+          nprocs = Runtime.getRuntime().availableProcessors();
+        }
 
         i++;
       }
 
-      else if(args[i].equals("-h")) {
+      else if (args[i].equals("-h")) {
         printUsage();
-        System.exit(0); 
+        System.exit(0);
       }
-      
+
       else if (args[i].equals("-dport")) {
-        D_SER_PORT = new Integer(args[i+1]).intValue();
+        D_SER_PORT = new Integer(args[i + 1]).intValue();
+        i++;
+      } else if (args[i].equals("-debug")) {
+        DEBUG_PORT = new Integer(args[i + 1]).intValue();
+        i++;
+        ADEBUG = true;
+      } else if (args[i].equals("-profile")) {
+        // i++;
+        APROFILE = true;
+      } else if (args[i].equals("-headnodeip")) {
+        hostIP = args[i + 1];
         i++;
       }
-	else if (args[i].equals("-debug")) {
-        DEBUG_PORT = new Integer(args[i+1]).intValue();
-        i++;
-	ADEBUG = true;
-      }
- 	else if (args[i].equals("-profile")) {
-        //i++;
-		APROFILE = true;
-      }
-      else if (args[i].equals("-headnodeip")) {
-	hostIP = args[i+1] ;
-	i++;
-      }
-      
+
       else if (args[i].equals("-dev")) {
-        deviceName = args[i+1];
+        deviceName = args[i + 1];
         i++;
-			if(!(deviceName.equals("niodev") || deviceName.equals("mxdev") || 
-				deviceName.equals("hybdev") ||  deviceName.equals("multicore"))){
-							System.out.println("MPJ Express currently does not support the <"+
-																					 deviceName+"> device.");
-								System.out.println("Possible options are niodev, mxdev, hybdev, and "+
-																			 "multicore devices.");
-					System.out.println("exiting ...");
-					System.exit(0); 
-				}
-				System.out.println("MPJ Express selected device to run is ("+deviceName+")");
+        if (!(deviceName.equals("niodev") || deviceName.equals("mxdev")
+            || deviceName.equals("hybdev") || deviceName.equals("multicore"))) {
+          System.out.println("MPJ Express currently does not support the <"
+              + deviceName + "> device.");
+          System.out.println("Possible options are niodev, mxdev, hybdev, and "
+              + "multicore devices.");
+          System.out.println("exiting ...");
+          System.exit(0);
+        }
+        System.out.println("MPJ Express selected device to run is ("
+            + deviceName + ")");
       }
 
       else if (args[i].equals("-machinesfile")) {
-        machinesFile = args[i+1];
+        machinesFile = args[i + 1];
         i++;
       }
 
       else if (args[i].equals("-wdir")) {
-        wdir = args[i+1];
+        wdir = args[i + 1];
         i++;
       }
 
-      else if(args[i].equals("-psl")) {
-        psl = new Integer(args[i+1]).intValue();
+      else if (args[i].equals("-psl")) {
+        psl = new Integer(args[i + 1]).intValue();
         i++;
       }
-      
+
       else if (args[i].equals("-mpjport")) {
-        MPJ_SERVER_PORT = new Integer(args[i+1]).intValue();
+        MPJ_SERVER_PORT = new Integer(args[i + 1]).intValue();
         i++;
       }
-      
+
       else if (args[i].equals("-mxboardnum")) {
-        mxBoardNum = new Integer(args[i+1]).intValue();
+        mxBoardNum = new Integer(args[i + 1]).intValue();
         i++;
       }
-      
+
       else if (args[i].equals("-cp") | args[i].equals("-classpath")) {
         jvmArgs.add("-cp");
-	jvmArgs.add(args[i+1]);
+        jvmArgs.add(args[i + 1]);
         i++;
       }
-      
-      else if (args[i].equals("-sport")) {
-        S_PORT = new Integer(args[i+1]).intValue();
-        i++;
-      }
-      
-      else if(args[i].equals("-jar")) {
-        File tFile = new File(args[i+1]);
-	String absJarPath = tFile.getAbsolutePath();
-	
-	if(tFile.exists()) {
-          applicationClassPathEntry = new String(absJarPath) ; 
 
-          try { 
-            JarFile jarFile = new JarFile(absJarPath) ;
+      else if (args[i].equals("-sport")) {
+        S_PORT = new Integer(args[i + 1]).intValue();
+        i++;
+      }
+
+      else if (args[i].equals("-jar")) {
+        File tFile = new File(args[i + 1]);
+        String absJarPath = tFile.getAbsolutePath();
+
+        if (tFile.exists()) {
+          applicationClassPathEntry = new String(absJarPath);
+
+          try {
+            JarFile jarFile = new JarFile(absJarPath);
             Attributes attr = jarFile.getManifest().getMainAttributes();
             className = attr.getValue(Attributes.Name.MAIN_CLASS);
-          } catch(IOException ioe) { 
-            ioe.printStackTrace() ; 
-          } 
-	  parallelProgramNotYetEncountered = false ; 
-	  i++;
-	}
-	else {
-          throw new MPJRuntimeException("mpjrun cannot find the jar file <"+
-			  args[i+1]+">. Make sure this is the right path.");	
-	}
-	
+          } catch (IOException ioe) {
+            ioe.printStackTrace();
+          }
+          parallelProgramNotYetEncountered = false;
+          i++;
+        } else {
+          throw new MPJRuntimeException("mpjrun cannot find the jar file <"
+              + args[i + 1] + ">. Make sure this is the right path.");
+        }
+
       }
 
       else {
-	      
-        //these are JVM options .. 
-        if(parallelProgramNotYetEncountered) {
-          if(args[i].startsWith("-")) { 		
-	    jvmArgs.add(args[i]); 
-	  }
-          else {
-            //This code takes care of executing class files directly ....
-            //although does not look like it ....
-            applicationClassPathEntry = System.getProperty("user.dir");	      
- 	    className = args[i];
-	    parallelProgramNotYetEncountered = false ; 
+
+        // these are JVM options ..
+        if (parallelProgramNotYetEncountered) {
+          if (args[i].startsWith("-")) {
+            jvmArgs.add(args[i]);
+          } else {
+            // This code takes care of executing class files directly ....
+            // although does not look like it ....
+            applicationClassPathEntry = System.getProperty("user.dir");
+            className = args[i];
+            parallelProgramNotYetEncountered = false;
           }
-	}
-	
-        //these have to be app arguments ...		
-	else {
-          appArgs.add(args[i]);		
-	}
+        }
+
+        // these have to be app arguments ...
+        else {
+          appArgs.add(args[i]);
+        }
 
       }
 
@@ -659,220 +641,236 @@ public class MPJRun {
     jArgs = jvmArgs.toArray(new String[0]);
     aArgs = appArgs.toArray(new String[0]);
 
-    if(DEBUG && logger.isDebugEnabled()) {
+    if (DEBUG && logger.isDebugEnabled()) {
 
-      logger.debug("###########################"); 	    
-      logger.debug("-dport: <"+D_SER_PORT+">");
-      logger.debug("-mpjport: <"+MPJ_SERVER_PORT+">");
-      logger.debug("-sport: <"+S_PORT+">");
-      logger.debug("-np: <"+nprocs+">");
-      logger.debug("$MPJ_HOME: <"+mpjHomeDir+">");
-      logger.debug("-dir: <"+wdir+">"); 
-      logger.debug("-dev: <"+deviceName+">");
-      logger.debug("-psl: <"+psl+">");
-      logger.debug("jvmArgs.length: <"+jArgs.length+">");
-      logger.debug("className : <"+className+">");
-      logger.debug("applicationClassPathEntry : <"+
-                                                applicationClassPathEntry+">");
-      
+      logger.debug("###########################");
+      logger.debug("-dport: <" + D_SER_PORT + ">");
+      logger.debug("-mpjport: <" + MPJ_SERVER_PORT + ">");
+      logger.debug("-sport: <" + S_PORT + ">");
+      logger.debug("-np: <" + nprocs + ">");
+      logger.debug("$MPJ_HOME: <" + mpjHomeDir + ">");
+      logger.debug("-dir: <" + wdir + ">");
+      logger.debug("-dev: <" + deviceName + ">");
+      logger.debug("-psl: <" + psl + ">");
+      logger.debug("jvmArgs.length: <" + jArgs.length + ">");
+      logger.debug("className : <" + className + ">");
+      logger.debug("applicationClassPathEntry : <" + applicationClassPathEntry
+          + ">");
 
-      for(int i=0; i<jArgs.length ; i++) {
-	  if(DEBUG && logger.isDebugEnabled())
-        logger.debug(" jvmArgs["+i+"]: <"+jArgs[i]+">");	      
+      for (int i = 0; i < jArgs.length; i++) {
+        if (DEBUG && logger.isDebugEnabled())
+          logger.debug(" jvmArgs[" + i + "]: <" + jArgs[i] + ">");
       }
-      if(DEBUG && logger.isDebugEnabled())
-      logger.debug("appArgs.length: <"+aArgs.length+">");
+      if (DEBUG && logger.isDebugEnabled())
+        logger.debug("appArgs.length: <" + aArgs.length + ">");
 
-      for(int i=0; i<aArgs.length ; i++) {
-	  if(DEBUG && logger.isDebugEnabled())
-        logger.debug(" appArgs["+i+"]: <"+aArgs[i]+">");	      
+      for (int i = 0; i < aArgs.length; i++) {
+        if (DEBUG && logger.isDebugEnabled())
+          logger.debug(" appArgs[" + i + "]: <" + aArgs[i] + ">");
       }
-      
-      if(DEBUG && logger.isDebugEnabled())
-      logger.debug("###########################"); 	    
+
+      if (DEBUG && logger.isDebugEnabled())
+        logger.debug("###########################");
     }
   }
 
   private synchronized void Wait() throws Exception {
     if (wait) {
-	if(DEBUG && logger.isDebugEnabled())
-      logger.debug("Waiting ...");
+      if (DEBUG && logger.isDebugEnabled())
+        logger.debug("Waiting ...");
       this.wait();
-	  if(DEBUG && logger.isDebugEnabled())
-      logger.debug("Unwaiting ...");
+      if (DEBUG && logger.isDebugEnabled())
+        logger.debug("Unwaiting ...");
     }
 
     wait = true;
   }
 
   private synchronized void Notify() {
-  if(DEBUG && logger.isDebugEnabled())
-    logger.debug("Notifying ..."); 	
+    if (DEBUG && logger.isDebugEnabled())
+      logger.debug("Notifying ...");
     this.notify();
     wait = false;
   }
 
   private void assignTasks() throws Exception {
-	  
+
     int rank = 0;
 
     int noOfMachines = machineVector.size();
 
-    CONF_FILE_CONTENTS += ";" + "# Number of Processes" ;
-    CONF_FILE_CONTENTS += ";" + nprocs ;
-    CONF_FILE_CONTENTS += ";" + "# Protocol Switch Limit" ;
+    CONF_FILE_CONTENTS += ";" + "# Number of Processes";
+    CONF_FILE_CONTENTS += ";" + nprocs;
+    CONF_FILE_CONTENTS += ";" + "# Protocol Switch Limit";
     CONF_FILE_CONTENTS += ";" + psl;
-    CONF_FILE_CONTENTS += ";" + "# Entry, HOST_NAME/IP@SERVERPORT@RANK" ;
+    CONF_FILE_CONTENTS += ";" + "# Entry, HOST_NAME/IP@SERVERPORT@RANK";
 
-    /* number of requested parallel processes are less than or equal
-       to compute nodes */ 
+    /*
+     * number of requested parallel processes are less than or equal to compute
+     * nodes
+     */
     if (nprocs <= noOfMachines) {
 
-      if(DEBUG && logger.isDebugEnabled()) { 
-        logger.debug("Processes Requested " + nprocs +
-                  " are less than than machines " + noOfMachines);
-        logger.debug("Adding 1 processes to the first " + nprocs +
-                  " items");
+      if (DEBUG && logger.isDebugEnabled()) {
+        logger.debug("Processes Requested " + nprocs
+            + " are less than than machines " + noOfMachines);
+        logger.debug("Adding 1 processes to the first " + nprocs + " items");
       }
 
       for (int i = 0; i < nprocs; i++) {
-        procsPerMachineTable.put( InetAddress.getByName((String) machineVector.get(i)).getHostAddress(),
-                                 new Integer(1));
-	 
-				if(deviceName.equals("niodev")) { 
-					          CONF_FILE_CONTENTS += ";"+InetAddress.getByName((String) machineVector.get(i)).getHostAddress()+"@"
-                                    + MPJ_SERVER_PORT + "@" + (rank++) 
-					+ "@" + (DEBUG_PORT);
-				} else if(deviceName.equals("hybdev")) { 
-						  CONF_FILE_CONTENTS += ";"+InetAddress.getByName((String) machineVector.get(i)).getHostAddress()+"@"
-                                    + MPJ_SERVER_PORT + "@" + (rank++) 
-					+ "@" + (DEBUG_PORT);
-				} else if(deviceName.equals("mxdev")) { 
-						  CONF_FILE_CONTENTS += ";"+InetAddress.getByName((String) machineVector.get(i)).getHostAddress()+"@"
-                                    + mxBoardNum + "@" + (rank++) 
-					+ "@" + (DEBUG_PORT);
-				}
-				
-				if(DEBUG && logger.isDebugEnabled()) { 
-					logger.debug("procPerMachineTable==>" + procsPerMachineTable);
-				}
+        procsPerMachineTable.put(
+            InetAddress.getByName((String) machineVector.get(i))
+                .getHostAddress(), new Integer(1));
+
+        if (deviceName.equals("niodev")) {
+          CONF_FILE_CONTENTS += ";"
+              + InetAddress.getByName((String) machineVector.get(i))
+                  .getHostAddress() + "@" + MPJ_SERVER_PORT + "@" + (rank++)
+              + "@" + (DEBUG_PORT);
+        } else if (deviceName.equals("hybdev")) {
+          CONF_FILE_CONTENTS += ";"
+              + InetAddress.getByName((String) machineVector.get(i))
+                  .getHostAddress() + "@" + MPJ_SERVER_PORT + "@" + (rank++)
+              + "@" + (DEBUG_PORT);
+        } else if (deviceName.equals("mxdev")) {
+          CONF_FILE_CONTENTS += ";"
+              + InetAddress.getByName((String) machineVector.get(i))
+                  .getHostAddress() + "@" + mxBoardNum + "@" + (rank++) + "@"
+              + (DEBUG_PORT);
+        }
+
+        if (DEBUG && logger.isDebugEnabled()) {
+          logger.debug("procPerMachineTable==>" + procsPerMachineTable);
+        }
       }
 
-    /* number of processes are greater than compute nodes available. we'll 
-       start more than one process on compute nodes to deal with this */
+      /*
+       * number of processes are greater than compute nodes available. we'll
+       * start more than one process on compute nodes to deal with this
+       */
     } else if (nprocs > noOfMachines) {
 
-      if(DEBUG && logger.isDebugEnabled()) { 
-          logger.debug("Processes Requested " + nprocs +
-                       " are greater than than machines " + noOfMachines);
+      if (DEBUG && logger.isDebugEnabled()) {
+        logger.debug("Processes Requested " + nprocs
+            + " are greater than than machines " + noOfMachines);
       }
 
       int divisor = nprocs / noOfMachines;
-      if(DEBUG && logger.isDebugEnabled()) { 
-	  logger.debug("divisor " + divisor);
+      if (DEBUG && logger.isDebugEnabled()) {
+        logger.debug("divisor " + divisor);
       }
       int remainder = nprocs % noOfMachines;
 
-      if(DEBUG && logger.isDebugEnabled()) { 
-	  logger.debug("remainder " + remainder);
+      if (DEBUG && logger.isDebugEnabled()) {
+        logger.debug("remainder " + remainder);
       }
-      for (int i = 0; i < noOfMachines; i++) { 
+      for (int i = 0; i < noOfMachines; i++) {
         if (i < remainder) {
-		
-         procsPerMachineTable.put( InetAddress.getByName((String) machineVector.get(i)).getHostAddress(),
-                                   new Integer(divisor + 1));
-          if(DEBUG && logger.isDebugEnabled()) { 
+
+          procsPerMachineTable.put(
+              InetAddress.getByName((String) machineVector.get(i))
+                  .getHostAddress(), new Integer(divisor + 1));
+          if (DEBUG && logger.isDebugEnabled()) {
             logger.debug("procPerMachineTable==>" + procsPerMachineTable);
-					}
-	  
+          }
+
           for (int j = 0; j < (divisor + 1); j++) {
-				if(deviceName.equals("niodev")) {
-					CONF_FILE_CONTENTS += ";"+InetAddress.getByName((String) machineVector.get(i)).getHostAddress()+"@"+
-                               		(MPJ_SERVER_PORT + (j * 2)) + "@" + (rank++) 
-					+ "@" + (DEBUG_PORT+j*2);
-				} if(deviceName.equals("hybdev")) { 		  
-					CONF_FILE_CONTENTS += ";"+InetAddress.getByName((String) machineVector.get(i)).getHostAddress()+"@"+
-                                	(MPJ_SERVER_PORT + (j * 2)) + "@" + (rank++) 
-					+ "@" + (DEBUG_PORT+j*2);
-				} else if(deviceName.equals("mxdev")) { 
-					CONF_FILE_CONTENTS += ";" +  InetAddress.getByName((String) machineVector.get(i)).getHostAddress() + "@" +
-                                	(mxBoardNum+j) + "@" + (rank++) 
-					+ "@" + (DEBUG_PORT+j*2);
-				}
+            if (deviceName.equals("niodev")) {
+              CONF_FILE_CONTENTS += ";"
+                  + InetAddress.getByName((String) machineVector.get(i))
+                      .getHostAddress() + "@" + (MPJ_SERVER_PORT + (j * 2))
+                  + "@" + (rank++) + "@" + (DEBUG_PORT + j * 2);
+            }
+            if (deviceName.equals("hybdev")) {
+              CONF_FILE_CONTENTS += ";"
+                  + InetAddress.getByName((String) machineVector.get(i))
+                      .getHostAddress() + "@" + (MPJ_SERVER_PORT + (j * 2))
+                  + "@" + (rank++) + "@" + (DEBUG_PORT + j * 2);
+            } else if (deviceName.equals("mxdev")) {
+              CONF_FILE_CONTENTS += ";"
+                  + InetAddress.getByName((String) machineVector.get(i))
+                      .getHostAddress() + "@" + (mxBoardNum + j) + "@"
+                  + (rank++) + "@" + (DEBUG_PORT + j * 2);
+            }
           }
         } else if (divisor > 0) {
-         procsPerMachineTable.put( InetAddress.getByName((String) machineVector.get(i)).getHostAddress(),
-                                   new Integer(divisor));
-	  
-          if(DEBUG && logger.isDebugEnabled()) { 
+          procsPerMachineTable.put(
+              InetAddress.getByName((String) machineVector.get(i))
+                  .getHostAddress(), new Integer(divisor));
+
+          if (DEBUG && logger.isDebugEnabled()) {
             logger.debug("procPerMachineTable==>" + procsPerMachineTable);
-					}
+          }
 
           for (int j = 0; j < divisor; j++) {
-            		if(deviceName.equals("niodev")) { 		  
-              			CONF_FILE_CONTENTS += ";" + InetAddress.getByName((String) machineVector.get(i)).getHostAddress() + "@" +
-                        	(MPJ_SERVER_PORT + (j * 2)) + "@" + (rank++) 
-				+ "@" + (DEBUG_PORT+j*2);
-			} else if(deviceName.equals("mxdev")) { 
-              			CONF_FILE_CONTENTS += ";" + InetAddress.getByName((String) machineVector.get(i)).getHostAddress() + "@" +
-                                (mxBoardNum+j) + "@" + (rank++) 
-				+ "@" + (DEBUG_PORT+j*2);
-			}
+            if (deviceName.equals("niodev")) {
+              CONF_FILE_CONTENTS += ";"
+                  + InetAddress.getByName((String) machineVector.get(i))
+                      .getHostAddress() + "@" + (MPJ_SERVER_PORT + (j * 2))
+                  + "@" + (rank++) + "@" + (DEBUG_PORT + j * 2);
+            } else if (deviceName.equals("mxdev")) {
+              CONF_FILE_CONTENTS += ";"
+                  + InetAddress.getByName((String) machineVector.get(i))
+                      .getHostAddress() + "@" + (mxBoardNum + j) + "@"
+                  + (rank++) + "@" + (DEBUG_PORT + j * 2);
+            }
           }
         }
       }
     }
   }
 
-	//________________ HD _________________________
-	
-	private void assignTasksHyb() throws Exception {
-		
-		noOfMachines = machineVector.size();
-		nioProcs=-1;
-		if (nprocs <= noOfMachines){						
-			nioProcs=nprocs;
-		}
-		else{												//when np is higher than the nodes available
-			nioProcs=noOfMachines;
-		} 
-		netID=0;
-    
-		CONF_FILE_CONTENTS += ";" + "# Number of NIO Processes" ;
-    CONF_FILE_CONTENTS += ";" + nioProcs ;
-    CONF_FILE_CONTENTS += ";" + "# Protocol Switch Limit" ;
-    CONF_FILE_CONTENTS += ";" + psl;
-    CONF_FILE_CONTENTS += ";" + "# Entry, HOST_NAME/IP@SERVERPORT@NETID" ;
-    //One NIO Process per machine is being implemented, SMP Threads per node will be decided in SMPDev
-		for (int i = 0; i < nioProcs; i++) {
-			procsPerMachineTable.put( (String) machineVector.get(i), 1);						//np because each node will have at max 1 NIODev Process and np is required on each node to calculate SMP processes required at that node    
-					CONF_FILE_CONTENTS += ";"+(String) machineVector.get(i)+"@"+ MPJ_SERVER_PORT + "@" + (netID++) ;
-		procsPerMachineTable.put( InetAddress.getByName((String) machineVector.get(i)).getHostAddress(),
-                                   new Integer(1)); //np because each node will have at max 1 NIODev Process and np is required on each node to calculate SMP processes required at that node 
-								   
-					CONF_FILE_CONTENTS += ";"+InetAddress.getByName((String) machineVector.get(i)).getHostAddress()+"@"+
-                                	(MPJ_SERVER_PORT )  + "@" + (netID++)
-					+ "@" + (DEBUG_PORT);
-		}
+  // ________________ HD _________________________
 
-		if(DEBUG && logger.isDebugEnabled()) {
-			logger.debug("procPerMachineTable==>" + procsPerMachineTable);
-		}
-	
-	}
-	
+  private void assignTasksHyb() throws Exception {
+
+    noOfMachines = machineVector.size();
+    nioProcs = -1;
+    if (nprocs <= noOfMachines) {
+      nioProcs = nprocs;
+    } else { // when np is higher than the nodes available
+      nioProcs = noOfMachines;
+    }
+    netID = 0;
+
+    CONF_FILE_CONTENTS += ";" + "# Number of NIO Processes";
+    CONF_FILE_CONTENTS += ";" + nioProcs;
+    CONF_FILE_CONTENTS += ";" + "# Protocol Switch Limit";
+    CONF_FILE_CONTENTS += ";" + psl;
+    CONF_FILE_CONTENTS += ";" + "# Entry, HOST_NAME/IP@SERVERPORT@NETID";
+    // One NIO Process per machine is being implemented, SMP Threads per node
+    // will be decided in SMPDev
+    for (int i = 0; i < nioProcs; i++) {
+      procsPerMachineTable
+          .put(InetAddress.getByName((String) machineVector.get(i))
+              .getHostAddress(), new Integer(1));
+      // np because each node will have at max 1 NIODev Process and np is
+      // required on each node to calculate SMP processes required at that node
+
+      CONF_FILE_CONTENTS += ";"
+          + InetAddress.getByName((String) machineVector.get(i))
+              .getHostAddress() + "@" + (MPJ_SERVER_PORT) + "@" + (netID++)
+          + "@" + (DEBUG_PORT);
+    }
+
+    if (DEBUG && logger.isDebugEnabled()) {
+      logger.debug("procPerMachineTable==>" + procsPerMachineTable);
+    }
+
+  }
+
   private void machinesSanityCheck() throws Exception {
-	  
-    for(int i=0 ; i<machineVector.size() ; i++) {
-	    
-      String host = (String) machineVector.get(i) ;
+
+    for (int i = 0; i < machineVector.size(); i++) {
+
+      String host = (String) machineVector.get(i);
 
       try {
         InetAddress add = InetAddress.getByName(host);
-      } catch( Exception e) {
-        throw new MPJRuntimeException (e);	      
+      } catch (Exception e) {
+        throw new MPJRuntimeException(e);
       }
-      
+
     }
 
   }
@@ -883,38 +881,36 @@ public class MPJRun {
     BufferedReader reader = null;
 
     try {
-      reader = new BufferedReader(new FileReader( machinesFile ));
-    }
-    catch (FileNotFoundException fnfe) {
-      throw new MPJRuntimeException ( "<"+ machinesFile + "> file cannot "+
-                            " be found." +
-                            " The starter module assumes "+
-                            "it to be in the current directory.");
+      reader = new BufferedReader(new FileReader(machinesFile));
+    } catch (FileNotFoundException fnfe) {
+      throw new MPJRuntimeException("<" + machinesFile + "> file cannot "
+          + " be found." + " The starter module assumes "
+          + "it to be in the current directory.");
     }
 
     boolean loop = true;
     String line = null;
-    int machineCount = 0 ; 
+    int machineCount = 0;
 
     while (machineCount < nprocs) {
 
       line = reader.readLine();
 
-      if(DEBUG && logger.isDebugEnabled()) {
+      if (DEBUG && logger.isDebugEnabled()) {
         logger.debug("line <" + line + ">");
       }
 
-      if(line == null) { 
-        break ; 
+      if (line == null) {
+        break;
       }
 
-      if (line.startsWith("#") || line.equals("") ||
-          (machineVector.size() == nprocs)) {
-        //loop = false;
-        continue ;
+      if (line.startsWith("#") || line.equals("")
+          || (machineVector.size() == nprocs)) {
+        // loop = false;
+        continue;
       }
 
-      machineCount ++ ;
+      machineCount++;
 
       line = line.trim();
 
@@ -922,33 +918,33 @@ public class MPJRun {
       String addressT = address.getHostAddress();
       String nameT = address.getHostName();
 
-      if(DEBUG && logger.isDebugEnabled()) {
+      if (DEBUG && logger.isDebugEnabled()) {
         logger.debug("nameT " + nameT);
         logger.debug("addressT " + addressT);
-      } 
-     
-      boolean alreadyPresent = false;
-      
-      for(int i=0 ; i<machineVector.size() ; i++) {
-        String machine = (String) machineVector.get(i); 
+      }
 
-        if(machine.equals(nameT) || machine.equals(addressT)) {  
-           alreadyPresent = true;
-           break ;
+      boolean alreadyPresent = false;
+
+      for (int i = 0; i < machineVector.size(); i++) {
+        String machine = (String) machineVector.get(i);
+
+        if (machine.equals(nameT) || machine.equals(addressT)) {
+          alreadyPresent = true;
+          break;
         }
       }
 
-      if(!alreadyPresent) { 
+      if (!alreadyPresent) {
 
-        //machineVector.add(addressT);
+        // machineVector.add(addressT);
         machineVector.add(nameT);
 
-        if(DEBUG && logger.isDebugEnabled()) {
-          logger.debug("Line " + line.trim() +
-                    " added to vector " + machineVector);
+        if (DEBUG && logger.isDebugEnabled()) {
+          logger.debug("Line " + line.trim() + " added to vector "
+              + machineVector);
         }
       }
-    }//end while.
+    }// end while.
   }
 
   private static int getPortFromWrapper() {
@@ -961,14 +957,14 @@ public class MPJRun {
 
     try {
 
-      String path = System.getenv("MPJ_HOME")+"/conf/wrapper.conf";
+      String path = System.getenv("MPJ_HOME") + "/conf/wrapper.conf";
       in = new FileInputStream(path);
       din = new DataInputStream(in);
       reader = new BufferedReader(new InputStreamReader(din));
 
-      while ((line = reader.readLine()) != null)   {
-        if(line.startsWith("wrapper.app.parameter.2")) {
-          String trimmedLine=line.replaceAll("\\s+", "");
+      while ((line = reader.readLine()) != null) {
+        if (line.startsWith("wrapper.app.parameter.2")) {
+          String trimmedLine = line.replaceAll("\\s+", "");
           port = Integer.parseInt(trimmedLine.substring(24));
           break;
         }
@@ -985,42 +981,37 @@ public class MPJRun {
   }
 
   private void clientSocketInit() throws Exception {
-      	  
+
     SocketChannel[] clientChannels = new SocketChannel[machineVector.size()];
     for (int i = 0; i < machineVector.size(); i++) {
-      boolean connected = false ; 	    
+      boolean connected = false;
       String daemon = (String) machineVector.get(i);
       try {
         clientChannels[i] = SocketChannel.open();
         clientChannels[i].configureBlocking(true);
-		if(DEBUG && logger.isDebugEnabled())
-		{
-        logger.debug("Connecting to " + daemon + "@" + D_SER_PORT);
-		}      
-	  connected = clientChannels[i].connect(
-			new InetSocketAddress(daemon, D_SER_PORT));
+        if (DEBUG && logger.isDebugEnabled()) {
+          logger.debug("Connecting to " + daemon + "@" + D_SER_PORT);
+        }
+        connected = clientChannels[i].connect(new InetSocketAddress(daemon,
+            D_SER_PORT));
 
-	if(!connected) {
-          throw new MPJRuntimeException("Cannot connect to the daemon "+
-			  "at machine <"+daemon+"> and port <"+
-			  D_SER_PORT+">."+
-			  "Please make sure that the machine is reachable "+
-			  "and running the daemon in 'sane' state"); 
-	}
+        if (!connected) {
+          throw new MPJRuntimeException("Cannot connect to the daemon "
+              + "at machine <" + daemon + "> and port <" + D_SER_PORT + ">."
+              + "Please make sure that the machine is reachable "
+              + "and running the daemon in 'sane' state");
+        }
 
-	doConnect(clientChannels[i]); 
-      }
-      catch(IOException ioe) {
+        doConnect(clientChannels[i]);
+      } catch (IOException ioe) {
 
-	System.out.println(" IOException in doConnect");
-        throw new MPJRuntimeException("Cannot connect to the daemon "+
-			"at machine <"+daemon+"> and port <"+
-			D_SER_PORT+">."+
-			"Please make sure that the machine is reachable "+
-			"and running the daemon in 'sane' state"); 
-      }
-      catch (Exception ccn1) {
-	  System.out.println(" rest of the exceptions ");
+        System.out.println(" IOException in doConnect");
+        throw new MPJRuntimeException("Cannot connect to the daemon "
+            + "at machine <" + daemon + "> and port <" + D_SER_PORT + ">."
+            + "Please make sure that the machine is reachable "
+            + "and running the daemon in 'sane' state");
+      } catch (Exception ccn1) {
+        System.out.println(" rest of the exceptions ");
         throw ccn1;
       }
     }
@@ -1031,108 +1022,99 @@ public class MPJRun {
    * serverSocket, and all the other socketChannels
    */
   public void finish() {
-   if(DEBUG && logger.isDebugEnabled())
-	{
-    logger.debug("\n---finish---");
-	}
+    if (DEBUG && logger.isDebugEnabled()) {
+      logger.debug("\n---finish---");
+    }
     try {
-      if(DEBUG && logger.isDebugEnabled())
-	 {
-      logger.debug("Waking up the selector");
-      
-	 }
-	 selector.wakeup();
-      selectorFlag = false;
-	if(DEBUG && logger.isDebugEnabled())
-	 {
-      logger.debug("Closing the selector");
+      if (DEBUG && logger.isDebugEnabled()) {
+        logger.debug("Waking up the selector");
+
       }
-	  selector.close();
+      selector.wakeup();
+      selectorFlag = false;
+      if (DEBUG && logger.isDebugEnabled()) {
+        logger.debug("Closing the selector");
+      }
+      selector.close();
 
       SocketChannel peerChannel = null;
 
       for (int i = 0; i < peerChannels.size(); i++) {
         peerChannel = peerChannels.get(i);
-	if(DEBUG && logger.isDebugEnabled())
-	 {       
-	   logger.debug("Closing the channel " + peerChannel);
-	 }
+        if (DEBUG && logger.isDebugEnabled()) {
+          logger.debug("Closing the channel " + peerChannel);
+        }
         if (peerChannel.isOpen()) {
           peerChannel.close();
         }
 
-
       }
 
       peerChannel = null;
-    }
-    catch (Exception e) {
-      //e.printStackTrace();
+    } catch (Exception e) {
+      // e.printStackTrace();
     }
   }
-  
-  private void writeFile(String configurationFileData) {
-   try {
-    BufferedWriter out = new BufferedWriter(new FileWriter(System.getProperty("user.home")+File.separator+CONF_FILE_NAME));
-    out.write(configurationFileData);
-    out.close();
-    } catch (IOException e) {
-                
-            }
 
-   
-  }
-  private void doConnect(SocketChannel peerChannel) {
-  if(DEBUG && logger.isDebugEnabled())
-    logger.debug("---doConnect---");
+  private void writeFile(String configurationFileData) {
     try {
-	if(DEBUG && logger.isDebugEnabled())
-      logger.debug("Configuring it to be non-blocking");
-      peerChannel.configureBlocking(false);
+      BufferedWriter out = new BufferedWriter(new FileWriter(
+          System.getProperty("user.home") + File.separator + CONF_FILE_NAME));
+      out.write(configurationFileData);
+      out.close();
+    } catch (IOException e) {
+
     }
-    catch (IOException ioe) {
-	if(DEBUG && logger.isDebugEnabled())
-      logger.debug("Closed Channel Exception in doConnect");
+
+  }
+
+  private void doConnect(SocketChannel peerChannel) {
+    if (DEBUG && logger.isDebugEnabled())
+      logger.debug("---doConnect---");
+    try {
+      if (DEBUG && logger.isDebugEnabled())
+        logger.debug("Configuring it to be non-blocking");
+      peerChannel.configureBlocking(false);
+    } catch (IOException ioe) {
+      if (DEBUG && logger.isDebugEnabled())
+        logger.debug("Closed Channel Exception in doConnect");
       System.exit(0);
     }
 
     try {
-	if(DEBUG && logger.isDebugEnabled())
-      logger.debug("Registering for OP_READ & OP_WRITE event");
-      peerChannel.register(selector,
-                           SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-    }
-    catch (ClosedChannelException cce) {
-	if(DEBUG && logger.isDebugEnabled())
-      logger.debug("Closed Channel Exception in doConnect");
+      if (DEBUG && logger.isDebugEnabled())
+        logger.debug("Registering for OP_READ & OP_WRITE event");
+      peerChannel.register(selector, SelectionKey.OP_READ
+          | SelectionKey.OP_WRITE);
+    } catch (ClosedChannelException cce) {
+      if (DEBUG && logger.isDebugEnabled())
+        logger.debug("Closed Channel Exception in doConnect");
       System.exit(0);
     }
 
     try {
       peerChannel.socket().setTcpNoDelay(true);
+    } catch (Exception e) {
     }
-    catch (Exception e) {}
     peerChannels.add(peerChannel);
-	if(DEBUG && logger.isDebugEnabled())
-	{
-    logger.debug("Adding the channel " + peerChannel + " to " + peerChannels);
-    logger.debug("Size of Peer Channels vector " + peerChannels.size());
+    if (DEBUG && logger.isDebugEnabled()) {
+      logger.debug("Adding the channel " + peerChannel + " to " + peerChannels);
+      logger.debug("Size of Peer Channels vector " + peerChannels.size());
     }
     peerChannel = null;
     if (peerChannels.size() == machineVector.size()) {
       Notify();
     }
   }
-  
+
   /**
-   * Entry point to the class 
+   * Entry point to the class
    */
   public static void main(String args[]) throws Exception {
 
     try {
       MPJRun client = new MPJRun(args);
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
       throw e;
     }
 
@@ -1146,14 +1128,13 @@ public class MPJRun {
             SocketChannel socketChannel = null;
             socketChannel = peerChannels.get(j);
             buffer.clear();
-            buffer.put( (new String("kill")).getBytes());
+            buffer.put((new String("kill")).getBytes());
             buffer.flip();
             socketChannel.write(buffer);
             buffer.clear();
           }
 
-        }
-        catch(Exception e){
+        } catch (Exception e) {
         }
       }
     });
@@ -1164,7 +1145,7 @@ public class MPJRun {
     /* This is selector thread */
     public void run() {
 
-      if(DEBUG && logger.isDebugEnabled())     
+      if (DEBUG && logger.isDebugEnabled())
         logger.debug("selector Thread started ");
 
       Set readyKeys = null;
@@ -1186,30 +1167,28 @@ public class MPJRun {
             key = (SelectionKey) readyItor.next();
             readyItor.remove();
             keyChannel = (SelectableChannel) key.channel();
-			if(DEBUG && logger.isDebugEnabled())
-            logger.debug("\n---selector EVENT---");
+            if (DEBUG && logger.isDebugEnabled())
+              logger.debug("\n---selector EVENT---");
 
             if (key.isAcceptable()) {
-              //doAccept(keyChannel);
-			  if(DEBUG && logger.isDebugEnabled())
-              logger.debug("ACCEPT_EVENT");
+              // doAccept(keyChannel);
+              if (DEBUG && logger.isDebugEnabled())
+                logger.debug("ACCEPT_EVENT");
             }
 
             else if (key.isConnectable()) {
-				if(DEBUG && logger.isDebugEnabled())
-              logger.debug("CONNECT_EVENT");
+              if (DEBUG && logger.isDebugEnabled())
+                logger.debug("CONNECT_EVENT");
               try {
                 socketChannel = (SocketChannel) keyChannel;
-              }
-              catch (NoConnectionPendingException e) {
+              } catch (NoConnectionPendingException e) {
                 continue;
               }
 
               if (socketChannel.isConnectionPending()) {
                 try {
                   socketChannel.finishConnect();
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                   continue;
                 }
               }
@@ -1217,40 +1196,39 @@ public class MPJRun {
               doConnect(socketChannel);
             }
 
-            else if (key.isReadable()) { 
-              //if(DEBUG && logger.isDebugEnabled())
-              //logger.debug("READ_EVENT");
+            else if (key.isReadable()) {
+              // if(DEBUG && logger.isDebugEnabled())
+              // logger.debug("READ_EVENT");
               socketChannel = (SocketChannel) keyChannel;
-              int read = socketChannel.read(bigBuffer);  
+              int read = socketChannel.read(bigBuffer);
 
-              /* 
-               * It would be ideal if this piece of code is called ...
-               * but it appears ..its never callled ..maybe the behaviour
-               * of closing down that we saw was Linux dependant ????
-               */ 
+              /*
+               * It would be ideal if this piece of code is called ... but it
+               * appears ..its never callled ..maybe the behaviour of closing
+               * down that we saw was Linux dependant ????
+               */
 
               if (read == -1) {
-                if(DEBUG && logger.isDebugEnabled())
-	          logger.debug("END_OF_STREAM signal at starter from "+
-                                                "channel "+socketChannel) ;  
-                streamEndedCount ++ ;  
+                if (DEBUG && logger.isDebugEnabled())
+                  logger.debug("END_OF_STREAM signal at starter from "
+                      + "channel " + socketChannel);
+                streamEndedCount++;
 
                 if (streamEndedCount == machineVector.size()) {
-				if(DEBUG && logger.isDebugEnabled())
-				{
-                  logger.debug("The starter has received "+ 
-                               machineVector.size() +"signals"); 
-                  logger.debug("This means its time to exit"); 
-				}                 
-		  Notify();
+                  if (DEBUG && logger.isDebugEnabled()) {
+                    logger.debug("The starter has received "
+                        + machineVector.size() + "signals");
+                    logger.debug("This means its time to exit");
+                  }
+                  Notify();
                 }
-                
-              } 
+
+              }
 
               bigBuffer.flip();
 
-              if(read == -1) { 
-                System.exit(0);  
+              if (read == -1) {
+                System.exit(0);
               }
 
               byte[] tempArray = new byte[read];
@@ -1260,40 +1238,37 @@ public class MPJRun {
 
               if (line.endsWith("EXIT")) {
                 endCount++;
-                if(DEBUG && logger.isDebugEnabled())
-				{
-				logger.debug("endCount " + endCount);
-                logger.debug("machineVector.size() " + machineVector.size());
-				}
+                if (DEBUG && logger.isDebugEnabled()) {
+                  logger.debug("endCount " + endCount);
+                  logger.debug("machineVector.size() " + machineVector.size());
+                }
                 if (endCount == machineVector.size()) {
-				if(DEBUG && logger.isDebugEnabled())
-				 logger.debug("Notify and exit"); 
+                  if (DEBUG && logger.isDebugEnabled())
+                    logger.debug("Notify and exit");
                   Notify();
                 }
-              } 
-	      else {
+              } else {
                 System.out.print(line);
               }
 
-            } //end if key.isReadable()
+            } // end if key.isReadable()
 
             else if (key.isWritable()) {
-			if(DEBUG && logger.isDebugEnabled())
-              logger.debug(
-                  "In, WRITABLE, so changing the interestOps to READ_ONLY");
+              if (DEBUG && logger.isDebugEnabled())
+                logger
+                    .debug("In, WRITABLE, so changing the interestOps to READ_ONLY");
               key.interestOps(SelectionKey.OP_READ);
             }
           }
         }
+      } catch (Exception ioe1) {
+        if (DEBUG && logger.isDebugEnabled())
+          // logger.debug("Exception in selector thread ");
+          // ioe1.printStackTrace();
+          System.exit(0);
       }
-      catch (Exception ioe1) {
-	  if(DEBUG && logger.isDebugEnabled())
-       // logger.debug("Exception in selector thread ");
-        //ioe1.printStackTrace();
-        System.exit(0);
-      }
-	  if(DEBUG && logger.isDebugEnabled())
-      logger.debug("Thread getting out");
+      if (DEBUG && logger.isDebugEnabled())
+        logger.debug("Thread getting out");
     }
   };
 }
