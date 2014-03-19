@@ -1,4 +1,4 @@
-package mpi.ccl; 
+package mpi.ccl;
 
 /****************************************************************************
 
@@ -23,7 +23,7 @@ package mpi.ccl;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -31,22 +31,27 @@ package mpi.ccl;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
-****************************************************************************/
+ ****************************************************************************/
 
 import mpi.*;
 
 public class reduce_scatter {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      reduce_scatter c = new reduce_scatter(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public reduce_scatter() {
@@ -55,49 +60,45 @@ public class reduce_scatter {
   public reduce_scatter(String[] args) throws Exception {
 
     final int MAXLEN = 10000;
- 
-    int out[] = new int[MAXLEN*100];
-    int in[]  = new int[MAXLEN*100];
-    int i,j,k;
-    int myself,tasks;
-    int recvcounts[] = new int[128];
- 
 
+    int out[] = new int[MAXLEN * 100];
+    int in[] = new int[MAXLEN * 100];
+    int i, j, k;
+    int myself, tasks;
+    int recvcounts[] = new int[128];
 
     MPI.Init(args);
     myself = MPI.COMM_WORLD.Rank();
-    tasks = MPI.COMM_WORLD.Size(); 
-    
-    if(tasks > 8) {
-      if(myself == 0) {
-        System.out.println("reduce_scatter must run with 8 tasks!");	      
+    tasks = MPI.COMM_WORLD.Size();
+
+    if (tasks > 8) {
+      if (myself == 0) {
+	System.out.println("reduce_scatter must run with 8 tasks!");
       }
       MPI.Finalize();
       return;
     }
-j=10 ;
-    //for(j=1;j<=MAXLEN*tasks;j*=10)  {
-      for(i=0;i<tasks;i++)  recvcounts[i] = j;
-      for(i=0;i<j*tasks;i++)  out[i] = i;
- 
-      MPI.COMM_WORLD.Reduce_scatter(out,0,in,0,recvcounts,MPI.INT,MPI.SUM);
+    j = 10;
+    // for(j=1;j<=MAXLEN*tasks;j*=10) {
+    for (i = 0; i < tasks; i++)
+      recvcounts[i] = j;
+    for (i = 0; i < j * tasks; i++)
+      out[i] = i;
 
-      for(k=0;k<j;k++) {
-	if(in[k] != tasks*(myself*j+k)) {  
-	  System.out.println
-	    ("bad answer ("+in[k]+") at index "+k+" of "+j+
-	     "(should be "+tasks*(myself*j+k)+")"); 
-	  break; 
-	}
+    MPI.COMM_WORLD.Reduce_scatter(out, 0, in, 0, recvcounts, MPI.INT, MPI.SUM);
+
+    for (k = 0; k < j; k++) {
+      if (in[k] != tasks * (myself * j + k)) {
+	System.out.println("bad answer (" + in[k] + ") at index " + k + " of "
+	    + j + "(should be " + tasks * (myself * j + k) + ")");
+	break;
       }
-    //}
-
-
+    }
+    // }
 
     MPI.COMM_WORLD.Barrier();
-    if(myself == 0)  System.out.println("Reduce_scatter TEST COMPLETE");
+    if (myself == 0)
+      System.out.println("Reduce_scatter TEST COMPLETE");
     MPI.Finalize();
   }
 }
-
-

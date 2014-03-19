@@ -23,7 +23,7 @@ package mpi.ccl;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -31,59 +31,58 @@ package mpi.ccl;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
-****************************************************************************/
+ ****************************************************************************/
 
 import mpi.*;
 
 public class barrier {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      barrier c = new barrier(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public barrier() {
   }
 
   public barrier(String[] args) throws Exception {
-    
-    int me,tasks,i;
+
+    int me, tasks, i;
 
     MPI.Init(args);
     me = MPI.COMM_WORLD.Rank();
     tasks = MPI.COMM_WORLD.Size();
 
-    if(tasks < 2)  { 
-      System.out.println("MUST RUN WITH AT LEAST 2 TASKS"); 
-      System.exit(0); 
+    if (tasks < 2) {
+      System.out.println("MUST RUN WITH AT LEAST 2 TASKS");
+      System.exit(0);
     }
 
-    for(i=0;i<250000*me;i++) ;
-    
-    System.out.println
-      (" TASK "+me+" BEFORE BARRIER, TIME = "+(MPI.Wtime()));
+    for (i = 0; i < 250000 * me; i++)
+      ;
 
+    System.out.println(" TASK " + me + " BEFORE BARRIER, TIME = "
+	+ (MPI.Wtime()));
 
     MPI.COMM_WORLD.Barrier();
-    
-    System.out.println
-      (" TASK "+me+" AFTER  BARRIER, TIME = "+(MPI.Wtime()));
 
-    if(me == 0)  System.out.println("Barrier TEST COMPLETE");
+    System.out.println(" TASK " + me + " AFTER  BARRIER, TIME = "
+	+ (MPI.Wtime()));
+
+    if (me == 0)
+      System.out.println("Barrier TEST COMPLETE");
     MPI.Finalize();
   }
 }
-
-
-
-
-
-
-

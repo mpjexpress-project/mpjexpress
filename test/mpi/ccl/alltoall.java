@@ -1,4 +1,5 @@
 package mpi.ccl;
+
 /****************************************************************************
 
  MESSAGE PASSING INTERFACE TEST CASE SUITE
@@ -22,7 +23,7 @@ package mpi.ccl;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -30,22 +31,27 @@ package mpi.ccl;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
-****************************************************************************/
+ ****************************************************************************/
 
 import mpi.*;
 
 public class alltoall {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      alltoall c = new alltoall(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public alltoall() {
@@ -55,39 +61,38 @@ public class alltoall {
 
     final int MAXLEN = 10000;
 
-    int i,j,k;
-    int myself,tasks;
- 
+    int i, j, k;
+    int myself, tasks;
+
     MPI.Init(args);
     myself = MPI.COMM_WORLD.Rank();
     tasks = MPI.COMM_WORLD.Size();
 
-    int out[] = new int[MAXLEN*tasks]; 
-    int in[]  = new int[MAXLEN*tasks];
-    
- 
-    for(j=1;j<=MAXLEN;j*=10)  {
-      for(i=0;i<j*tasks;i++)  out[i] = myself;
-      
-      MPI.COMM_WORLD.Alltoall(out,0,j,MPI.INT,in,0,j,MPI.INT);
-      
-      for(i=0;i<tasks;i++)  {
-	for(k=0;k<j;k++) {
-	  if(in[k+i*j] != i) {
-	    System.out.println("bad answer ("+(in[k+i*j])+") at index "+
-			       (k+i*j)+" of "+(j*tasks)+
-			       " (should be "+i+")");
-	    break; 
+    int out[] = new int[MAXLEN * tasks];
+    int in[] = new int[MAXLEN * tasks];
+
+    for (j = 1; j <= MAXLEN; j *= 10) {
+      for (i = 0; i < j * tasks; i++)
+	out[i] = myself;
+
+      MPI.COMM_WORLD.Alltoall(out, 0, j, MPI.INT, in, 0, j, MPI.INT);
+
+      for (i = 0; i < tasks; i++) {
+	for (k = 0; k < j; k++) {
+	  if (in[k + i * j] != i) {
+	    System.out
+		.println("bad answer (" + (in[k + i * j]) + ") at index "
+		    + (k + i * j) + " of " + (j * tasks) + " (should be " + i
+		    + ")");
+	    break;
 	  }
 	}
-      } 
+      }
     }
-    
 
-    //MPI.COMM_WORLD.Barrier();
-    if(myself==0)  System.out.println("AllToAll TEST COMPLETE");
+    // MPI.COMM_WORLD.Barrier();
+    if (myself == 0)
+      System.out.println("AllToAll TEST COMPLETE");
     MPI.Finalize();
   }
 }
-
-
