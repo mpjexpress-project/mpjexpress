@@ -37,7 +37,7 @@ import java.util.UUID;
  * Author       : Sang Lim, Bryan Carpenter, Aamir Shafi
  * Created      : Thu Jan 17 17:20:40 2002
  * Revision     : $Revision: 1.11 $
- * Updated      : $Date: 2005/11/27 19:40:12 $
+ * Updated      : $Date: 2014/03/11 13:26:15 PKT $
  */
 
 /**
@@ -55,23 +55,27 @@ public class Status {
    */
   public int tag;
   /**
-   * For a `waitany()' operation in class `Request'.
-   * This field defines which communication in the `reqs' array was selected.
+   * For a `waitany()' operation in class `Request'. This field defines which
+   * communication in the `reqs' array was selected.
    */
   public int index;
   public int count;
-  public int countInBytes ; 
+  public int countInBytes;
   public int numEls;
   public mpjbuf.Type type;
   public java.util.UUID srcID = null;
 
+  // this.source = -1; is introduced here so as to provide functionality for
+  // completionHandler for nativeDevice .. see /mpjdev/nativ/Comm irecv()
   public Status() {
+    this.source = -1;
   }
 
   public Status(UUID uid, int tag, int index) {
     this.srcID = uid;
     this.tag = tag;
     this.index = index;
+    this.source = -1;
   }
 
   public Status(UUID srcID, int tag, int index, mpjbuf.Type type, int numEls) {
@@ -80,8 +84,9 @@ public class Status {
     this.index = index;
     this.type = type;
     this.numEls = numEls;
+    this.source = -1;
   }
-  
+
   public Status(int source, int tag, int index, mpjbuf.Type type, int numEls) {
     this.source = source;
     this.tag = tag;
