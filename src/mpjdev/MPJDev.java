@@ -1,11 +1,9 @@
 /*
  The MIT License
 
- Copyright (c) 2005 - 2010
-   1. Distributed Systems Group, University of Portsmouth (2005)
-   2. Aamir Shafi (2005 - 2010)
-   3. Bryan Carpenter (2005 - 2010)
-   4. Mark Baker (2005 - 2010)
+ Copyright (c) 2013 - 2014
+   1. SEECS, National University of Sciences and Technology, Pakistan (2013 - 2014)
+   2. Bibrak Qamar  (2013 - 2014)
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -26,117 +24,96 @@
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
  THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 /*
  * File         : MPJDev.java
- * Author       : Aamir Shafi, Bryan Carpenter
- * Created      : Mon Nov 1 12:22:15 BST 2004
- * Revision     : $Revision: 1.12 $
- * Updated      : $Date: 2005/12/05 11:58:20 $
- *    
+ * Author       : Bibrak Qamar
+ * Created      : Tue Sept  17 11:15:11 PKT 2013
+ * Revision     : $Revision: 1.1 $
+ * Updated      : $Date: 2014/03/11 11:30:00 $
+ *
  */
 
 package mpjdev;
 
+/*
+ This calss does the switching between Native or javampjdev MPJDev. 
+ The javampjdev then further decides which xdev device to use depending
+ on the use selection.
+ */
 import xdev.Device;
-import xdev.ProcessID;
-import org.apache.log4j.Logger ; 
-
-import java.net.*;
+import mpjdev.Constants;
 
 public class MPJDev {
 
-  public static Comm WORLD = null;
-
-  static Device dev = null;
-
-  static Logger logger = Logger.getLogger( "mpj" );
+  public static String deviceName;
+  public static mpjdev.Comm WORLD = null;
+  public static Device dev = null;
 
   public static Device init(String args[]) throws MPJDevException {
-	  
+
     if (args.length < 3) {
-	    
-      throw new MPJDevException("Usage: " + 
-        "java MPJDev <myrank> <conf_file> <device_name>"
-       +"conf_file can be, ../conf/xdev.conf <Local>"
-       +"OR http://holly.dsg.port.ac.uk:15000/xdev.conf <Remote>");
+
+      throw new MPJDevException("Usage (for javampjdev): "
+	  + "java MPJDev <myrank> <conf_file> <device_name>"
+	  + "conf_file can be, ../conf/xdev.conf <Local>"
+	  + "OR http://holly.dsg.port.ac.uk:15000/xdev.conf <Remote>"
+	  + "\nUsage (for natmpjdev): " + "java MPJDev <x> <x> <device_name>"
+	  + "ignore the first two arguments" + "device name = native");
 
     }
-	
-    /* we want multiple threads to see the same object */
-    synchronized (MPJDev.class) {
-      if (dev == null) {
-        //dev = Device.newInstance(args[2]);
-        String device = args[2];
 
-        if (device.equals("niodev")) {
-          dev = new xdev.niodev.NIODevice();
-        }else if (device.equals("hybdev")) {
-          dev = new xdev.hybdev.HYBDevice();
-        } else if (device.equals("mxdev")) {
-          dev = new xdev.mxdev.MXDevice();
-        } else if (device.equals("smpdev")) {
-          dev = new xdev.smpdev.SMPDevice();
-        } else {
-          throw new MPJDevException("No matching device found for <" 
-               + dev + ">");
-        }
-      }
+    deviceName = args[2]; // get and set the device name
+
+    if (deviceName.equals("native")) {
+      // for Native
+      Constants.isNative = true;
+
+      mpjdev.natmpjdev.MPJDev.init(args);
+      WORLD = mpjdev.natmpjdev.MPJDev.WORLD;
+
+
+    } else {
+      // for javampjdev
+      Constants.isNative = false;
+
+      dev = mpjdev.javampjdev.MPJDev.init(args);
+      WORLD = mpjdev.javampjdev.MPJDev.WORLD;
+      
     }
 
-    if (dev == null) {
-      System.out.println("Specified device: " + args[2]);
-      System.out.println("Available devices, niodev, smpdev, hybdev, mxdev");
-      System.out.println("Error, cant execute, correct the device first");
-      return dev ;
-    }
+    return dev;
 
-    ProcessID[] ids = dev.init(args);
-    ProcessID myID = dev.id();
-    int myRank = -1;
-    for(int i=0 ; i<ids.length ; i++) { 
-      if(myID.uuid().equals(ids[i].uuid())) {
-        myRank = i ; 	      
-	break; 
-      }
-    }
-    WORLD = new Comm(dev, new Group(ids, myID, myRank ));
-    return dev ; 
   }
 
   /**
-   * Gets the overhead incurred by send methods. It should be called 
-   * after calling #init(String[] args) method
+   * Gets the overhead incurred by send methods. It should be called after
+   * calling #init(String[] args) method
+   * 
    * @return int An integer specifying the overhead incurred by send methods
    */
+
   public static int getSendOverhead() {
-    if(dev == null) {
-      throw new MPJDevException("MPJDev should call init before getting "+
-		      "getSendOverhead()" ) ;	    
-    }
-    return dev.getSendOverhead() ; 	  
+    if (Constants.isNative) {
+      return mpjdev.natmpjdev.MPJDev.getRecvOverhead();
+    } else
+      return mpjdev.javampjdev.MPJDev.getSendOverhead();
   }
 
-  /**
-   * Gets the overhead incurred by recv methods. It should be called 
-   * after calling #init(String[] args) method
-   * @return int Number of bytes overhead incurred by recv methods
-   */
   public static int getRecvOverhead() {
-    if(dev == null) {
-      throw new MPJDevException("MPJDev should call init before getting "+
-		      "getRecvOverhead()" ) ;	    
-    }
-    return dev.getRecvOverhead() ;	  
+    if (Constants.isNative) {
+      return mpjdev.natmpjdev.MPJDev.getRecvOverhead();
+    } else
+      return mpjdev.javampjdev.MPJDev.getRecvOverhead();
   }
 
   public static void finish() throws MPJDevException {
-    try { 
-      dev.finish();
-    }catch( xdev.XDevException xde) {
-      throw new MPJDevException ( xde); 	    
+    if (Constants.isNative) {
+   
+    mpjdev.natmpjdev.MPJDev.finish();
+    } else {
+      mpjdev.javampjdev.MPJDev.finish();
     }
-
-    dev = null;
   }
 
 }
