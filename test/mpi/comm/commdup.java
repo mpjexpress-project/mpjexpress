@@ -23,7 +23,7 @@ package mpi.comm;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -31,22 +31,27 @@ package mpi.comm;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
-****************************************************************************/
+ ****************************************************************************/
 
 import mpi.*;
 
 public class commdup {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      commdup a = new commdup(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public commdup() {
@@ -54,26 +59,26 @@ public class commdup {
 
   public commdup(String[] args) throws Exception {
     final int ITER = 20;
-    int i,myself;
+    int i, myself;
 
     MPI.Init(args);
 
-    Comm comm,newcomm;
+    Comm comm, newcomm;
 
     myself = MPI.COMM_WORLD.Rank();
-    
-    for(i=0;i<ITER;i++)  
+
+    for (i = 0; i < ITER; i++)
       comm = (Comm) MPI.COMM_WORLD.clone();
-    
 
     comm = MPI.COMM_WORLD;
-    for(i=0;i<ITER;i++) { 
+    for (i = 0; i < ITER; i++) {
       newcomm = (Comm) comm.clone();
       comm = newcomm;
     }
 
     MPI.COMM_WORLD.Barrier();
-    if(myself == 0)  System.out.println("CommDup TEST COMPLETE");
+    if (myself == 0)
+      System.out.println("CommDup TEST COMPLETE");
     MPI.Finalize();
   }
 }
