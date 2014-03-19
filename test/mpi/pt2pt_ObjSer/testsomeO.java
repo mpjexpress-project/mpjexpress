@@ -23,7 +23,7 @@ package mpi.pt2pt_ObjSer;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -31,28 +31,32 @@ package mpi.pt2pt_ObjSer;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
  Object version :
-    Sang Lim(slim@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    07/18/98
-****************************************************************************
-*/
+ Sang Lim(slim@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 07/18/98
+ ****************************************************************************
+ */
 
 import mpi.*;
- 
 
 public class testsomeO {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      testsomeO c = new testsomeO(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public testsomeO() {
@@ -60,60 +64,57 @@ public class testsomeO {
 
   public testsomeO(String[] args) throws Exception {
 
-    int me,tasks,i,index,done,outcount;
+    int me, tasks, i, index, done, outcount;
     test mebuf[] = new test[1];
 
     MPI.Init(args);
     me = MPI.COMM_WORLD.Rank();
-    tasks =MPI.COMM_WORLD.Size(); 
+    tasks = MPI.COMM_WORLD.Size();
 
-    test      data[] = new test[tasks];
-    Request   req[] = new Request[tasks];
+    test data[] = new test[tasks];
+    Request req[] = new Request[tasks];
     Status status[];
 
     mebuf[0] = new test();
-    for ( i = 0;i< tasks;i++){
-       data[i] = new test();
-       data[i].a = -1;
+    for (i = 0; i < tasks; i++) {
+      data[i] = new test();
+      data[i].a = -1;
     }
 
     mebuf[0].a = me;
-    if(me != 0) 
-      MPI.COMM_WORLD.Send(mebuf,0,1,MPI.OBJECT,0,1);            
+    if (me != 0)
+      MPI.COMM_WORLD.Send(mebuf, 0, 1, MPI.OBJECT, 0, 1);
     else {
       req[0] = MPI.REQUEST_NULL;
-      for(i=1;i<tasks;i++)  
-	req[i] = MPI.COMM_WORLD.Irecv(data,i,1,MPI.OBJECT,i,1);      
+      for (i = 1; i < tasks; i++)
+	req[i] = MPI.COMM_WORLD.Irecv(data, i, 1, MPI.OBJECT, i, 1);
 
-      done = 0; 
-      while(done < tasks-1)  {
+      done = 0;
+      while (done < tasks - 1) {
 	status = Request.Testsome(req);
 
 	outcount = status.length;
-	for(i=0;i<outcount;i++)  {
+	for (i = 0; i < outcount; i++) {
 	  done++;
 
-	  if(!req[status[i].index].Is_null())
-	    System.out.println
-	      ("ERROR(2) in MPI_Testsome: reqest not set to NULL");
-	  if(data[status[i].index].a != status[i].index)
+	  if (!req[status[i].index].Is_null())
+	    System.out
+		.println("ERROR(2) in MPI_Testsome: reqest not set to NULL");
+	  if (data[status[i].index].a != status[i].index)
 	    System.out.println("ERROR(3) in MPI_Testsome: wrong data");
-	} 
+	}
       }
-      
+
       status = Request.Testsome(req);
-      if(status.length != 0) 
-      //if(status != null) //Aamir changed it from 
-                           //null to checking length zero
-	System.out.println
-	  ("ERROR in MPI_Testsome: status is NOT null");
+      if (status.length != 0)
+	// if(status != null) //Aamir changed it from
+	// null to checking length zero
+	System.out.println("ERROR in MPI_Testsome: status is NOT null");
     }
-    
+
     MPI.COMM_WORLD.Barrier();
-    if(me == 1)  System.out.println("TestsomeO TEST COMPLETE");
+    if (me == 1)
+      System.out.println("TestsomeO TEST COMPLETE");
     MPI.Finalize();
   }
 }
-
-
-

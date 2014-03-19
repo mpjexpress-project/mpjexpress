@@ -1,4 +1,5 @@
-package mpi.pt2pt_ObjSer; 
+package mpi.pt2pt_ObjSer;
+
 /****************************************************************************
 
  MESSAGE PASSING INTERFACE TEST CASE SUITE
@@ -22,7 +23,7 @@ package mpi.pt2pt_ObjSer;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -30,27 +31,32 @@ package mpi.pt2pt_ObjSer;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
  Object version :
-    Sang Lim(slim@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    07/29/98
-****************************************************************************
-*/
+ Sang Lim(slim@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 07/29/98
+ ****************************************************************************
+ */
 
 import mpi.*;
- 
+
 public class test1O {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      test1O c = new test1O(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public test1O() {
@@ -59,38 +65,36 @@ public class test1O {
   public test1O(String[] args) throws Exception {
     test outmsg[] = new test[1];
     test inmsg[] = new test[1];
-    int i,me,flag=0;
-    Status status=null;
+    int i, me, flag = 0;
+    Status status = null;
     Request msgid;
 
     MPI.Init(args);
     me = MPI.COMM_WORLD.Rank();
-  
-    if(me == 1) { 
+
+    if (me == 1) {
       outmsg[0] = new test();
       outmsg[0].a = 5;
-      MPI.COMM_WORLD.Send(outmsg,0,1,MPI.OBJECT,0,1);
+      MPI.COMM_WORLD.Send(outmsg, 0, 1, MPI.OBJECT, 0, 1);
     }
 
-    if(me == 0) {
-     inmsg[0] = new test();
-     inmsg[0].a = 0;
-     msgid = MPI.COMM_WORLD.Irecv(inmsg, 0, 1, MPI.OBJECT,
-                                  MPI.ANY_SOURCE, MPI.ANY_TAG);
+    if (me == 0) {
+      inmsg[0] = new test();
+      inmsg[0].a = 0;
+      msgid = MPI.COMM_WORLD.Irecv(inmsg, 0, 1, MPI.OBJECT, MPI.ANY_SOURCE,
+	  MPI.ANY_TAG);
 
-     while(status == null)
+      while (status == null)
 	status = msgid.Test();
-     
 
-      if(inmsg[0].a != 5 || status.source != 1 || status.tag != 1)
-	System.out.println
-	  ("ERROR inmsg[0]="+inmsg[0].a+", src="+status.source+
-	   ", tag="+status.tag+", should be 5,1,1");
+      if (inmsg[0].a != 5 || status.source != 1 || status.tag != 1)
+	System.out.println("ERROR inmsg[0]=" + inmsg[0].a + ", src="
+	    + status.source + ", tag=" + status.tag + ", should be 5,1,1");
     }
 
-
-    MPI.COMM_WORLD.Barrier(); 
-    if(me == 1)  System.out.println("Test1O TEST COMPLETE");
-    MPI.Finalize();     
+    MPI.COMM_WORLD.Barrier();
+    if (me == 1)
+      System.out.println("Test1O TEST COMPLETE");
+    MPI.Finalize();
   }
 }

@@ -1,6 +1,7 @@
 package mpi.pt2pt_ObjSer;
+
 /****************************************************************************
-}
+ }
  MESSAGE PASSING INTERFACE TEST CASE SUITE
 
  Copyright IBM Corp. 1995
@@ -22,7 +23,7 @@ package mpi.pt2pt_ObjSer;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -30,28 +31,32 @@ package mpi.pt2pt_ObjSer;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
  Object version :
-    Sang Lim(slim@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    07/18/98
-****************************************************************************
-*/
+ Sang Lim(slim@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 07/18/98
+ ****************************************************************************
+ */
 
 import mpi.*;
- 
 
 public class test3O {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      test3O c = new test3O(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public test3O() {
@@ -59,39 +64,47 @@ public class test3O {
 
   public test3O(String[] args) throws Exception {
 
-    int i,done;
-    test  in[] = new test[1];
+    int i, done;
+    test in[] = new test[1];
     test out[] = new test[1];
-    int myself,tasks;
-    Request req1,req2;
+    int myself, tasks;
+    Request req1, req2;
     Status status;
- 
+
     MPI.Init(args);
     myself = MPI.COMM_WORLD.Rank();
-    tasks =MPI.COMM_WORLD.Size(); 
+    tasks = MPI.COMM_WORLD.Size();
 
-    in[0]    = new test();
-    out[0]   = new test();
-    in[0].a  = -1;
+    in[0] = new test();
+    out[0] = new test();
+    in[0].a = -1;
     out[0].a = 1;
 
-    if(myself < 2)  {
-      if(myself == 0)  {
-	req1 = MPI.COMM_WORLD.Isend(out,0,1,MPI.OBJECT,1,1);
-	req2 = MPI.COMM_WORLD.Irecv(in,0,1,MPI.OBJECT,1,2);
-        for(;;) { status = req1.Test(); if(status!=null) break; } 
-        for(;;) { status = req2.Test(); if(status!=null) break; } 	
-      } else if(myself == 1) { 
-	MPI.COMM_WORLD.Send(out,0,1,MPI.OBJECT,0,2);
-	MPI.COMM_WORLD.Recv(in,0,1,MPI.OBJECT,0,1);
+    if (myself < 2) {
+      if (myself == 0) {
+	req1 = MPI.COMM_WORLD.Isend(out, 0, 1, MPI.OBJECT, 1, 1);
+	req2 = MPI.COMM_WORLD.Irecv(in, 0, 1, MPI.OBJECT, 1, 2);
+	for (;;) {
+	  status = req1.Test();
+	  if (status != null)
+	    break;
+	}
+	for (;;) {
+	  status = req2.Test();
+	  if (status != null)
+	    break;
+	}
+      } else if (myself == 1) {
+	MPI.COMM_WORLD.Send(out, 0, 1, MPI.OBJECT, 0, 2);
+	MPI.COMM_WORLD.Recv(in, 0, 1, MPI.OBJECT, 0, 1);
       }
-      if(in[0].a != 1) 
-	System.out.println
-	  ("ERROR IN TASK "+myself+", in[0]="+in[0]);
+      if (in[0].a != 1)
+	System.out.println("ERROR IN TASK " + myself + ", in[0]=" + in[0]);
     }
 
     MPI.COMM_WORLD.Barrier();
-    if(myself == 1)  System.out.println("Test3O TEST COMPLETE");
-    MPI.Finalize();     
+    if (myself == 1)
+      System.out.println("Test3O TEST COMPLETE");
+    MPI.Finalize();
   }
 }

@@ -1,4 +1,4 @@
-package mpi.pt2pt_ObjSer; 
+package mpi.pt2pt_ObjSer;
 
 /****************************************************************************
 
@@ -23,7 +23,7 @@ package mpi.pt2pt_ObjSer;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -31,66 +31,71 @@ package mpi.pt2pt_ObjSer;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
  Object version :
-    Sang Lim(slim@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    09/3/98
-****************************************************************************
-*/
+ Sang Lim(slim@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 09/3/98
+ ****************************************************************************
+ */
 
 import mpi.*;
- 
+
 public class waitallO {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      waitallO c = new waitallO(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public waitallO() {
   }
 
-  public waitallO(String[] args) throws Exception { 
- 
-    int me,tasks,bytes,i;
+  public waitallO(String[] args) throws Exception {
+
+    int me, tasks, bytes, i;
     test mebuf[] = new test[1];
-    
+
     MPI.Init(args);
     me = MPI.COMM_WORLD.Rank();
-    tasks = MPI.COMM_WORLD.Size(); 
+    tasks = MPI.COMM_WORLD.Size();
 
     mebuf[0] = new test();
     mebuf[0].a = me;
 
     test data[] = new test[tasks];
-    for (int j = 0; j<tasks;j++){
-        data[j] = new test();
-        data[j].a = -1;
+    for (int j = 0; j < tasks; j++) {
+      data[j] = new test();
+      data[j].a = -1;
     }
-    Request req[] = new Request[2*tasks];
-    Status stats[] = new Status[2*tasks];
+    Request req[] = new Request[2 * tasks];
+    Status stats[] = new Status[2 * tasks];
 
-    //mebuf[0] = me;
-    for(i=0;i<tasks;i++)  {
-      if(i != me) {	    
-        req[2*i] = MPI.COMM_WORLD.Isend(mebuf,0,1,MPI.OBJECT,i,1);
-          // Original IBM code used `Irsend' here.  Clearly wrong?  dbc.
+    // mebuf[0] = me;
+    for (i = 0; i < tasks; i++) {
+      if (i != me) {
+	req[2 * i] = MPI.COMM_WORLD.Isend(mebuf, 0, 1, MPI.OBJECT, i, 1);
+	// Original IBM code used `Irsend' here. Clearly wrong? dbc.
 
-        req[2*i+1] =MPI.COMM_WORLD.Irecv(data,i,1,MPI.OBJECT,i,1); 
+	req[2 * i + 1] = MPI.COMM_WORLD.Irecv(data, i, 1, MPI.OBJECT, i, 1);
       }
     }
     stats = Request.Waitall(req);
 
     MPI.COMM_WORLD.Barrier();
-    if(me == 1)  System.out.println("WaitallO TEST COMPLETE");
+    if (me == 1)
+      System.out.println("WaitallO TEST COMPLETE");
     MPI.Finalize();
   }
 }
-

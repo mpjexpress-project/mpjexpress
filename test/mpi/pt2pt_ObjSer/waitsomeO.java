@@ -1,4 +1,5 @@
-package mpi.pt2pt_ObjSer; 
+package mpi.pt2pt_ObjSer;
+
 /****************************************************************************
 
  MESSAGE PASSING INTERFACE TEST CASE SUITE
@@ -22,7 +23,7 @@ package mpi.pt2pt_ObjSer;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -30,27 +31,32 @@ package mpi.pt2pt_ObjSer;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
  Object version :
-    Sang Lim(slim@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    09/17/98
-****************************************************************************
-*/
+ Sang Lim(slim@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 09/17/98
+ ****************************************************************************
+ */
 
 import mpi.*;
- 
+
 public class waitsomeO {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      waitsomeO c = new waitsomeO(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public waitsomeO() {
@@ -58,7 +64,7 @@ public class waitsomeO {
 
   public waitsomeO(String[] args) throws Exception {
 
-    int me,tasks,i,done,outcount;
+    int me, tasks, i, done, outcount;
     boolean flag;
     test mebuf[] = new test[1];
     mebuf[0] = new test();
@@ -66,43 +72,44 @@ public class waitsomeO {
 
     MPI.Init(args);
     me = MPI.COMM_WORLD.Rank();
-    tasks = MPI.COMM_WORLD.Size(); 
- 
-    test data[]  = new test[tasks];
-    for (int j = 0; j<tasks;j++){
-        data[j] = new test();
-        data[j].a = -1;
+    tasks = MPI.COMM_WORLD.Size();
+
+    test data[] = new test[tasks];
+    for (int j = 0; j < tasks; j++) {
+      data[j] = new test();
+      data[j].a = -1;
     }
-    Request req[]   = new Request[tasks];  
-    Status status[] = new Status[tasks];  
-  
-    if(me != 0) 
-      MPI.COMM_WORLD.Send(mebuf,0,1,MPI.OBJECT,0,1);
+    Request req[] = new Request[tasks];
+    Status status[] = new Status[tasks];
+
+    if (me != 0)
+      MPI.COMM_WORLD.Send(mebuf, 0, 1, MPI.OBJECT, 0, 1);
     else {
       req[0] = MPI.REQUEST_NULL;
-      for(i=1;i<tasks;i++)  
-	req[i] = MPI.COMM_WORLD.Irecv(data,i,1,MPI.OBJECT,i,1);
+      for (i = 1; i < tasks; i++)
+	req[i] = MPI.COMM_WORLD.Irecv(data, i, 1, MPI.OBJECT, i, 1);
 
-      done = 0; 
-      while(done < tasks-1)  {
+      done = 0;
+      while (done < tasks - 1) {
 	status = Request.Waitsome(req);
 	outcount = status.length;
 
-	if(outcount == 0)
+	if (outcount == 0)
 	  System.out.println("ERROR(2) in Waitsome: outcount = 0");
-	for(i=0;i<outcount;i++)  {
+	for (i = 0; i < outcount; i++) {
 	  done++;
 
-	  if(!req[status[i].index].Is_null())
-	    System.out.println
-	      (i+", "+outcount+", "+status[i].index+", "+req[status[i].index]+
-	       " ERROR(4) in MPI_Waitsome: reqest not set to NULL");
+	  if (!req[status[i].index].Is_null())
+	    System.out.println(i + ", " + outcount + ", " + status[i].index
+		+ ", " + req[status[i].index]
+		+ " ERROR(4) in MPI_Waitsome: reqest not set to NULL");
 	}
       }
     }
 
     MPI.COMM_WORLD.Barrier();
-    if(me == 1)  System.out.println("WaitsomeO TEST COMPLETE");
+    if (me == 1)
+      System.out.println("WaitsomeO TEST COMPLETE");
     MPI.Finalize();
   }
 }

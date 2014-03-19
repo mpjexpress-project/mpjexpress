@@ -1,4 +1,5 @@
 package mpi.pt2pt_ObjSer;
+
 /****************************************************************************
 
  MESSAGE PASSING INTERFACE TEST CASE SUITE
@@ -22,7 +23,7 @@ package mpi.pt2pt_ObjSer;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -30,70 +31,75 @@ package mpi.pt2pt_ObjSer;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
  Object version :
-    Sang Lim(slim@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    08/3/98
-****************************************************************************
-*/
-
+ Sang Lim(slim@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 08/3/98
+ ****************************************************************************
+ */
 
 import mpi.*;
 import java.io.*;
 
-
-public class getcountO{
-  static public void main(String[] args) throws MPIException {
+public class getcountO {
+  static public void main(String[] args) throws Exception {
+    try {
+      getcountO c = new getcountO(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public getcountO() {
   }
 
   public getcountO(String[] args) throws Exception {
-    int me,count,i,j;
+    int me, count, i, j;
 
-    int   datatest[][]  = new int[7][4];
-    int   recdata[][]   = new int[7][4];
+    int datatest[][] = new int[7][4];
+    int recdata[][] = new int[7][4];
     Status status;
 
-    for(i = 0; i < 7; i++)
-      for (j = 0;j < 4; j++) {  
-       datatest[i][j] = j + i*4;
-       recdata [i][j] = 0;
-    }
+    for (i = 0; i < 7; i++)
+      for (j = 0; j < 4; j++) {
+	datatest[i][j] = j + i * 4;
+	recdata[i][j] = 0;
+      }
     MPI.Init(args);
-    
-    me=MPI.COMM_WORLD.Rank();
 
-    if(me == 0)  
-      MPI.COMM_WORLD.Send(datatest,0,7,MPI.OBJECT,1,1);
-    
-    else if(me == 1)  {
-      status = MPI.COMM_WORLD.Recv(recdata,0,7,MPI.OBJECT,0,1);
-    
-      for(i = 0; i < 7; i++)
-	  for (j = 0; j <4;j++){
-            if (recdata[i][j] != datatest[i][j])
-              System.out.println("Recived data  "+recdata[i][j]+" at index ["+i+"]["+j+"] should be : "+datatest[i][j]);
-	  }
+    me = MPI.COMM_WORLD.Rank();
+
+    if (me == 0)
+      MPI.COMM_WORLD.Send(datatest, 0, 7, MPI.OBJECT, 1, 1);
+
+    else if (me == 1) {
+      status = MPI.COMM_WORLD.Recv(recdata, 0, 7, MPI.OBJECT, 0, 1);
+
+      for (i = 0; i < 7; i++)
+	for (j = 0; j < 4; j++) {
+	  if (recdata[i][j] != datatest[i][j])
+	    System.out.println("Recived data  " + recdata[i][j] + " at index ["
+		+ i + "][" + j + "] should be : " + datatest[i][j]);
+	}
       count = status.Get_count(MPI.OBJECT);
-      if(count != 7) 
-	System.out.println
-	  ("ERROR(4) in MPI_Get_count, count = "+count+", should be 7");
+      if (count != 7)
+	System.out.println("ERROR(4) in MPI_Get_count, count = " + count
+	    + ", should be 7");
     }
 
     MPI.COMM_WORLD.Barrier();
-    if(me == 1)  System.out.println("Get_countO TEST COMPLETE.");
+    if (me == 1)
+      System.out.println("Get_countO TEST COMPLETE.");
     MPI.Finalize();
-  }  
+  }
 }

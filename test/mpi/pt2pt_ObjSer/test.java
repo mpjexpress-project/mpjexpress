@@ -1,7 +1,8 @@
 package mpi.pt2pt_ObjSer;
 
 import java.io.*;
-public class test implements Serializable{
+
+public class test implements Serializable {
 
   public test() {
   }
@@ -10,4 +11,3 @@ public class test implements Serializable{
   public String b = "test1";
   public int c = 999;
 }
-
