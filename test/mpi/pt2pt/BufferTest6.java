@@ -8,8 +8,12 @@ import java.util.Arrays;
  * @author Aamir Shafi 
  */ 
 public class BufferTest6 {
-    public static void main (String args[]) throws Exception{
-    }
+   static public void main(String[] args) throws Exception {
+	  try{
+		BufferTest6 c = new BufferTest6(args);
+	  }catch(Exception e){
+	  }
+  }
 
     public BufferTest6() {
     }

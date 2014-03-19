@@ -1,4 +1,5 @@
-package mpi.pt2pt; 
+package mpi.pt2pt;
+
 /****************************************************************************
 
  MESSAGE PASSING INTERFACE TEST CASE SUITE
@@ -22,7 +23,7 @@ package mpi.pt2pt;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -30,113 +31,121 @@ package mpi.pt2pt;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
-****************************************************************************
-*/
+ ****************************************************************************
+ */
 
 import mpi.*;
-import java.nio.ByteBuffer ;
+import java.nio.ByteBuffer;
+
 //no detach ...
 public class isend {
 
-  static int tasks,bytes,i; 
+  static int tasks, bytes, i;
   static int me[] = new int[1];
   static int data[] = new int[1000];
-  //static mpi.Buffer buf = new mpi.Buffer(10000);
-  static ByteBuffer buf = ByteBuffer.allocateDirect ( 10000 );
+  // static mpi.Buffer buf = new mpi.Buffer(10000);
+  static ByteBuffer buf = ByteBuffer.allocateDirect(10000);
   static Request req[];
   static Status stats[];
-  
-  static void wstart()
-  throws MPIException {
-    
+
+  static void wstart() throws MPIException {
+
     stats = Request.Waitall(req);
-    
-    for(i=0;i<tasks;i++)
-      if(data[i] != i) 
-	System.out.println
-	  ("ERROR<"+me[0]+"> : data is"+data[i]+", should be"+i);
 
-    /* ONLY THE RECEIVERS HAVE STATUS VALUES !  */
-    
-    for(i=1;i<2*tasks;i+=2) {
-        bytes = stats[i].Get_count(MPI.INT);  //fix by aamir
-        if(bytes != 1) //fix by aamir
-	  System.out.println
-	    ("ERROR : bytes ="+bytes+", should be 4");
+    for (i = 0; i < tasks; i++)
+      if (data[i] != i)
+	System.out.println("ERROR<" + me[0] + "> : data is" + data[i]
+	    + ", should be" + i);
+
+    /* ONLY THE RECEIVERS HAVE STATUS VALUES ! */
+
+    for (i = 1; i < 2 * tasks; i += 2) {
+      bytes = stats[i].Get_count(MPI.INT); // fix by aamir
+      if (bytes != 1) // fix by aamir
+	System.out.println("ERROR : bytes =" + bytes + ", should be 4");
     }
-    
-  }
-  
 
-  public static void main(String[] args) throws MPIException {
+  }
+
+  static public void main(String[] args) throws MPIException {
+    try {
+      isend c = new isend(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public isend() {
   }
 
-  public isend(String[] args) throws Exception{ 
+  public isend(String[] args) throws Exception {
     MPI.Init(args);
-    me[0]=MPI.COMM_WORLD.Rank();
-    tasks=MPI.COMM_WORLD.Size();
+    me[0] = MPI.COMM_WORLD.Rank();
+    tasks = MPI.COMM_WORLD.Size();
 
-    req = new Request[2*tasks];
-    stats = new Status[2*tasks];  
+    req = new Request[2 * tasks];
+    stats = new Status[2 * tasks];
 
     MPI.Buffer_attach(buf);
-    if(me[0] == 0)  System.out.println("> Testing Isend/Irecv...");
-    for(i=0;i<tasks;i++)  data[i] = -1;
-    for(i=0;i<tasks;i++)  {
-        req[2*i]=MPI.COMM_WORLD.Isend(me,0,1,MPI.INT,i,1);      
-        req[2*i+1]=MPI.COMM_WORLD.Irecv(data,i,1,MPI.INT,i,1);
+    if (me[0] == 0)
+      System.out.println("> Testing Isend/Irecv...");
+    for (i = 0; i < tasks; i++)
+      data[i] = -1;
+    for (i = 0; i < tasks; i++) {
+      req[2 * i] = MPI.COMM_WORLD.Isend(me, 0, 1, MPI.INT, i, 1);
+      req[2 * i + 1] = MPI.COMM_WORLD.Irecv(data, i, 1, MPI.INT, i, 1);
     }
-    
-    wstart(); 
 
-    if(me[0] == 0)  System.out.println("> Testing Issend/Irecv...");
-    for(i=0;i<tasks;i++)  data[i] = -1;
+    wstart();
 
-    for(i=0;i<tasks;i++) { 
-      req[2*i]=MPI.COMM_WORLD.Issend(me,0,1,MPI.INT,i,i);	
-      req[2*i+1]=MPI.COMM_WORLD.Irecv(data,i,1,MPI.INT,i,me[0]);
-    }   
+    if (me[0] == 0)
+      System.out.println("> Testing Issend/Irecv...");
+    for (i = 0; i < tasks; i++)
+      data[i] = -1;
 
-    wstart(); 
-    if(me[0] == 0)  System.out.println("> Testing Irecv/Irsend..."); 
-    for(i=0;i<tasks;i++)  data[i] = -1;
-    
-    for(i=0;i<tasks;i++)
-        req[2*i+1]=MPI.COMM_WORLD.Irecv(data,i,1,MPI.INT,i,1);
-        MPI.COMM_WORLD.Barrier();
-
-    for(i=0;i<tasks;i++)    
-        req[2*i]=MPI.COMM_WORLD.Irsend(me,0,1,MPI.INT,i,1);	
-        wstart();
-
-    if(me[0] == 0)  System.out.println("> Testing Ibsend/Irecv...");
-    for(i=0;i<tasks;i++)  data[i] = -1;
-    for(i=0;i<tasks;i++)  {      
-        req[2*i]=MPI.COMM_WORLD.Ibsend(me,0,1,MPI.INT,i,1);
-        req[2*i+1]=MPI.COMM_WORLD.Irecv(data,i,1,MPI.INT,i,1);     
+    for (i = 0; i < tasks; i++) {
+      req[2 * i] = MPI.COMM_WORLD.Issend(me, 0, 1, MPI.INT, i, i);
+      req[2 * i + 1] = MPI.COMM_WORLD.Irecv(data, i, 1, MPI.INT, i, me[0]);
     }
-  
-    wstart(); 
+
+    wstart();
+    if (me[0] == 0)
+      System.out.println("> Testing Irecv/Irsend...");
+    for (i = 0; i < tasks; i++)
+      data[i] = -1;
+
+    for (i = 0; i < tasks; i++)
+      req[2 * i + 1] = MPI.COMM_WORLD.Irecv(data, i, 1, MPI.INT, i, 1);
+    MPI.COMM_WORLD.Barrier();
+
+    for (i = 0; i < tasks; i++)
+      req[2 * i] = MPI.COMM_WORLD.Irsend(me, 0, 1, MPI.INT, i, 1);
+    wstart();
+
+    if (me[0] == 0)
+      System.out.println("> Testing Ibsend/Irecv...");
+    for (i = 0; i < tasks; i++)
+      data[i] = -1;
+    for (i = 0; i < tasks; i++) {
+      req[2 * i] = MPI.COMM_WORLD.Ibsend(me, 0, 1, MPI.INT, i, 1);
+      req[2 * i + 1] = MPI.COMM_WORLD.Irecv(data, i, 1, MPI.INT, i, 1);
+    }
+
+    wstart();
 
     MPI.COMM_WORLD.Barrier();
-    if(me[0] == 1)  
-    System.out.println("Isend TEST COMPLETE");
+    if (me[0] == 1)
+      System.out.println("Isend TEST COMPLETE");
     MPI.Finalize();
   }
 }
-
-
-

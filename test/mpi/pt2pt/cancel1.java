@@ -3,7 +3,7 @@ package mpi.pt2pt;
 import mpi.*;
 
 public class cancel1 {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
   }
 
   public cancel1() {

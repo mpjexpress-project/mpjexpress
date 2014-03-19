@@ -1,4 +1,4 @@
-package mpi.pt2pt; 
+package mpi.pt2pt;
 
 /****************************************************************************
 
@@ -23,7 +23,7 @@ package mpi.pt2pt;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -31,99 +31,97 @@ package mpi.pt2pt;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
-****************************************************************************
-*/
+ ****************************************************************************
+ */
 
 import mpi.*;
- 
 
 public class testall {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      testall c = new testall(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public testall() {
   }
 
   public testall(String[] args) throws Exception {
-    
-    int me,tasks,i;
+
+    int me, tasks, i;
     int mebuf[] = new int[1];
     boolean flag;
 
-
     MPI.Init(args);
     me = MPI.COMM_WORLD.Rank();
-    tasks =MPI.COMM_WORLD.Size(); 
+    tasks = MPI.COMM_WORLD.Size();
 
     int data[] = new int[tasks];
-    Request   req[] = new Request[tasks];
-    Status status[] = new Status[tasks]; 
+    Request req[] = new Request[tasks];
+    Status status[] = new Status[tasks];
 
     mebuf[0] = me;
-    if(me > 0)  {
-      //try {
-      //  Thread.currentThread().sleep(500); 
-      //}catch(Exception e){
-      //}
-      MPI.COMM_WORLD.Send(mebuf,0,1,MPI.INT,0,1);
-    }
-    else {
-      req[0] = MPI.REQUEST_NULL;  
-      for(i=1;i<tasks;i++)  
-	req[i] = MPI.COMM_WORLD.Irecv(data,i,1,MPI.INT,i,1);
+    if (me > 0) {
+      // try {
+      // Thread.currentThread().sleep(500);
+      // }catch(Exception e){
+      // }
+      MPI.COMM_WORLD.Send(mebuf, 0, 1, MPI.INT, 0, 1);
+    } else {
+      req[0] = MPI.REQUEST_NULL;
+      for (i = 1; i < tasks; i++)
+	req[i] = MPI.COMM_WORLD.Irecv(data, i, 1, MPI.INT, i, 1);
 
+      flag = false;
+      while (flag == false) {
 
-      flag = false; 
-      while(flag == false)  {
-
-	for(i=1;i<tasks;i++)  {
-	  if(req[i].Is_null())
+	for (i = 1; i < tasks; i++) {
+	  if (req[i].Is_null())
 	    System.out.println("ERROR(2) in MPI_Testall: incorrect status");
 	}
-	
+
 	status = Request.Testall(req);
-	if(status == null) { 
-		flag = false;
-		//System.out.println("null");
-	}
-	else    flag = true;
+	if (status == null) {
+	  flag = false;
+	  // System.out.println("null");
+	} else
+	  flag = true;
       }
 
+      for (i = 1; i < tasks; i++) {
+	if (!req[i].Is_null())
+	  System.out.println("ERROR(3) in Testall: request not set to NULL");
 
-      for(i=1;i<tasks;i++)  {	     
-	if(!req[i].Is_null())
-	  System.out.println("ERROR(3) in Testall: request not set to NULL");	
+	if (status[i].source != i)
+	  System.out
+	      .println("ERROR(4) in Testall: request prematurely set to NULL");
 
-	if(status[i].source != i)
-	  System.out.println
-	    ("ERROR(4) in Testall: request prematurely set to NULL");
-	
-	if(data[i] != i)
+	if (data[i] != i)
 	  System.out.println("ERROR(5) in MPI_Testall: incorrect data");
 
       }
-      
 
       status = Request.Testall(req);
-      if(status == null)
-	System.out.println
-	  ("ERROR(6) in MPI_Testall: status(flag) is not set");
+      if (status == null)
+	System.out.println("ERROR(6) in MPI_Testall: status(flag) is not set");
 
     }
 
-
-   MPI.COMM_WORLD.Barrier();
-    if(me == 1)  System.out.println("Testall TEST COMPLETE");
+    MPI.COMM_WORLD.Barrier();
+    if (me == 1)
+      System.out.println("Testall TEST COMPLETE");
     MPI.Finalize();
   }
 }

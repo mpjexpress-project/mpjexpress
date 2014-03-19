@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.nio.ByteBuffer ;
 
 public class Bsend_test2 {
+	
   public Bsend_test2() {
   }
   
@@ -82,11 +83,11 @@ public class Bsend_test2 {
 	   Arrays.equals(charArray,charReadArray) &&
 	   Arrays.equals(byteArray,byteReadArray) && 
 	   Arrays.equals(booleanArray,booleanReadArray)) {
-		/*
+		
 	   System.out.println("\n#################"+
 			      "\n <<<<PASSED>>>> "+
 			      "\n################");
-	        */
+	        
 	} else {
 	   System.out.println("\n#################"+
 	 		      "\n <<<<FAILED>>>> "+

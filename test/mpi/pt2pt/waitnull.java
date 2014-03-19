@@ -23,7 +23,7 @@ package mpi.pt2pt;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -31,45 +31,49 @@ package mpi.pt2pt;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    09/10/99
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 09/10/99
 
-****************************************************************************
-*/
+ ****************************************************************************
+ */
 
 import mpi.*;
- 
+
 public class waitnull {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      waitnull c = new waitnull(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public waitnull() {
   }
 
   public waitnull(String[] args) throws Exception {
-    
-    int me,tasks,i;
+
+    int me, tasks, i;
     Request request;
     Status status;
-    
-    
+
     MPI.Init(args);
     tasks = MPI.COMM_WORLD.Size();
     me = MPI.COMM_WORLD.Rank();
-    
-    
+
     request = MPI.REQUEST_NULL;
     status = request.Wait();
-    
+
     MPI.COMM_WORLD.Barrier();
-    if(me == 1)   System.out.println("Waitnull TEST COMPLETE");
+    if (me == 1)
+      System.out.println("Waitnull TEST COMPLETE");
     MPI.Finalize();
   }
 }

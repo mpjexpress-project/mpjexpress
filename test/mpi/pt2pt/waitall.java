@@ -1,4 +1,4 @@
-package mpi.pt2pt; 
+package mpi.pt2pt;
 
 /****************************************************************************
 
@@ -23,7 +23,7 @@ package mpi.pt2pt;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -31,56 +31,60 @@ package mpi.pt2pt;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
-****************************************************************************
-*/
+ ****************************************************************************
+ */
 
 import mpi.*;
- 
 
 public class waitall {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      waitall c = new waitall(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public waitall() {
   }
 
   public waitall(String[] args) throws Exception {
- 
-    int me,tasks,bytes,i;
+
+    int me, tasks, bytes, i;
     int mebuf[] = new int[1];
 
     MPI.Init(args);
     me = MPI.COMM_WORLD.Rank();
-    tasks = MPI.COMM_WORLD.Size(); 
+    tasks = MPI.COMM_WORLD.Size();
 
     int data[] = new int[tasks];
-    Request req[] = new Request[2*tasks];
-    Status stats[] = new Status[2*tasks];
+    Request req[] = new Request[2 * tasks];
+    Status stats[] = new Status[2 * tasks];
 
     mebuf[0] = me;
-    for(i=0;i<tasks;i++)  {
-      if(i!=me)	    
-        req[2*i] = MPI.COMM_WORLD.Isend(mebuf,0,1,MPI.INT,i,1);
-          // Original IBM code used `Irsend' here.  Clearly wrong?  dbc.
+    for (i = 0; i < tasks; i++) {
+      if (i != me)
+	req[2 * i] = MPI.COMM_WORLD.Isend(mebuf, 0, 1, MPI.INT, i, 1);
+      // Original IBM code used `Irsend' here. Clearly wrong? dbc.
 
-      if(i!=me)
-        req[2*i+1] =MPI.COMM_WORLD.Irecv(data,i,1,MPI.INT,i,1); 
+      if (i != me)
+	req[2 * i + 1] = MPI.COMM_WORLD.Irecv(data, i, 1, MPI.INT, i, 1);
     }
     stats = Request.Waitall(req);
 
     MPI.COMM_WORLD.Barrier();
-    if(me == 1)  System.out.println("Waitall TEST COMPLETE");
+    if (me == 1)
+      System.out.println("Waitall TEST COMPLETE");
     MPI.Finalize();
   }
 }
-

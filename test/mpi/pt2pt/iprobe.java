@@ -1,4 +1,4 @@
-package mpi.pt2pt; 
+package mpi.pt2pt;
 
 /****************************************************************************
 
@@ -23,7 +23,7 @@ package mpi.pt2pt;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -31,76 +31,90 @@ package mpi.pt2pt;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    09/10/99
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 09/10/99
 
-****************************************************************************
-*/
+ ****************************************************************************
+ */
 
 import mpi.*;
 
 public class iprobe {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      iprobe c = new iprobe(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public iprobe() {
   }
-  
+
   public iprobe(String[] args) throws Exception {
-    int me,cnt=1,src=-1,tag;
+    int me, cnt = 1, src = -1, tag;
     int data[] = new int[1];
     boolean flag;
     Intracomm comm;
     Status status = null;
-	
+
     MPI.Init(args);
     comm = MPI.COMM_WORLD;
     me = comm.Rank();
 
-    if(me == 0) {
+    if (me == 0) {
       data[0] = 7;
-      comm.Send(data,0,1,MPI.INT,1,1);
-    } 
-    else if(me == 1)  {
-      try { Thread.currentThread().sleep(1000); } catch(Exception e){} 	    
-      //for(int k=0 ; k<2 ; k ++)  {
-      for(;;)  {
-	//System.out.println(" (b) status "+status); 
-	status = comm.Iprobe(0,1);	
-	//System.out.println(" (a) status "+status); 
-	if(status != null) break;
+      comm.Send(data, 0, 1, MPI.INT, 1, 1);
+    } else if (me == 1) {
+      try {
+	Thread.currentThread().sleep(1000);
+      }
+      catch (Exception e) {
+      }
+      // for(int k=0 ; k<2 ; k ++) {
+      for (;;) {
+	// System.out.println(" (b) status "+status);
+	status = comm.Iprobe(0, 1);
+	// System.out.println(" (a) status "+status);
+	if (status != null)
+	  break;
       }
 
       src = status.source;
-      if(src != 0)
-	System.out.println("ERROR in MPI_Probe: src = "+src+", should be 0");
-	    
+      if (src != 0)
+	System.out
+	    .println("ERROR in MPI_Probe: src = " + src + ", should be 0");
+
       tag = status.tag;
-      if(tag != 1)
-	System.out.println("ERROR in MPI_Probe: tag = "+tag+", should be 1");  
-     
+      if (tag != 1)
+	System.out
+	    .println("ERROR in MPI_Probe: tag = " + tag + ", should be 1");
+
       cnt = status.Get_count(MPI.INT);
+      System.out.println(" MPI_Probe1: cnt = " + cnt);
+      if (cnt != 1)
+	System.out
+	    .println("ERROR in MPI_Probe: cnt = " + cnt + ", should be 1");
 
-      if(cnt != 1) 
-	System.out.println("ERROR in MPI_Probe: cnt = "+cnt+", should be 1");  
-	    
-      status = comm.Recv(data,0,cnt,MPI.INT,src,tag);
+      status = comm.Recv(data, 0, cnt, MPI.INT, src, tag);
+      cnt = status.Get_count(MPI.INT);
+      System.out.println(" MPI_Probe2: cnt = " + cnt);
 
-      if(data[0] != 7) 
-	System.out.println("ERROR inMPI_Recv,data[0]="+data[0]+"should be 7");
-      
-      
+      if (data[0] != 7)
+	System.out.println("ERROR inMPI_Recv,data[0]=" + data[0]
+	    + "should be 7");
+
     }
-	
+
     comm.Barrier();
-    if(me == 1) 
+    if (me == 1)
       System.out.println("Iprobe TEST COMPLETE ");
     MPI.Finalize();
   }

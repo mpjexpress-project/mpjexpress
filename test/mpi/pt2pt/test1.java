@@ -1,4 +1,4 @@
-package mpi.pt2pt; 
+package mpi.pt2pt;
 
 /****************************************************************************
 
@@ -23,7 +23,7 @@ package mpi.pt2pt;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -31,60 +31,67 @@ package mpi.pt2pt;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
-****************************************************************************
-*/
+ ****************************************************************************
+ */
 
 import mpi.*;
- 
+
 public class test1 {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      test1 c = new test1(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public test1() {
   }
 
-  public test1(String[] args) throws Exception {	  
+  public test1(String[] args) throws Exception {
     int outmsg[] = new int[1];
-    int  inmsg[] = new int[1];
-    int i,me,flag=0;
-    Status status=null;
+    int inmsg[] = new int[1];
+    int i, me, flag = 0;
+    Status status = null;
     Request msgid;
 
-
     MPI.Init(args);
-    me = MPI.COMM_WORLD.Rank();  
+    me = MPI.COMM_WORLD.Rank();
 
-    if(me == 1) { 
+    if (me == 1) {
       outmsg[0] = 5;
-      MPI.COMM_WORLD.Send(outmsg,0,1,MPI.INT,0,1);
+      MPI.COMM_WORLD.Send(outmsg, 0, 1, MPI.INT, 0, 1);
     }
-    if(me == 0) {
-     msgid = MPI.COMM_WORLD.Irecv(inmsg,0,1,MPI.INT,MPI.ANY_SOURCE,MPI.ANY_TAG);
-     while(status == null) {
+    if (me == 0) {
+      msgid = MPI.COMM_WORLD.Irecv(inmsg, 0, 1, MPI.INT, MPI.ANY_SOURCE,
+	  MPI.ANY_TAG);
+      while (status == null) {
+
 	status = msgid.Test();
-	if(status != null)
-          break;		
-     }
+	// System.out.println("test1 -- status "+status);
 
-      if(inmsg[0] != 5 || status.source != 1 || status.tag != 1)
-	System.out.println
-	  ("ERROR inmsg[0]="+inmsg[0]+", src="+status.source+
-	   ", tag="+status.tag+", should be 5,1,1");
+	if (status != null)
+	  break;
+      }
+
+      if (inmsg[0] != 5 || status.source != 1 || status.tag != 1)
+	System.out.println("ERROR inmsg[0]=" + inmsg[0] + ", src="
+	    + status.source + ", tag=" + status.tag + ", should be 5,1,1");
     }
 
-
-   MPI.COMM_WORLD.Barrier();
-   if(me == 1) System.out.println("Test1 TEST COMPLETE");
-   MPI.Finalize();     
+    MPI.COMM_WORLD.Barrier();
+    if (me == 1)
+      System.out.println("Test1 TEST COMPLETE");
+    MPI.Finalize();
   }
 }

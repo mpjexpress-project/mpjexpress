@@ -23,7 +23,7 @@ package mpi.pt2pt;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -31,61 +31,64 @@ package mpi.pt2pt;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
-****************************************************************************
-*/
+ ****************************************************************************
+ */
 
 import mpi.*;
- 
 
 public class wildcard {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      wildcard c = new wildcard(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public wildcard() {
   }
 
   public wildcard(String[] args) throws Exception {
- 
-    int me,tasks,i,tag,expected;
+
+    int me, tasks, i, tag, expected;
     int val[] = new int[1];
     Status status;
     final int ITER = 1;
 
     MPI.Init(args);
     me = MPI.COMM_WORLD.Rank();
-    tasks = MPI.COMM_WORLD.Size(); 
+    tasks = MPI.COMM_WORLD.Size();
 
-
-    if(me == 0)  {
-      for(i=0;i<(tasks-1)*ITER;i++)  {
-	status = MPI.COMM_WORLD.Recv(val,0,1,MPI.INT,
-				   MPI.ANY_SOURCE ,i/(tasks-1));
-	expected = status.source*1000+status.tag;
-	if(val[0] != expected)
-	  System.out.println
-	    ("ERROR, val[0] = "+(val[0])+", should be "+expected);
+    if (me == 0) {
+      for (i = 0; i < (tasks - 1) * ITER; i++) {
+	status = MPI.COMM_WORLD.Recv(val, 0, 1, MPI.INT, MPI.ANY_SOURCE, i
+	    / (tasks - 1));
+	expected = status.source * 1000 + status.tag;
+	if (val[0] != expected)
+	  System.out.println("ERROR, val[0] = " + (val[0]) + ", should be "
+	      + expected);
       }
     } else {
-      for(i=0;i<ITER;i++)  {
+      for (i = 0; i < ITER; i++) {
 	tag = i;
-	val[0] = me*1000 + tag;
-	MPI.COMM_WORLD.Send(val,0,1,MPI.INT,0,tag);
+	val[0] = me * 1000 + tag;
+	MPI.COMM_WORLD.Send(val, 0, 1, MPI.INT, 0, tag);
       }
     }
 
     MPI.COMM_WORLD.Barrier();
-    
-    if(me == 0) {
+
+    if (me == 0) {
       System.out.println("Wildcard TEST COMPLETE");
     }
 

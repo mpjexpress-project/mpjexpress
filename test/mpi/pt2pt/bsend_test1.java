@@ -48,7 +48,11 @@ import mpi.*;
 import java.nio.ByteBuffer ;
 
 public class bsend_test1 {
-  static public void main(String[] args) throws MPIException {
+   static public void main(String[] args) throws MPIException {
+	  try{
+		bsend_test1 c = new bsend_test1(args);
+	  }catch(Exception e){
+	  }
   }
 
   public bsend_test1() {

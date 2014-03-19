@@ -1,4 +1,4 @@
-package mpi.pt2pt; 
+package mpi.pt2pt;
 
 /****************************************************************************
 
@@ -23,7 +23,7 @@ package mpi.pt2pt;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -31,94 +31,103 @@ package mpi.pt2pt;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
-****************************************************************************
-*/
+ ****************************************************************************
+ */
 
 import mpi.*;
 
 public class sendrecv {
 
-  static public void main(String[] args) 
-    throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      sendrecv c = new sendrecv(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public sendrecv() {
   }
 
   public sendrecv(String[] args) throws Exception {
-      int src,dest,sendtag,recvtag,tasks,me,i;
-      Status status;
+    int src, dest, sendtag, recvtag, tasks, me, i;
+    Status status;
 
+    MPI.Init(args);
+    tasks = MPI.COMM_WORLD.Size();
+    me = MPI.COMM_WORLD.Rank();
 
-      MPI.Init(args);
-      tasks=MPI.COMM_WORLD.Size();
-      me=MPI.COMM_WORLD.Rank();
-
-      int sendbuf[] = new int[1000];
-      int recvbuf[] = new int[1000];
-      if(me < 2)  {
-	src = dest = 1-me;
-	sendtag = me;
-	recvtag = src;
-
-	for(i=0;i<100;i++) { sendbuf[i] = me; recvbuf[i] = -1; }
-
-	status = MPI.COMM_WORLD.Sendrecv(sendbuf,0,100,MPI.INT,dest,sendtag,
-					 recvbuf,0,100,MPI.INT,src, recvtag);
-	
-	for(i=0;i<2000000;i++);
-	
-	for(i=0;i<100;i++) 
-	  if(recvbuf[i] != src)  { 
-	    System.out.println("ERROR in MPI.Sendrecv: incorrect data\n"); 
-	    break; 
-	  }
-	
-	if(status.source != src)  
-	  System.out.println("ERROR in MPI.Sendrecv: incorrect source\n");
-	if(status.tag != recvtag)  
-	  System.out.println
-	    ("ERROR in MPI.Sendrecv: incorrect tag ("+status.tag+")");
-	  
-      }
-
-
-      src = (me==0) ? tasks-1 : me-1;
-      dest = (me==tasks-1) ? 0 : me+1;
+    int sendbuf[] = new int[1000];
+    int recvbuf[] = new int[1000];
+    if (me < 2) {
+      src = dest = 1 - me;
       sendtag = me;
       recvtag = src;
-      for(i=0;i<100;i++) { sendbuf[i] = me; recvbuf[i] = -1; }
 
-      status = MPI.COMM_WORLD.Sendrecv(sendbuf,0,100,MPI.INT,dest,sendtag,
-				       recvbuf,0,100,MPI.INT,src, recvtag);
+      for (i = 0; i < 100; i++) {
+	sendbuf[i] = me;
+	recvbuf[i] = -1;
+      }
 
-      for(i=0;i<2000000;i++);
-      for(i=0;i<100;i++) 
-	if(recvbuf[i] != src)  { 
-	  System.out.println("ERROR in MPI.Sendrecv: incorrect data\n"); 
-	  break; 
+      status = MPI.COMM_WORLD.Sendrecv(sendbuf, 0, 100, MPI.INT, dest, sendtag,
+	  recvbuf, 0, 100, MPI.INT, src, recvtag);
+
+      for (i = 0; i < 2000000; i++)
+	;
+
+      for (i = 0; i < 100; i++)
+	if (recvbuf[i] != src) {
+	  System.out.println("ERROR in MPI.Sendrecv: incorrect data\n");
+	  break;
 	}
 
-      if(status.source != src)  
+      if (status.source != src)
 	System.out.println("ERROR in MPI.Sendrecv: incorrect source\n");
-      if(status.tag != recvtag)  
-	System.out.println
-	  ("ERROR in MPI.Sendrecv: incorrect tag ("+status.tag+")");
+      if (status.tag != recvtag)
+	System.out.println("ERROR in MPI.Sendrecv: incorrect tag ("
+	    + status.tag + ")");
 
-
-       MPI.COMM_WORLD.Barrier();
-      if (me == 1) System.out.println("SendRecv TEST COMPLETE");
-      MPI.Finalize();
     }
-}
 
+    src = (me == 0) ? tasks - 1 : me - 1;
+    dest = (me == tasks - 1) ? 0 : me + 1;
+    sendtag = me;
+    recvtag = src;
+    for (i = 0; i < 100; i++) {
+      sendbuf[i] = me;
+      recvbuf[i] = -1;
+    }
+
+    status = MPI.COMM_WORLD.Sendrecv(sendbuf, 0, 100, MPI.INT, dest, sendtag,
+	recvbuf, 0, 100, MPI.INT, src, recvtag);
+
+    for (i = 0; i < 2000000; i++)
+      ;
+    for (i = 0; i < 100; i++)
+      if (recvbuf[i] != src) {
+	System.out.println("ERROR in MPI.Sendrecv: incorrect data\n");
+	break;
+      }
+
+    if (status.source != src)
+      System.out.println("ERROR in MPI.Sendrecv: incorrect source\n");
+    if (status.tag != recvtag)
+      System.out.println("ERROR in MPI.Sendrecv: incorrect tag (" + status.tag
+	  + ")");
+
+    MPI.COMM_WORLD.Barrier();
+    if (me == 1)
+      System.out.println("SendRecv TEST COMPLETE");
+    MPI.Finalize();
+  }
+}

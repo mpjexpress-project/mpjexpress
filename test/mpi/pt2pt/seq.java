@@ -1,4 +1,4 @@
-package mpi.pt2pt; 
+package mpi.pt2pt;
 
 /****************************************************************************
 
@@ -23,7 +23,7 @@ package mpi.pt2pt;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -31,32 +31,36 @@ package mpi.pt2pt;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
-****************************************************************************
-*/
+ ****************************************************************************
+ */
 
 import mpi.*;
 
 public class seq {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      seq c = new seq(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public seq() {
   }
 
-  public seq(String[] args) throws Exception {	
+  public seq(String[] args) throws Exception {
 
-    
-    int i,me,tasks;
+    int i, me, tasks;
     int data[] = new int[1];
     Status status;
 
@@ -64,20 +68,19 @@ public class seq {
 
     MPI.Init(args);
     me = MPI.COMM_WORLD.Rank();
-    tasks =MPI.COMM_WORLD.Size(); 
+    tasks = MPI.COMM_WORLD.Size();
 
-    if(me == 0)  {
-      for(i=0;i<(tasks-1)*ITER;i++)  
-	MPI.COMM_WORLD.Recv(data,0,1,MPI.INT,1,1);
-    } else if(me == 1){
-      for(i=0;i<(tasks-1)*ITER;i++)
-	MPI.COMM_WORLD.Send(data,0,1,MPI.INT,0,1);
+    if (me == 0) {
+      for (i = 0; i < (tasks - 1) * ITER; i++)
+	MPI.COMM_WORLD.Recv(data, 0, 1, MPI.INT, 1, 1);
+    } else if (me == 1) {
+      for (i = 0; i < (tasks - 1) * ITER; i++)
+	MPI.COMM_WORLD.Send(data, 0, 1, MPI.INT, 0, 1);
     }
 
-
     MPI.COMM_WORLD.Barrier();
-    if(me == 1)
+    if (me == 1)
       System.out.println("Seq TEST COMPLETE");
-    MPI.Finalize();     
+    MPI.Finalize();
   }
 }

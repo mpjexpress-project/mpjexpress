@@ -49,7 +49,11 @@ import mpi.*;
 import java.nio.ByteBuffer ;
 
 public class buffer {
-  static public void main(String[] args) throws MPIException {
+   static public void main(String[] args) throws MPIException {
+	  try{
+		buffer c = new buffer(args);
+	  }catch(Exception e){
+	  }
   }
 
   public buffer() {
@@ -60,9 +64,7 @@ public class buffer {
     int len,tasks,me,i,size,flag;
     int data[] = new int[100001];
     int sizeofint = 4;
-    int over = MPI.BSEND_OVERHEAD ;  // Checks constant correctly
-                                     // initialized before MPI.Init().
-
+  
     Status status;
     Request request;
     Errhandler warn;
@@ -71,6 +73,8 @@ public class buffer {
 
                          
     me=MPI.COMM_WORLD.Rank();   
+  int over = MPI.BSEND_OVERHEAD ;  // Checks constant correctly
+                                     // initialized before MPI.Init().
 
     if(me==0) {
       size = MPI.COMM_WORLD.Pack_size( 100001, MPI.INT ) + over;      

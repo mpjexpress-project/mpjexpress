@@ -1,4 +1,4 @@
-package mpi.pt2pt; 
+package mpi.pt2pt;
 
 /****************************************************************************
 
@@ -23,7 +23,7 @@ package mpi.pt2pt;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -31,24 +31,28 @@ package mpi.pt2pt;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
-****************************************************************************
-*/
+ ****************************************************************************
+ */
 
 import mpi.*;
- 
 
 public class test3 {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      test3 c = new test3(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public test3() {
@@ -56,37 +60,45 @@ public class test3 {
 
   public test3(String[] args) throws Exception {
 
-    int i,done;
-    int  in[] = new int[1];
+    int i, done;
+    int in[] = new int[1];
     int out[] = new int[1];
-    int myself,tasks;
-    Request req1,req2;
+    int myself, tasks;
+    Request req1, req2;
     Status status;
- 
+
     MPI.Init(args);
     myself = MPI.COMM_WORLD.Rank();
-    tasks =MPI.COMM_WORLD.Size(); 
+    tasks = MPI.COMM_WORLD.Size();
 
     in[0] = -1;
     out[0] = 1;
 
-    if(myself < 2)  {
-      if(myself == 0)  {
-	req1 = MPI.COMM_WORLD.Isend(out,0,1,MPI.INT,1,1);
-	req2 = MPI.COMM_WORLD.Irecv(in,0,1,MPI.INT,1,2);
-        for(;;) { status = req1.Test(); if(status!=null) break; } 
-        for(;;) { status = req2.Test(); if(status!=null) break; } 	
-      } else if(myself == 1) { 
-	MPI.COMM_WORLD.Send(out,0,1,MPI.INT,0,2);
-	MPI.COMM_WORLD.Recv(in,0,1,MPI.INT,0,1);
+    if (myself < 2) {
+      if (myself == 0) {
+	req1 = MPI.COMM_WORLD.Isend(out, 0, 1, MPI.INT, 1, 1);
+	req2 = MPI.COMM_WORLD.Irecv(in, 0, 1, MPI.INT, 1, 2);
+	for (;;) {
+	  status = req1.Test();
+	  if (status != null)
+	    break;
+	}
+	for (;;) {
+	  status = req2.Test();
+	  if (status != null)
+	    break;
+	}
+      } else if (myself == 1) {
+	MPI.COMM_WORLD.Send(out, 0, 1, MPI.INT, 0, 2);
+	MPI.COMM_WORLD.Recv(in, 0, 1, MPI.INT, 0, 1);
       }
-      if(in[0] != 1) 
-	System.out.println
-	  ("ERROR IN TASK "+myself+", in[0]="+in[0]);
+      if (in[0] != 1)
+	System.out.println("ERROR IN TASK " + myself + ", in[0]=" + in[0]);
     }
 
-   MPI.COMM_WORLD.Barrier();
-    if(myself == 1)  System.out.println("Test3 TEST COMPLETE");
-    MPI.Finalize();     
+    MPI.COMM_WORLD.Barrier();
+    if (myself == 1)
+      System.out.println("Test3 TEST COMPLETE");
+    MPI.Finalize();
   }
 }

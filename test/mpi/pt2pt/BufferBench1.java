@@ -5,6 +5,12 @@ import mpjbuf.*;
 import java.util.Arrays;
 
 public class BufferBench1 {
+  static public void main(String[] args) throws Exception {
+	  try{
+		BufferBench1 c = new BufferBench1(args);
+	  }catch(Exception e){
+	  }
+  }
   public BufferBench1() {
   }
   
@@ -78,9 +84,7 @@ for(int q=0 ; q<10 ; q++) {
      }
 
   }
-  
-  public static void main(String args[]) throws Exception{
-    BufferBench1 test = new BufferBench1(args);
-  }
+
+
   
 }
