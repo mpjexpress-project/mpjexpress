@@ -3,12 +3,14 @@
 <project name="mpi" default="all" basedir=".">
     <property name="mpi.dir" value="src/mpi"/>
     <property name="doc.dir" value="doc"/>
-    <property name="mpjdev.dir" value="src/mpjdev"/>	
+    <property name="mpjdev.dir" value="src/mpjdev"/>
+    <property name="mpjdev.javampjdev.dir" value="src/mpjdev/javampjdev"/>
+    <property name="mpjdev.natmpjdev.dir" value="src/mpjdev/natmpjdev"/>
     <property name="mpjbuf.dir" value="src/mpjbuf"/>
     <property name="xdev.dir" value="src/xdev/"/>	
     <property name="niodev.dir" value="src/xdev/niodev"/>
-    <property name="hybdev.dir" value="src/xdev/hybdev"/>
     <property name="smpdev.dir" value="src/xdev/smpdev"/>   
+    <property name="hybdev.dir" value="src/xdev/hybdev"/>
     <property name="lib.dir" value="lib/"/>   
     <property name="src.dir" value="src"/>   
     <property name="mx.native.dir" value="src/xdev/mxdev/lib"/>
@@ -89,15 +91,15 @@
     <target name="jars" description="builds jar files ..">
 
    <jar destfile="${lib.dir}/mpj.jar" basedir="src"
-          includes="mpi/*.class mpjbuf/*.class mpjdev/*.class xdev/*.class
-	  	    xdev/niodev/*.class xdev/mxdev/*.class xdev/hybdev/*.class ">
-			<manifest>
+          includes="mpi/*.class mpjbuf/*.class mpjdev/*.class mpjdev/javampjdev/*.class xdev/*.class mpjdev/natmpjdev/*.class
+	  	    xdev/niodev/*.class xdev/mxdev/*.class xdev/hybdev/*.class">
+	  <manifest>
             <attribute name="Class-path" value="log4j-1.2.11.jar"/>
           </manifest>
     </jar>
 
     <jar destfile="${lib.dir}/mpiExp.jar" basedir="src"
-          includes="mpi/MPIException.class,mpjdev/MPJDevException.class,mpjdev/Request.class,mpjdev/Request$WaitanyQue.class,mpjdev/Status.class,mpjdev/CompletionHandler.class">
+          includes="mpi/MPIException.class,mpjdev/MPJDevException.class,mpjdev/Request.class,mpjdev/Request$WaitanyQue.class,mpjdev/Status.class,mpjdev/CompletionHandler.class, mpjdev/Constants.class">
 	  <manifest>
             <attribute name="Class-path" value="log4j-1.2.11.jar"/>
           </manifest>
@@ -118,7 +120,7 @@
      </jar>
 
      <jar destfile="${lib.dir}/mpjdev.jar" basedir="src"
-        includes="mpjdev/*.class" excludes="mpjdev/MPJDevException.class,mpjdev/Request.class,mpjdev/Request$WaitanyQue.class,mpjdev/Status.class,mpjdev/CompletionHandler.class">
+        includes="mpjdev/*.class mpjdev/javampjdev/*.class mpjdev/natmpjdev/*.class" excludes="mpjdev/MPJDevException.class,mpjdev/Request.class,mpjdev/Request$WaitanyQue.class,mpjdev/Status.class,mpjdev/CompletionHandler.class, mpjdev/Constants.class">
 	  <manifest>
             <attribute name="Class-path" value="log4j-1.2.11.jar"/> 
           </manifest>  
@@ -141,15 +143,8 @@
             <attribute name="Class-path" value="log4j-1.2.11.jar"/> 
           </manifest>  
      </jar>
-		
-		<jar destfile="${lib.dir}/hybdev.jar" basedir="src"
-          includes="xdev/hybdev/*.class">
-				<manifest>
-            <attribute name="Class-path" value="log4j-1.2.11.jar"/> 
-        </manifest>  
-    </jar>
-		
-    <jar destfile="${lib.dir}/mxdev.jar" basedir="src"
+
+     <jar destfile="${lib.dir}/mxdev.jar" basedir="src"
           includes="xdev/mxdev/*.class">
 	  <manifest>
             <attribute name="Class-path" value="log4j-1.2.11.jar"/> 
@@ -162,6 +157,15 @@
             <attribute name="Class-path" value="log4j-1.2.11.jar"/> 
           </manifest>  
      </jar>
+  
+     <jar destfile="${lib.dir}/hybdev.jar" basedir="src"
+          includes="xdev/hybdev/*.class">
+                                <manifest>
+            <attribute name="Class-path" value="log4j-1.2.11.jar"/>
+        </manifest>
+    </jar>
+
+
 
      <jar destfile="${lib.dir}/daemon.jar" basedir="src"
           includes="runtime/daemon/*.class runtime/*.class">
@@ -242,9 +246,9 @@
     <target name="clean">  <!-- depends="cleanJava"> -->
 	<delete>
 	 <fileset dir="${mpi.dir}" includes="**/*.class"/>
-	 <fileset dir="${mpjdev.dir}" includes="**/*.class"/>
+	 <fileset dir="${mpjdev.dir}" includes="**/*.class"/> 
 	 <fileset dir="${xdev.dir}" includes="**/*.class"/>
-	 <fileset dir="${mpjbuf.dir}" includes="**/*.class"/>
+	 <fileset dir="${mpjbuf.dir}" includes="**/*.class"/> 
 	 <fileset dir="src/runtime" includes="**/*.class"/>
 	 <fileset dir="src/runtime" includes="*.class"/>
 	</delete>
