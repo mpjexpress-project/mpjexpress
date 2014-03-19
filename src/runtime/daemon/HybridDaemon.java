@@ -230,23 +230,31 @@ public class HybridDaemon {
     int HYB_ARGS = 5;
 
     /*
-     * FIX ME: BY AMJAD AZIZ : When launched in Debug Mode
+     * FIX ME: BY Aleem Akhtar : When launched in Debug Mode or Profile Mode
      */
     if (MPJDaemon.ADEBUG)
+      CMD_WORDS++;
+    if (MPJDaemon.APROFILE)
       CMD_WORDS++;
 
     String[] aArgs = appArgs.toArray(new String[0]);
     String[] ex = new String[(CMD_WORDS + jArgs.length + HYB_ARGS + aArgs.length)];
-    if (MPJDaemon.APROFILE)
+   if (MPJDaemon.APROFILE){
       ex[0] = "tau_java";
+      ex[1] = "-tau:node=" + Integer.toString(netID);
+    }
     else
       ex[0] = "java";
 
+    int increment = 1;
+    if(MPJDaemon.APROFILE)
+      increment++;  // In case of profiling increment it by 1.
+    
     for (int i = 0; i < jArgs.length; i++) {
-      ex[i + 1] = jArgs[i];
+      ex[i + increment] = jArgs[i];
     }
 
-    int indx = jArgs.length + 1;
+    int indx = jArgs.length + increment;
     if (MPJDaemon.ADEBUG)
       ex[indx++] = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address="
           + MPJDaemon.startingDebugPort;
