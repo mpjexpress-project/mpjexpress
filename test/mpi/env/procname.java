@@ -1,4 +1,5 @@
-package mpi.env; 
+package mpi.env;
+
 /****************************************************************************
 
  MESSAGE PASSING INTERFACE TEST CASE SUITE
@@ -22,7 +23,7 @@ package mpi.env;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -30,23 +31,28 @@ package mpi.env;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
-****************************************************************************
-*/
+ ****************************************************************************
+ */
 
 import mpi.*;
- 
+
 public class procname {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      procname c = new procname(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public procname() {
@@ -54,22 +60,20 @@ public class procname {
 
   public procname(String[] args) throws Exception {
 
-    int me,len;
-    char tmp[]  = new char[256];
+    int me, len;
+    char tmp[] = new char[256];
     String procname;
 
-
     MPI.Init(args);
-    me=MPI.COMM_WORLD.Rank();
+    me = MPI.COMM_WORLD.Rank();
 
- 
     procname = MPI.Get_processor_name();
 
-    System.out.println("Processor name is "+procname);
-
+    System.out.println("Processor name is " + procname);
 
     MPI.COMM_WORLD.Barrier();
-    if(me == 0)  System.out.println("Procname TEST COMPLETE\n");
+    if (me == 0)
+      System.out.println("Procname TEST COMPLETE\n");
     MPI.Finalize();
   }
 }

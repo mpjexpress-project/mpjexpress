@@ -1,4 +1,5 @@
-package mpi.env; 
+package mpi.env;
+
 /****************************************************************************
 
  MESSAGE PASSING INTERFACE TEST CASE SUITE
@@ -22,7 +23,7 @@ package mpi.env;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -30,22 +31,27 @@ package mpi.env;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
-****************************************************************************/
+ ****************************************************************************/
 
 import mpi.*;
 
 public class abort {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      abort c = new abort(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public abort() {
@@ -53,19 +59,18 @@ public class abort {
 
   public abort(String[] args) throws Exception {
 
-    int me,tasks,i;
-
+    int me, tasks, i;
 
     MPI.Init(args);
-    me=MPI.COMM_WORLD.Rank();
-    tasks=MPI.COMM_WORLD.Size();
+    me = MPI.COMM_WORLD.Rank();
+    tasks = MPI.COMM_WORLD.Size();
 
-    System.out.println
-      ( "This program tests the MPI_ABORT call, and will generate" );
-    System.out.print( "error messages." );
-  
-    //if(me == 0)
-      MPI.COMM_WORLD.Abort(5); 
+    System.out
+	.println("This program tests the MPI_ABORT call, and will generate");
+    System.out.print("error messages.");
+
+    // if(me == 0)
+    MPI.COMM_WORLD.Abort(5);
 
     MPI.Finalize();
   }

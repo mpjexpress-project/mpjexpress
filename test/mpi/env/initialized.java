@@ -1,4 +1,4 @@
-package mpi.env; 
+package mpi.env;
 
 /****************************************************************************
 
@@ -23,7 +23,7 @@ package mpi.env;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -31,23 +31,28 @@ package mpi.env;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
-****************************************************************************
-*/
+ ****************************************************************************
+ */
 
 import mpi.*;
- 
+
 public class initialized {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      initialized c = new initialized(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public initialized() {
@@ -59,23 +64,21 @@ public class initialized {
     boolean flag;
 
     flag = MPI.Initialized();
-    if(flag)  
-      System.out.println
-	("ERROR: MPI_Initialized returned TRUE before initialization");
-
+    if (flag)
+      System.out
+	  .println("ERROR: MPI_Initialized returned TRUE before initialization");
 
     MPI.Init(args);
-    me=MPI.COMM_WORLD.Rank();
-
+    me = MPI.COMM_WORLD.Rank();
 
     flag = MPI.Initialized();
-    if(!flag)  
-      System.out.println
-	("ERROR: MPI_Initialized returned FALSE after initialization");
-
+    if (!flag)
+      System.out
+	  .println("ERROR: MPI_Initialized returned FALSE after initialization");
 
     MPI.COMM_WORLD.Barrier();
-    if(me == 0)  System.out.println("Initialized TEST COMPLETE\n");
+    if (me == 0)
+      System.out.println("Initialized TEST COMPLETE\n");
     MPI.Finalize();
   }
 }

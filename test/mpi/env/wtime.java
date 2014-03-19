@@ -1,4 +1,4 @@
-package mpi.env; 
+package mpi.env;
 
 /****************************************************************************
 
@@ -23,7 +23,7 @@ package mpi.env;
  CORP. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  ENHANCEMENTS, OR MODIFICATIONS.
 
-****************************************************************************
+ ****************************************************************************
 
  These test cases reflect an interpretation of the MPI Standard.  They are
  are, in most cases, unit tests of specific MPI behaviors.  If a user of any
@@ -31,46 +31,52 @@ package mpi.env;
  different than that implied by the test case we would appreciate feedback.
 
  Comments may be sent to:
-    Richard Treumann
-    treumann@kgn.ibm.com
+ Richard Treumann
+ treumann@kgn.ibm.com
 
-****************************************************************************
+ ****************************************************************************
 
  MPI-Java version :
-    Sung-Hoon Ko(shko@npac.syr.edu)
-    Northeast Parallel Architectures Center at Syracuse University
-    03/22/98
+ Sung-Hoon Ko(shko@npac.syr.edu)
+ Northeast Parallel Architectures Center at Syracuse University
+ 03/22/98
 
-****************************************************************************
-*/
+ ****************************************************************************
+ */
 
 import mpi.*;
- 
+
 public class wtime {
-  static public void main(String[] args) throws MPIException {
+  static public void main(String[] args) throws Exception {
+    try {
+      wtime c = new wtime(args);
+    }
+    catch (Exception e) {
+    }
   }
 
   public wtime() {
   }
 
   public wtime(String[] args) throws Exception {
- 
-    double time[] = new double[20];    
-    int i,me;
+
+    double time[] = new double[20];
+    int i, me;
 
     MPI.Init(args);
-    me=MPI.COMM_WORLD.Rank();
+    me = MPI.COMM_WORLD.Rank();
 
-    if(me == 0)  {
-      System.out.println("resolution = "+MPI.Wtick());
-      for(i=0;i<20;i++)
+    if (me == 0) {
+      System.out.println("resolution = " + MPI.Wtick());
+      for (i = 0; i < 20; i++)
 	time[i] = MPI.Wtime();
-      for(i=0;i<20;i++)
-	System.out.println("time = "+time[i]);
+      for (i = 0; i < 20; i++)
+	System.out.println("time = " + time[i]);
     }
 
     MPI.COMM_WORLD.Barrier();
-    if(me == 0)  System.out.println("Wtime and Wtick TEST COMPLETE\n");
+    if (me == 0)
+      System.out.println("Wtime and Wtick TEST COMPLETE\n");
     MPI.Finalize();
   }
 }
