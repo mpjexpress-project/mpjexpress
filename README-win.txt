@@ -1,6 +1,6 @@
            QuickStart Guide: Running MPJ Express on Windows Platform 
-                  Last Updated: Tue Feb 11 12:11:47 EST 2014
-                                Version 0.40
+                  Last Updated: Wed Mar 19 10:39:11 PKT 2014
+                                Version 0.41
 
 Introduction
 ============
@@ -16,12 +16,13 @@ MPJ Express can be configured in two ways:
 
 2. Cluster Configuration: This configuration is used by developers who want to 
    execute their parallel Java applications on distributed memory platforms
-   including clusters and network of computers. 
-
-3. Hybrid Configuration: This configuration is used by developers who want to
-   execute their parallel Java application on cluster of multicore machines
-   i.e. nodes in clusters having multicore machines and are connected throught some
-   high speed interconnect.
+   including clusters and network of computers. There are four options in the 
+   cluster configuration.
+   
+   i) niodev - uses Java NIO Sockets
+   ii) mxdev - uses Myrinet eXpress (MX) library for Myrinet networks
+   iii) hybdev - for clusters of multicore processors
+   iv) native - uses a native MPI library (like MPICH, MVAPICH, Open MPI) (NOT TESTED UNDER WINDOWS)
 
 Pre-requisites
 ==============
@@ -48,8 +49,8 @@ Running MPJ Express Programs in the Multicore Configuration
 4. Compile: javac -cp .;%MPJ_HOME%/lib/mpj.jar HelloWorld.java
 5. Execute: mpjrun.bat -np 4 HelloWorld.java
 
-Running MPJ Express Programs in the Cluster Configuration 
-=========================================================
+Running MPJ Express Programs in the Cluster Configuration with niodev 
+=====================================================================
 
 1. Download MPJ Express and unpack it. 
 2. Set MPJ_HOME and PATH environmental variables.
@@ -79,8 +80,8 @@ Running MPJ Express Programs in the Cluster Configuration
 8. Stop daemons: Go-to Control-Panel->Administrative Tools->Services-> MPJ Daemon 
    and stop the service.
 
-Running MPJ Express Programs in the Hybrid Configuration
-=========================================================
+Running MPJ Express Programs in the Cluster Configuration with hybdev
+=====================================================================
 
 1. Download MPJ Express and unpack it.
 2. Set MPJ_HOME and PATH environmental variables.
