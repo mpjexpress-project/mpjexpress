@@ -32,17 +32,17 @@
  * Author       : Aamir Shafi, Bryan Carpenter
  * Created      : Fri Sep 10 12:22:15 BST 2004
  * Revision     : $Revision: 1.6 $
- * Updated      : $Date: 2005/07/29 14:03:10 $
+ * Updated      : $Date: 2014/03/11 13:26:15 PKT $
  */
 
 package mpi;
 
 import mpjbuf.*;
 
-public class Sum
-    extends Op {
+public class Sum extends Op {
 
   Sum() {
     worker = new SumWorker();
+    this.opCode = mpjdev.Constants.SUM_CODE;
   }
 }
