@@ -37,12 +37,19 @@
 
 package mpi;
 
+import mpjdev.*;
+
 public class Intercomm
     extends Comm {
 
   Comm peerComm = null; //only need Create_intercommm method ..so its OK :)
   Comm local_comm;
   int local_leader, remote_leader;
+
+  //TODO: get this approved
+  // native Intercomm
+  mpjdev.natmpjdev.Intercomm nativeIntercomm = null;
+
 
   //this constructor may be used to create intercommunicators.
   Intercomm(mpjdev.Comm mpjdevComm, mpjdev.Group lGrp, mpjdev.Group rGrp,
@@ -57,6 +64,9 @@ public class Intercomm
     this.intercomm = true;
     this.local_comm = local_comm;
     //you ll have to agree on send_context and recv_context
+    if(Constants.isNative)
+    nativeIntercomm = new mpjdev.natmpjdev.Intercomm(
+							   (mpjdev.natmpjdev.Comm) this.mpjdevComm); 
   }
 
   /**
@@ -114,14 +124,27 @@ public class Intercomm
 
     try {
 
+
+		if(Constants.isNative){
+			
+			mpjdev.Group mpjdevGroup = nativeIntercomm.Merge(high);
+			mpi.Group ngrp = new mpi.Group(mpjdevGroup);
+			return MPI.COMM_WORLD.Create(ngrp); //should work
+		}
+
+
       Group ngrp = null;
 
-      if(high)
+      if(high){
+		//  System.out.println("Merge for high, localgroup.size = "+localgroup.Size()+" group = "+group.Size());
         ngrp = Group.Union(group, localgroup);
-      else
+        }
+      else{
+		//  System.out.println("Merge for NOT high , localgroup.size = "+localgroup.Size()+" group = "+group.Size());
 	ngrp = Group.Union(localgroup, group);
-
-
+	
+	}
+	//System.out.println("going to create in merge\n");
       return MPI.COMM_WORLD.Create(ngrp); //ooooo! that's very dogdy.
 
     }catch(Exception e) {
