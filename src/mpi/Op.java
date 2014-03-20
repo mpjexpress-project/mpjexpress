@@ -31,8 +31,8 @@
  * File         : Op.java
  * Author       : Aamir Shafi, Bryan Carpenter
  * Created      : Fri Sep 10 12:22:15 BST 2004
- * Revision     : $Revision: 1.9 $
- * Updated      : $Date: 2005/08/01 22:31:40 $
+ * Revision     : $Revision: 1.91 $
+ * Updated      : $Date: 2014/03/11 13:26:15 PKT $
  */
 
 package mpi;
@@ -40,7 +40,12 @@ package mpi;
 public class Op {
   OpWorker worker = null;
   User_function funct = null; 
-
+  
+  //TODO: Document this and later make this private and provide a 
+  //	getter function
+  // need for natmpjdev
+  public int opCode = -1; // MPI.UNDEFINED
+  
   Op() {
   }
 
@@ -77,6 +82,22 @@ public class Op {
    */
   public Op(User_function function, boolean commute) throws MPIException {
     funct = function; 
+  }
+  //TODO: document this new constructor
+    /**
+   * Bind a user-defined global reduction operation to an <tt>Op</tt> object.
+   * <p>
+   * <table>
+   * <tr><td><tt> function </tt></td><td> user defined function </tr>
+   * <tr><td><tt> commute  </tt></td><td> <tt>true</tt> if commutative,
+   *                                      <tt>false</tt> otherwise </tr>
+   * </table>
+   * <p>
+   * Java binding of the MPI operation <tt>MPI_OP_CREATE</tt>.
+   */
+  public Op(User_function function, boolean commute, int opCode_) throws MPIException {
+    funct = function;
+    this.opCode = opCode_;
   }
 
   void getWorker() throws MPIException {
