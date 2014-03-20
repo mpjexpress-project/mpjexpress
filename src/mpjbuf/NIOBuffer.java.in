@@ -1,8 +1,8 @@
 # File         : NIOBuffer.java.in
 # Author       : Bryan Carpenter, Aamir Shafi 
 # Created      : Fri Jul 16 15:21:38 BST 2004
-# Revision     : $Revision: 1.12 $
-# Updated      : $Date: 2006/10/20 19:23:11 $
+# Revision     : $Revision: 1.13 $
+# Updated      : $Date: 2014/03/11 13:26:15 PKT $
 
 # Numeric types, excluding byte
 
@@ -61,7 +61,8 @@ public class NIOBuffer implements RawBuffer {
 
     NIOBuffer(int capacity) {
         this.capacity = capacity ;
-        buffer = ByteBuffer.allocate(capacity);
+				//for native device we introduce allocateDirect
+        buffer = ByteBuffer.allocateDirect(capacity);
     }
 
     public NIOBuffer(int capacity, ByteBuffer slicedBuffer) {
