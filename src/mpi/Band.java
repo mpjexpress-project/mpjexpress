@@ -32,5 +32,6 @@ public class Band
 
   Band() {
     worker = new BandWorker();
+    this.opCode =  mpjdev.Constants.BAND_CODE;
   }
 }
