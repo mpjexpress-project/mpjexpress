@@ -1,0 +1,16 @@
+This directory contains compile and run scripts for native device mode (natmpjdev).
+
+How to Compile
+==============
+
+./compile.sh
+
+How to Run the Testcases
+========================
+
+./runtest.sh
+
+Use the first argument of runtest script to provide full path to machine file:
+
+./runtest.sh /full/path/to/machinefile
+
