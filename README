@@ -152,10 +152,7 @@ for new interconnects and efficient collective communication algorithms, of the 
        To install MPICH for example go to http://www.mpich.org/downloads/
        download the native MPI library, install and make sure that its working.
    iii) Create build directory: cd $MPJ_HOME/src/natmpjdev/lib; mkdir build 
-   iv) Generate Makefile using configure.sh: cd $MPJ_HOME/src/natmpjdev/lib/build; ../configure.sh
-       configure.sh can optionally take C compiler using the first argument else it
-       takes the default C compiler. To specify gcc compiler: 
-       		configure.sh /full/path/to/the/compiler/gcc
+   iv) Generate Makefile using cmake: cd $MPJ_HOME/src/natmpjdev/lib/build; cmake ..
    v) make: cd $MPJ_HOME/src/natmpjdev/lib/build; make 
    vi) install: cd $MPJ_HOME/src/natmpjdev/lib/build; make install
 
