@@ -44,6 +44,7 @@ public class Prod
 
   Prod() {
     worker = new ProdWorker();
+    this.opCode =  mpjdev.Constants.PROD_CODE;
   }
 }
 
