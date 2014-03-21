@@ -108,7 +108,7 @@ public class MPJRun {
   private int nioProcs = -1;
 
   static final boolean DEBUG = false;
-  static final String VERSION = "0.40";
+  static final String VERSION = "0.41";
   private static int RUNNING_JAR_FILE = 2;
   private static int RUNNING_CLASS_FILE = 1;
 
