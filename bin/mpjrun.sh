@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/bash
 allArguments="$@"  
 
 #First check if its native?
