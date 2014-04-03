@@ -41,7 +41,11 @@
 #include <inttypes.h>
 #include "mpjdev_natmpjdev_shared.h"
 //for ltdl
+#ifdef __unix__
 #include <dlfcn.h>
+#elif __linux__
+#include <dlfcn.h>
+#endif
 
 jfieldID mpjdev_natmpjdev_Comm_CommhandleID;
 
@@ -146,7 +150,7 @@ JNIEXPORT jboolean JNICALL Java_mpjdev_natmpjdev_Comm_loadGlobalLibraries
                                        RTLD_NOW | RTLD_GLOBAL))) {
         return JNI_FALSE;
     }
-    #endif
+    #endif 
     return JNI_TRUE;
 }
 /*
@@ -370,7 +374,17 @@ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Comm_nativeInit
     slen = strlen((*env)->GetStringUTFChars(env, jc, 0)) + 1; //why plus one?
     sargs[i] = (char*) calloc(slen, sizeof(char));
 
+    #ifdef WIN32
+    strcpy_s(sargs[i], slen, (*env)->GetStringUTFChars(env, jc, 0));
+    #elif _WIN64
+    strcpy_s(sargs[i], slen, (*env)->GetStringUTFChars(env, jc, 0));	
+    #elif _WIN32
+    strcpy_s(sargs[i], slen, (*env)->GetStringUTFChars(env, jc, 0));
+    #elif __unix__
     strcpy(sargs[i], (*env)->GetStringUTFChars(env, jc, 0));
+    #elif __linux__
+    strcpy(sargs[i], (*env)->GetStringUTFChars(env, jc, 0));
+    #endif
   }
 
   errCode = MPI_Init(&len, &sargs);
