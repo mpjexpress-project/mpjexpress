@@ -22,7 +22,7 @@ REM REM REM REM REM REM REM REM
 
 
 REM Comm Tests
-SET MPI_COMM_TESTS=(comm_test compare commdup CommTest split2 intercomm)
+SET MPI_COMM_TESTS=(compare commdup CommTest split2 intercomm)
 
 
 REM Group Tests
@@ -106,7 +106,9 @@ for %%t in %MPI_COMM_TESTS% do (
 REM  split runs for 6 processors so writing it down here
 echo "Running:   mpi.comm.split"
 call mpjrun.bat -np 6 -dev native %MACHINES_ARG% mpi.comm.split
-
+REM  comm_test runs for 8 processors so writing it down here
+echo "Running:   mpi.comm.comm_test"
+call mpjrun.bat -np 8 -dev native %MACHINES_ARG% mpi.comm.comm_test
 
 for %%t in %MPI_GROUP_TESTS% do (
 		echo Running:   mpi.group.%%t
