@@ -8,7 +8,7 @@ Introduction
 MPJ Express is a reference implementation of the mpiJava 1.2 API, which
 is an MPI-like API for Java defined by the Java Grande forum. 
 
-MPJ Express can be configured in three ways: 
+MPJ Express can be configured in two ways: 
 
 1. Multicore Configuration: This configuration is used by developers who want 
    to execute their parallel Java applications on multicore or shared 
