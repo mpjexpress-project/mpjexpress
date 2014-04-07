@@ -22,8 +22,7 @@ MPJ Express can be configured in two ways:
    i) niodev - uses Java NIO Sockets
    ii) mxdev - uses Myrinet eXpress (MX) library for Myrinet networks
    iii) hybdev - for clusters of multicore processors
-   iv) native - uses a native MPI library (like MPICH, MVAPICH, Open MPI) (NOT TESTED UNDER WINDOWS)
-
+   iv) native - uses a native MPI library (like MPICH, MVAPICH, Open MPI, MS-MPI)
 Pre-requisites
 ==============
 1. Java 1.6 (stable) or higher
