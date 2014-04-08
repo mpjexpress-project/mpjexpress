@@ -1,5 +1,5 @@
 QuickStart Guide: Running MPJ Express on UNIX/Linux/Mac platform
-                  Last Updated: Wed Mar 19 10:39:11 PKT 2014
+                  Last Updated: Wed Apr 8 12:21:12 PKT 2014
                                 Version 0.41
 
 Introduction
@@ -31,9 +31,11 @@ on UNIX/Linux/Mac platforms. Windows users should consult README-win.txt.
 Pre-requisites
 ==============
 
-1. Java 1.6 (stable) or higher
+1. Java 1.6 (stable) or higher (Mandatory)
 2. Apache ant 1.6.2 or higher (Optional)
-3. Perl (Optional) 
+3. Perl (Optional)
+4. Native MPI library (Optional): For example MPICH, MVAPICH or Open MPI
+5. CMake (Optional): For generating Makefile to compile native JNI C code
 
 Running MPJ Express Programs in the Multicore Configuration
 ===========================================================
@@ -47,134 +49,46 @@ Running MPJ Express Programs in the Multicore Configuration
 4. Compile: javac -cp .:$MPJ_HOME/lib/mpj.jar HelloWorld.java
 5. Execute: mpjrun.sh -np 4 HelloWorld
 
-Running MPJ Express Programs in the Cluster Configuration with niodev
-=====================================================================
+Running MPJ Express Programs in the Cluster Configuration
+=========================================================
 
-1. Download MPJ Express and unpack it. 
-2. Set MPJ_HOME and PATH environmental variables:
-       export MPJ_HOME=/path/to/mpj/
-       export PATH=$PATH:$MPJ_HOME/bin 
-       (These above two lines can be added to ~/.bashrc)
-3. Write your MPJ Express program (HelloWorld.java) and save it. 
-4. Write a machines file (name it "machines") stating host names or IP
+1. Assuming you have completed step 1 to 4 of the Multicore Configuration.
+2. Write a machines file (name it "machines") stating host names or IP
    addresses of all machines involved in the parallel execution.
-5. Start daemons: mpjboot machines
-6. Compile: javac -cp .:$MPJ_HOME/lib/mpj.jar HelloWorld.java
-7. Execute: mpjrun.sh -np 4 -dev niodev HelloWorld
-8. Stop daemons: mpjhalt machines  
+3. Execution:
+-- For niodev, hybdev and mxdev
+	i) Start daemons: mpjboot machines
+	ii) Execute: mpjrun.sh -np 4 -dev niodev HelloWorld
+		-- For -dev <device> here device can be niodev, 
+		hybdev or mxdev
+	iii) Stop daemons: mpjhalt machines  
+-- For native deive
+	i) Compile JNI wrapper library:
+		a) Make sure cmake (2.6 or above) is installed on the system
+		b) Make sure a native MPI library is installed on the system 
+		   and working. To install MPICH for example go to
+		   http://www.mpich.org/downloads/ and download the native MPI 
+		   library, install and make sure that its working.
+		c) Create build directory: cd $MPJ_HOME/src/natmpjdev/lib; 
+		   			   mkdir build 
+	        d) Generate Makefile using cmake: cmake ..
+		e) make: make 
+		f) install: make install
+	ii) Execute: mpjrun.sh -np 4 -dev native HelloWorld
 
-
-Running MPJ Express Programs in the Cluster Configuration with mxdev
-=====================================================================
-
-This configuration is used by developers who want to execute their parallel Java 
-application on clusters based on the Myrinet interconnect.
-
-1. Download MPJ Express and unpack it.
-2. Set MPJ_HOME and PATH environmental variables:
-       export MPJ_HOME=/path/to/mpj/
-			 export MX_HOME=/path/to/mx
-       export PATH=$PATH:$MPJ_HOME/bin:$MX_HOME/bin
-       (These above three lines can be added to ~/.bashrc)
-3. Edit build.xml (in $MPJ_HOME) and change the following line
-	  	 <target name="all" depends="compile,jars,java-docs,clean" >
-			 to
-			 <target name="all" depends="compile,mxlib,jars,java-docs,clean" >
-4. Compile: run "ant" in $MPJ_HOME directory
-   This produces native libraries *.so and JAR files in $MPJ_HOME/lib directory
-3. Write your MPJ Express program (HelloWorld.java) and save it.
-4. Write a machines file (name it "machines") stating host names or IP
-   addresses of all machines involved in the parallel execution.
-
-   For this, run "mx_info" command in your terminal (assuming $MX_HOME/bin is in the $PATH variable) 
-   you'll get something like this:
-
-	     MX Version: 1.1.7rc3cvs1_1_fixes
-			 MX Build: @indus1:/opt/mx2g-1.1.7rc3 Thu May 31 11:03:00 PKT 2007
-			 2 Myrinet boards installed.
-			 The MX driver is configured to support up to 4 instances and 1024 nodes.
-			 [ .. ]
-			 ROUTE COUNT INDEX MAC ADDRESS HOST NAME P0
-			 ----- ----------- --------- ---
-			 0) 00:60:dd:47:ad:7c indus1:0 1,1
-			 1) 00:60:dd:47:ad:68 indus4:0 1,1
-			 [ .. ]
-
-
-   Depending upon the machines having Myrinet, write your machines file
-
-5. Start daemons: mpjboot machines
-6. Compile: javac -cp .:$MPJ_HOME/lib/mpj.jar HelloWorld.java
-7. Execute: mpjrun.sh -np 4 -dev mxdev -Djava.library.path=$MPJ_HOME/lib HelloWorld
-   		 This command is assuming the Myrinet NICs with id 0 are used, 
-   		 this may be changed by using the mpjrun switch called "-mxboardnum"
-8. Stop daemons: mpjhalt machines
-
-Running MPJ Express Programs in the Cluster Configuration with hybdev
-=====================================================================
-
-This configuration is used by developers who want to execute their parallel Java 
-application on cluster of multicore machines i.e. nodes in clusters having multicore 
-machines and are connected throught some high speed interconnect.
-
-1. Download MPJ Express and unpack it.
-2. Set MPJ_HOME and PATH environmental variables:
-       export MPJ_HOME=/path/to/mpj/
-       export PATH=$PATH:$MPJ_HOME/bin
-       (These above two lines can be added to ~/.bashrc)
-3. Write your MPJ Express program (HelloWorld.java) and save it.
-4. Write a machines file (name it "machines") stating host names or IP
-   addresses of all machines involved in the parallel execution.
-5. Start daemons: mpjboot machines
-6. Compile: javac -cp .:$MPJ_HOME/lib/mpj.jar HelloWorld.java
-7. Execute: mpjrun.sh -np 4 -dev hybdev HelloWorld
-8. Stop daemons: mpjhalt machines
-
-
-Running MPJ Express Programs in the Cluster Configuration with native MPI
-=========================================================================
-
-This configuration is used by developers who want to execute their parallel Java 
-application exploiting a native MPI library (like MPICH, MVAPICH, Open MPI etc).
-In this setting the bulk of messaging logic is offloaded to the underlying MPI library.
-This is attractive because MPJ Express can exploit latest features, like support 
-for new interconnects and efficient collective communication algorithms, of the native MPI library.
-
-1. Download MPJ Express and unpack it.
-2. Set MPJ_HOME and PATH environmental variables:
-       export MPJ_HOME=/path/to/mpj/
-       export PATH=$PATH:$MPJ_HOME/bin
-       (These above two lines can be added to ~/.bashrc)
-
-3. Compile JNI wrapper library:
-   i) Make sure cmake (2.6 or above) is installed on the system
-   ii) Make sure a native MPI library is installed on the system and working.
-       To install MPICH for example go to http://www.mpich.org/downloads/
-       download the native MPI library, install and make sure that its working.
-   iii) Create build directory: cd $MPJ_HOME/src/natmpjdev/lib; mkdir build 
-   iv) Generate Makefile using cmake: cd $MPJ_HOME/src/natmpjdev/lib/build; cmake ..
-   v) make: cd $MPJ_HOME/src/natmpjdev/lib/build; make 
-   vi) install: cd $MPJ_HOME/src/natmpjdev/lib/build; make install
-
-   This creates a shared library with the name "libnativempjdev.so" in "$MPJ_HOME/lib"
-
-4. Write your MPJ Express program (HelloWorld.java) and save it.
-5. Compile: javac -cp .:$MPJ_HOME/lib/mpj.jar HelloWorld.java
-6. Write a machines file (name it "machines") stating host names or IP
-   addresses of all machines involved in the parallel execution.
-7. Execute: mpjrun.sh -np 4 -machinesfile machine -dev native HelloWorld
-           For using advance options refer to section 2.3.4.1 of linuxguide.pdf
+For detials read the linuxguide.pdf that can be found in $MPJ_HOME/doc
 
 Known Issues
 ============
 
-1. One of the known issues of MPJ Express in cluster configuration is incorrect working 
-   directroy. This issue is reported on cluster build using Rocks clusters. MPJRun module
-   of MPJ Express reads the current directory i.e. user directory using System.getProperty("user.dir")
-   It should retrun same path as Unix 'pwd' command. But it is not giving same result. As a manual work 
-   around for this issue is to use -wdir switch in mpjrun command and giving path to the current directory 
-   where HelloWorld is placed i.e.
-           mpjrun.sh -np 4 -dev niodev -wdir /export/home/aamir/projects/mpj-user/ HelloWorld   
+1. One of the known issues of MPJ Express in cluster configuration is incorrect 
+   working directroy. This issue is reported on cluster build using Rocks 
+   clusters. MPJRun module of MPJ Express reads the current directory i.e. user
+   directory using System.getProperty("user.dir") It should retrun same path as 
+   Unix 'pwd' command. But it is not giving same result. As a manual work 
+   around for this issue is to use -wdir switch in mpjrun command and giving 
+   path to the current directory where HelloWorld is placed i.e.
+        mpjrun.sh -np 4 -dev niodev -wdir /export/home/aamir/projects/mpj-user/ HelloWorld   
 
 Additional Documentation
 ========================

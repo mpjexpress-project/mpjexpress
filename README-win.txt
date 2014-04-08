@@ -1,5 +1,5 @@
            QuickStart Guide: Running MPJ Express on Windows Platform 
-                  Last Updated: Wed Mar 19 10:39:11 PKT 2014
+                  Last Updated: Wed Apr 8 12:21:12 PKT 2014
                                 Version 0.41
 
 Introduction
@@ -22,12 +22,14 @@ MPJ Express can be configured in two ways:
    i) niodev - uses Java NIO Sockets
    ii) mxdev - uses Myrinet eXpress (MX) library for Myrinet networks
    iii) hybdev - for clusters of multicore processors
-   iv) native - uses a native MPI library (like MPICH, MVAPICH, Open MPI, MS-MPI)
+   iv) native - uses a native MPI library (curretly only tested under MS-MPI
+		  			   for Windows)
 Pre-requisites
 ==============
-1. Java 1.6 (stable) or higher
+1. Java 1.6 (stable) or higher (Mandatory)
 2. Apache ant 1.6.2 or higher (Optional)
 3. Perl (Optional) 
+4. Visual Studio (Optional)
 
 Running MPJ Express Programs in the Multicore Configuration
 ===========================================================
@@ -35,8 +37,8 @@ Running MPJ Express Programs in the Multicore Configuration
 1. Download MPJ Express and unpack it. 
 2. Set MPJ_HOME and PATH environmental variables.
     - Windows XP, Vista, or 7 (assuming mpj is in 'c:\mpj')
-      Right-click My Computer->Properties->Advanced tab->Environment Variables and export 
-      the following system variables (User variables are not enough)
+      Right-click My Computer->Properties->Advanced tab->Environment Variables
+      and export the following system variables (User variables are not enough)
 	  Set the value of variable MPJ_HOME as c:\mpj 
 	  Append the c:\mpj\bin directory to the PATH variable
     - Cygwin on Windows (assuming mpj is 'c:\mpj')
@@ -48,75 +50,38 @@ Running MPJ Express Programs in the Multicore Configuration
 4. Compile: javac -cp .;%MPJ_HOME%/lib/mpj.jar HelloWorld.java
 5. Execute: mpjrun.bat -np 4 HelloWorld.java
 
-Running MPJ Express Programs in the Cluster Configuration with niodev 
-=====================================================================
+Running MPJ Express Programs in the Cluster Configuration
+=========================================================
 
-1. Download MPJ Express and unpack it. 
-2. Set MPJ_HOME and PATH environmental variables.
-    - Windows XP, Vista, or 7 (assuming mpj is in 'c:\mpj')
-      Right-click My Computer->Properties->Advanced tab->Environment Variables and export 
-      the following system variables (User variables are not enough)
-	  Set the value of variable MPJ_HOME as c:\mpj 
-	  Append the c:\mpj\bin directory to the PATH variable
-    - Cygwin on Windows (assuming mpj is 'c:\mpj')
-	  The recommended way to is to set variables as in Windows
-	  If you want to set variables in cygwin shell
-          export MPJ_HOME="c:\\mpj"
-          export PATH=$PATH:"$MPJ_HOME\bin" 
-3. Write your MPJ Express program (HelloWorld.java) and save it. 
-4. Write a machines file (name it "machines") stating host names or IP addresses of all 
-   machines involved in the parallel execution.
-5. Start daemons:
-     a. Windows XP: Run %MPJ_HOME%/bin/installmpjd-windows.bat (Vista and 7 users 
-	  need to right-click this script and "Run as Administrator")
-     b. Goto Control-Panel->Administrative Tools->Services-> MPJ Daemon and start the service. 
-        It is important to start the daemon as a user process instead of a SYSTEM process. For this, 
-	  right-Click MPJ Daemon ->Properties, click "Log On" tab, For the option "Log on as:",
-	  select This account and put in the user name and password of this account, and start 
-	  the service. 
-6. Compile: javac -cp .;%MPJ_HOME%/lib/mpj.jar HelloWorld.java 
-7. Execute: mpjrun.bat -np 4 -dev niodev HelloWorld
-8. Stop daemons: Go-to Control-Panel->Administrative Tools->Services-> MPJ Daemon 
-   and stop the service.
+1. Assuming you have completed step 1 to 4 of the Multicore Configuration. 
+2. Write a machines file (name it "machines") stating host names or 
+	 IP addresses of all machines involved in the parallel execution.
+3. Execution:
+-- For niodev, hybdev and mxdev
+	i) Start daemons:
+		a) Windows XP: Run %MPJ_HOME%/bin/installmpjd-windows.bat 
+		   (Vista and 7 users need to right-click this script and 
+	           "Run as Administrator")
+		b) Goto Control-Panel->Administrative Tools->Services
+		                     -> MPJ Daemon and start the service. 
+        	   It is important to start the daemon as a user process instead
+		   of a SYSTEM process. For this, right-Click 
+		   MPJ Daemon ->Properties, click "Log On" tab, 
+		   For the option "Log on as:", select This account and put in
+		   the user name and password of this account, and start
+		   the service. 
+	ii) Execute: mpjrun.bat -np 4 -dev niodev HelloWorld
+		-- For -dev <device> here device can be niodev, hybdev or mxdev
+	iii) Stop daemons: Go-to Control-Panel->Administrative Tools->Services
+					     -> MPJ Daemon and stop the service.
+-- For native deive
+	i) Compile JNI wrapper library: Follow the windowsguide.pdf 
+					instructions on how to compile and
+					generate .dll library
+	ii) Execute: mpjrun.bat -np 4 -dev native HelloWorld
 
-Running MPJ Express Programs in the Cluster Configuration with hybdev
-=====================================================================
 
-1. Download MPJ Express and unpack it.
-2. Set MPJ_HOME and PATH environmental variables.
-    - Windows XP, Vista, or 7 (assuming mpj is in 'c:\mpj')
-      Right-click My Computer->Properties->Advanced tab->Environment Variables
-and export
-      the following system variables (User variables are not enough)
-          Set the value of variable MPJ_HOME as c:\mpj
-          Append the c:\mpj\bin directory to the PATH variable
-    - Cygwin on Windows (assuming mpj is 'c:\mpj')
-          The recommended way to is to set variables as in Windows
-          If you want to set variables in cygwin shell
-          export MPJ_HOME="c:\\mpj"
-          export PATH=$PATH:"$MPJ_HOME\bin"
-3. Write your MPJ Express program (HelloWorld.java) and save it.
-4. Write a machines file (name it "machines") stating host names or IP
-addresses of all
-   machines involved in the parallel execution.
-5. Start daemons:
-     a. Windows XP: Run %MPJ_HOME%/bin/installmpjd-windows.bat (Vista and 7
-users
-          need to right-click this script and "Run as Administrator")
-     b. Goto Control-Panel->Administrative Tools->Services-> MPJ Daemon and
-start the service.
-        It is important to start the daemon as a user process instead of a
-SYSTEM process. For this,
-          right-Click MPJ Daemon ->Properties, click "Log On" tab, For the
-option "Log on as:",
-          select This account and put in the user name and password of this
-account, and start
-          the service.
-6. Compile: javac -cp .;%MPJ_HOME%/lib/mpj.jar HelloWorld.java
-7. Execute: mpjrun.bat -np 4 -dev hybdev HelloWorld
-8. Stop daemons: Go-to Control-Panel->Administrative Tools->Services-> MPJ
-Daemon
-   and stop the service.
+For detials read the windowsguide.pdf that can be found in $MPJ_HOME/doc
 
 Known Issues
 ============
