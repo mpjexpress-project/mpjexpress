@@ -360,7 +360,8 @@ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Comm_nativeInit
   int len = (*env)->GetArrayLength(env, args);
   char ** sargs = (char**) calloc(len+1, sizeof(char*));
   int errCode;
-
+  int rank, len_of_proc_name;
+  char name[MPI_MAX_PROCESSOR_NAME];
   jobject newArgs;
 
   int i;
@@ -395,6 +396,14 @@ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Comm_nativeInit
 
   MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_TAG_UB, &mpiTagUB, &flag);
 
+  /*
+   * Print the name of the computer node where this rank is executed
+   * */
+  MPI_Comm_rank(MPI_COMM_WORLD,&rank); 
+  MPI_Get_processor_name(name, &len_of_proc_name);
+  printf("Starting process <%d> on on <%s>\n", rank, name);
+  fflush(stdout); 
+  
   /* we are not returning the new arguments (the modified ones from MPI_Init()??
    * but mpi-Java is returning. I am just providing that logic of returning the
    * new arguments in this comment section, perhaps for future use....
