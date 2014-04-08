@@ -1,6 +1,0 @@
-This folder contains the JNI wrapper library to inteface between MPJ Express
-and a Native MPI library.
-
-To compile and generate the "libnatmpjdev.so" please follow the following steps
-outlined in section 3 of Native Configuration in $MPJ_HOME/README file.
-

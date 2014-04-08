@@ -42,6 +42,7 @@
 extern "C" {
 #endif
 
+
 extern jfieldID mpjdev_Status_sourceID;
 extern jfieldID mpjdev_Status_tagID;
 //    extern jfieldID mpjdev_Status_stathandleID;
