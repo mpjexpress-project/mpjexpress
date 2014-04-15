@@ -299,7 +299,7 @@ public class MPI {
      * then this '3' may have to be changed
      */
     String[] nargs = null;
-    if (argv[2].equal("hybdev")){
+    if (argv[2].equals("hybdev")){
 	nargs = new String[(argv.length - 8)];
 	System.arraycopy(argv, 8, nargs, 0, nargs.length);
     }else {
