@@ -298,9 +298,14 @@ public class MPI {
      * arguments ..if in future, we write a device which takes more argument,
      * then this '3' may have to be changed
      */
-    String[] nargs = new String[(argv.length - 3)];
-    System.arraycopy(argv, 3, nargs, 0, nargs.length);
-
+    String[] nargs = null;
+    if (argv[2].equal("hybdev")){
+	nargs = new String[(argv.length - 8)];
+	System.arraycopy(argv, 8, nargs, 0, nargs.length);
+    }else {
+    	nargs = new String[(argv.length - 3)];
+    	System.arraycopy(argv, 3, nargs, 0, nargs.length);
+    }
     initialized = true;
 
     if (DEBUG && logger.isDebugEnabled()) {
