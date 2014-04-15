@@ -1,5 +1,5 @@
 QuickStart Guide: Running MPJ Express on UNIX/Linux/Mac platform
-                  Last Updated: Wed Apr 8 12:21:12 PKT 2014
+                  Last Updated: Wed Apr 15 4:44:12 PKT 2014
                                 Version 0.41
 
 Introduction
@@ -34,8 +34,11 @@ Pre-requisites
 1. Java 1.6 (stable) or higher (Mandatory)
 2. Apache ant 1.6.2 or higher (Optional)
 3. Perl (Optional)
-4. Native MPI library (Optional): For example MPICH, MVAPICH or Open MPI
-5. CMake (Optional): For generating Makefile to compile native JNI C code
+4. Native MPI library (Optional): Native MPI library such as MPICH, MVAPICH
+   or Open MPI is required for running MPJ Express in cluster configuration
+   with native device.
+5. CMake (Optional): CMake is used for generating Makefile to compile native 
+   JNI C code
 
 Running MPJ Express Programs in the Multicore Configuration
 ===========================================================
@@ -105,6 +108,5 @@ your query/problem is still not resolved, contact us by emailing:
 2. Aamir Shafi (aamir.shafi@seecs.edu.pk)
 3. Mohsan Jameel (mohsan.jameel@seecs.edu.pk)
 4. Bryan Carpenter (bryan.carpenter@port.ac.uk)
-5. Mark Baker (http://acet.rdg.ac.uk/~mab)
-6. Guillermo Lopez Taboada (http://www.des.udc.es/~gltaboada)
+5. Guillermo Lopez Taboada (http://www.des.udc.es/~gltaboada)
 

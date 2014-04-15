@@ -1,5 +1,5 @@
            QuickStart Guide: Running MPJ Express on Windows Platform 
-                  Last Updated: Wed Apr 8 12:21:12 PKT 2014
+                  Last Updated: Wed Apr 15 4:51:16 PKT 2014
                                 Version 0.41
 
 Introduction
@@ -28,8 +28,12 @@ Pre-requisites
 ==============
 1. Java 1.6 (stable) or higher (Mandatory)
 2. Apache ant 1.6.2 or higher (Optional)
-3. Perl (Optional) 
-4. Visual Studio (Optional)
+3. Perl (Optional)
+4. A native MPI library (Optional): Native MPI library such as MS-MPI
+   is required for running MPJ Express in cluster configuration with 
+   native device. 
+5. Visual Studio (Optional): Visual Studio is used to compile JNI C code
+   used by native device.
 
 Running MPJ Express Programs in the Multicore Configuration
 ===========================================================
@@ -104,5 +108,4 @@ your query/problem is still not resolved, contact us by emailing:
 2. Aamir Shafi (aamir.shafi@seecs.edu.pk)
 3. Mohsan Jameel (mohsan.jameel@seecs.edu.pk)
 4. Bryan Carpenter (bryan.carpenter@port.ac.uk)
-5. Mark Baker (http://acet.rdg.ac.uk/~mab)
-6. Guillermo Lopez Taboada (http://www.des.udc.es/~gltaboada)
+5. Guillermo Lopez Taboada (http://www.des.udc.es/~gltaboada)
