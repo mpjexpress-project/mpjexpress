@@ -15,7 +15,7 @@ if [ "$IS_NATIVE" == "false" ]; then
 	
 else
    # use natmpjdev  
-echo "MPJ Express (0.41) is started in the native MPI configuration"  
+echo "MPJ Express (0.41) is started in cluster configuration with native device"  
 MACHINESFILE=""
 CP=$MPJ_HOME/lib/mpj.jar                                                                              
 for i in $@; do     
