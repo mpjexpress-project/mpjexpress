@@ -2,110 +2,116 @@ Version 0.41
 ------------
 
 1. This release mainly introduces support for using a Native MPI Implementation 
-   from MPJ Express. We call this native device. Currently the native device
-	 is only supported and tested on Linux.
+   from MPJ Express. We call this native device. 
 
-2. Major changes: $MPJ_HOME/src/mpjdev is now abstract and provides two implementations
+2. This release also introduces support for MPJ Express Profiler. The Prolifer
+   generates profiles and traces of MPJ Express applications. Currently the
+   Profiler does not support native device.
+
+3. Major changes: $MPJ_HOME/src/mpjdev is now abstract and provides two implementations
 	 i) javampjdev and ii) natmpjdev. Intracomm is now a wrapper class that either
 	 uses PureIntracomm (for pure Java devices) or NativeIntracomm (for native decive).
 
-3. libnatmpjdev.so is provided that is a C JNI wrapper library to call native
-	 MPI library. The source code is placed in $MPJ_HOME/src/mpjdev/natmpjdev/lib
+4. libnatmpjdev.so is a C JNI wrapper library to call native MPI library.
+   The source code is placed in $MPJ_HOME/src/mpjdev/natmpjdev/lib
 
-4. Some bug fixes in runtime.
+5. Some bug fixes in runtime.
 
-5. Changes in individual files and addition of new file:
+6. Changes in individual files and addition of new file:
 	 (+ indicates addition of a new file or directory)
 	 $MPJ_HOME/
-			build.xml - Added supoort for compiling $MPJ_HOME/src/mpjdev/natmpjdev and javampjdev
-			README-win.txt
-			README
-			CHANGELOG - This file
+		build.xml - Added supoort for compiling $MPJ_HOME/src/mpjdev/natmpjdev and javampjdev
+		README-win.txt
+		README
+		CHANGELOG - This file
 	 $MPJ_HOME/test/
-		  +nativetest (new directory)
-				+README
-				+compile.sh
-				+runtest.sh
+		+nativetest (new directory)
+			+README
+			+compile.sh
+			+runtest.sh
 			mpi - Added main() method in testcases
 			mpjdev - Added main() method in Buffer testcases
 	 $MPJ_HOME/bin/
-			mpjrun.sh - modified to detect -dev native, if found then calls
-   							  mpirun instead of invoking $MPJ_HOME/lib/starter.jar
+		mpjrun.sh - modified to detect -dev native, if found then calls
+   			    mpirun instead of invoking $MPJ_HOME/lib/starter.jar
 	 $MPJ_HOME/doc/
-			linuxguide.(doc/pdf)
-			windowsguide.(doc/pdf)
+		linuxguide.pdf
+		linuxguide.doc
+		windowsguide.pdf
+		windowsguide.doc
+		+RunningandDebuggingMPJExpressWithEclipse.pdf
+		+RunningandDebuggingMPJExpresswithEclipse.doc
 	 $MPJ_HOME/runtime/
 		 /starter/MPJRun.java (version 0.41)
 	 $MPJ_HOME/mpjbuf/
-			NIOBuffer.java.in - Now using allocateDirect()
-			Buffer.java.in - Added a new method public int getCapacity()
-											 used in mpjdev.natmpjdev.Comm.recv() as count  
+		NIOBuffer.java.in - Now using allocateDirect()
+		Buffer.java.in - Added a new method public int getCapacity()
+				 used in mpjdev.natmpjdev.Comm.recv() as count  
 	 $MPJ_HOME/mpi/
-			MPI
-			Comm
-			Intracomm
-			+IntracommImpl
-			+NativeIntracomm
-			+PureIntracomm
-			Datatype
-			Group
-			Request
-			Intercomm
-			Op - a new field opCode is introduced. This helps distinguish MPJ Express
-					 Operators from Native MPI_Operators
-			Max - Initializing this.opCode = mpjdev.Constants.MAX_CODE
-			Min - Initializing this.opCode = mpjdev.Constants.MIN_CODE
-			Sum - Initializing this.opCode = mpjdev.Constants.SUM_CODE
-			Prod - Initializing this.opCode = mpjdev.Constants.PROD_CODE
-			Land - Initializing this.opCode = mpjdev.Constants.LAND_CODE
-			Band - Initializing this.opCode = mpjdev.Constants.BAND_CODE
-			Lor - Initializing this.opCode = mpjdev.Constants.LOR_CODE
-			Bor - Initializing this.opCode = mpjdev.Constants.BOR_CODE
-			Lxor - Initializing this.opCode = mpjdev.Constants.LXOR_CODE
-			Bxor - Initializing this.opCode = mpjdev.Constants.BXOR_CODE
+		MPI
+		Comm
+		Intracomm
+		+IntracommImpl
+		+NativeIntracomm
+		+PureIntracomm
+		Datatype
+		Group
+		Request
+		Intercomm
+		Op - a new field opCode is introduced. This helps distinguish MPJ Express
+				 Operators from Native MPI_Operators
+		Max - Initializing this.opCode = mpjdev.Constants.MAX_CODE
+		Min - Initializing this.opCode = mpjdev.Constants.MIN_CODE
+		Sum - Initializing this.opCode = mpjdev.Constants.SUM_CODE
+		Prod - Initializing this.opCode = mpjdev.Constants.PROD_CODE
+		Land - Initializing this.opCode = mpjdev.Constants.LAND_CODE
+		Band - Initializing this.opCode = mpjdev.Constants.BAND_CODE
+		Lor - Initializing this.opCode = mpjdev.Constants.LOR_CODE
+		Bor - Initializing this.opCode = mpjdev.Constants.BOR_CODE
+		Lxor - Initializing this.opCode = mpjdev.Constants.LXOR_CODE
+		Bxor - Initializing this.opCode = mpjdev.Constants.BXOR_CODE
 
 	 $MPJ_HOME/mpjdev/
-			Comm - Abstracted
-			+Constants - Contains Macros and Flags
-			Group - Abstracted
-			MPJDev - Abstracted
-			MPJDevException - Provided a comments section telling that currently it throws
-												xdevEception so need to think about it for natmpjdev since
-												natmpjdev doesn't implement xdev.
-			Request - Modified to check if native device then donot call dev.peek() method
-			Status - source is now initialized as -1 to support native device completion handler, 
-							 if its set (which means > -1) then the operation is complete
+		Comm - Abstracted
+		+Constants - Contains Macros and Flags
+		Group - Abstracted
+		MPJDev - Abstracted
+		MPJDevException - Provided a comments section telling that currently it throws
+			       	  xdevEception so need to think about it for natmpjdev since
+				  natmpjdev doesn't implement xdev.
+		Request - Modified to check if native device then donot call dev.peek() method
+		Status - source is now initialized as -1 to support native device completion handler, 
+			 if its set (which means > -1) then the operation is complete
 
-			+javampjdev/
-				+Comm - For Pure Java
-				+Group - For Pure Java
-				+MPJDev - For Pure Java
-			+natmpjdev/
-				+Comm - For native device
-				+Group - For native device
-				+Intercomm - For native device
-				+Intracomm - For native device
-				+MPJDev - For native device
-				+NativeRequest - For native device
-				+NativeRecvRequest - For native device
-				+NativeSendRequest - For native device
+		+javampjdev/
+			+Comm - For Pure Java
+			+Group - For Pure Java
+			+MPJDev - For Pure Java
+		+natmpjdev/
+			+Comm - For native device
+			+Group - For native device
+			+Intercomm - For native device
+			+Intracomm - For native device
+			+MPJDev - For native device
+			+NativeRequest - For native device
+			+NativeRecvRequest - For native device
+			+NativeSendRequest - For native device
 				
-				+lib/
-					+CMakeLists.txt - For cmake
-					+mpjdev_natmpjdev_Comm.c
-					+mpjdev_natmpjdev_Comm.h
-					+mpjdev_natmpjdev_Group.c
-					+mpjdev_natmpjdev_Group.h
-					+mpjdev_natmpjdev_Intercomm.c
-					+mpjdev_natmpjdev_Intercomm.h
-					+mpjdev_natmpjdev_Intracomm.c
-					+mpjdev_natmpjdev_Intracomm.h
-					+mpjdev_natmpjdev_NativeRecvRequest.c
-					+mpjdev_natmpjdev_NativeRecvRequest.h
-					+mpjdev_natmpjdev_NativeSendRequest.c
-					+mpjdev_natmpjdev_NativeSendRequest.h
-					+mpjdev_natmpjdev_shared.h
-					+README
+			+lib/
+				+CMakeLists.txt - For CMake
+				+mpjdev_natmpjdev_Comm.c
+				+mpjdev_natmpjdev_Comm.h
+				+mpjdev_natmpjdev_Group.c
+				+mpjdev_natmpjdev_Group.h
+				+mpjdev_natmpjdev_Intercomm.c
+				+mpjdev_natmpjdev_Intercomm.h
+				+mpjdev_natmpjdev_Intracomm.c
+				+mpjdev_natmpjdev_Intracomm.h
+				+mpjdev_natmpjdev_NativeRecvRequest.c
+				+mpjdev_natmpjdev_NativeRecvRequest.h
+				+mpjdev_natmpjdev_NativeSendRequest.c
+				+mpjdev_natmpjdev_NativeSendRequest.h
+				+mpjdev_natmpjdev_shared.h
 
 Version 0.40
 ------------
