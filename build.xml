@@ -82,7 +82,7 @@
             depends="generateJava">
         
 	<javac srcdir="${src.dir}" 
-	classpath="lib/wrapper.jar:lib/org.mortbay.jetty.jar:lib/log4j-1.2.11.jar" 
+	classpath="lib/wrapper.jar:lib/org.mortbay.jetty.jar:lib/log4j-1.2.11.jar:lib/commons-cli-1.2.jar:lib\commons-codec-1.8.jar" 
 	sourcepath="${src.dir}"
 	debug="true"
 	/>
@@ -167,15 +167,15 @@
 
 
 
-     <jar destfile="${lib.dir}/daemon.jar" basedir="src"
-          includes="runtime/daemon/*.class runtime/*.class">
-	  <manifest>
-            <attribute name="Main-class" 
-	               value="runtime.daemon.WrapperSimpleApp" /> 
-            <attribute name="Class-path" 
-	    value="wrapper.jar log4j-1.2.11.jar"/> 
-          </manifest>  
-     </jar>
+<jar destfile="${lib.dir}/daemon.jar" basedir="src"
+	          includes="runtime/daemon/*.class">
+				<manifest>
+					<attribute name="Main-class" 
+		               value="runtime.daemon.MPJDaemon" /> 
+					<attribute name="Class-path" 
+		    value="wrapper.jar log4j-1.2.11.jar commons-codec-1.8.jar runtimecommon.jar"/> 
+				</manifest>  
+			</jar>
 
      <jar destfile="${lib.dir}/loader1.jar" basedir="src"
           includes="runtime/daemon/*.class runtime/*.class">
@@ -197,14 +197,32 @@
           </manifest>  
      </jar>
 
-     <jar destfile="${lib.dir}/starter.jar" basedir="src"
-          includes="runtime/starter/*.class runtime/*.class">
-	  <manifest>
-	   <attribute name="Main-class" value="runtime.starter.MPJRun" />
-           <attribute name="Class-path" 
-	   value="org.mortbay.jetty.jar log4j-1.2.11.jar javax.servlet.jar"/> 
-	  </manifest>  
-     </jar>
+		<jar destfile="${lib.dir}/starter.jar" basedir="src"
+          includes="runtime/starter/*.class"  >
+			<manifest>
+				<attribute name="Main-class" value="runtime.starter.MPJRun" />
+				<attribute name="Class-path" 
+	   value="org.mortbay.jetty.jar log4j-1.2.11.jar runtimecommon.jar"/> 
+			</manifest>  
+		</jar>
+     
+     		<jar destfile="${lib.dir}/daemonmanager.jar" basedir="src"
+    	          includes="runtime/daemonmanager/*.class">
+			<manifest>
+				<attribute name="Main-class" value="runtime.daemonmanager.MPJDaemonManager" />    
+				<attribute name="Class-path" 
+    		  		   value="commons-cli-1.2.jar runtimecommon.jar"/> 
+			</manifest>  
+		</jar>	
+		<jar destfile="${lib.dir}/runtimecommon.jar" basedir="src"
+	    	          includes="runtime/common/*.class">
+				<manifest>
+					<attribute name="Class-path" 
+	    		  		   value="commons-cli-1.2.jar commons-codec-1.8.jar"/> 
+				</manifest>  
+			</jar>	
+     
+     
     </target>
 
     <target name="mxlib" description="generates native MX code">
