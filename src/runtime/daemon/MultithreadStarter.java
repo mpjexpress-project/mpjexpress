@@ -51,76 +51,79 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 public class MultithreadStarter {
-  Method method = null; 
-  String [] newArgs = new String[2];
-  Integer rank = new Integer(-1); 
+  Method method = null;
+  String[] newArgs = new String[2];
+  Integer rank = new Integer(-1);
 
   public static void main(String args[]) throws Exception {
-    if(args.length < 2) {
-       System.out.println("java className nprocs");
-       return;
+    if (args.length < 2) {
+      System.out.println("java className nprocs");
+      return;
     }
     MultithreadStarter starter = new MultithreadStarter(args);
   }
-  
-  public MultithreadStarter(String [] args) throws Exception {
+
+  public MultithreadStarter(String[] args) throws Exception {
 
     Runnable ab = new Runnable() {
-      public void run() {	      
-        synchronized( rank ) {
-          int val = rank.intValue();
+      public void run() {
+	synchronized (rank) {
+	  int val = rank.intValue();
 	  val++;
-          rank = new Integer(val);
+	  rank = new Integer(val);
 	  newArgs[1] = rank.toString();
-//System.out.println(" newArgs[0] "+ newArgs[0] + "__"+ Thread.currentThread() ); 
-//System.out.println(" newArgs[1] "+ newArgs[1] + "__"+ Thread.currentThread() );	
+	  // System.out.println(" newArgs[0] "+ newArgs[0] + "__"+
+	  // Thread.currentThread() );
+	  // System.out.println(" newArgs[1] "+ newArgs[1] + "__"+
+	  // Thread.currentThread() );
 	}
-	  
-	  try {
-            System.out.println(" invoking for <"+Thread.currentThread() );	  
-            MultithreadStarter.this.method.invoke( null, 	  
-			  new Object[] { MultithreadStarter.this.newArgs });
-            System.out.println(" invoked for <"+Thread.currentThread() );	  
-	  } catch (Exception e) {
-            System.out.println(" exception while invoking in "+
-			    		 Thread.currentThread() );
-  	    e.printStackTrace();		
-	    // This should not happen, as we have disabled access checks
-	  }	  
+
+	try {
+	  System.out.println(" invoking for <" + Thread.currentThread());
+	  MultithreadStarter.this.method.invoke(null,
+	      new Object[] { MultithreadStarter.this.newArgs });
+	  System.out.println(" invoked for <" + Thread.currentThread());
+	}
+	catch (Exception e) {
+	  System.out.println(" exception while invoking in "
+	      + Thread.currentThread());
+	  e.printStackTrace();
+	  // This should not happen, as we have disabled access checks
+	}
 
       }
 
     };
 
-    String className = args[0]; 
-    int nprocs    = Integer.parseInt( args[1] );        
-    Thread procs[] = new Thread[nprocs];     
+    String className = args[0];
+    int nprocs = Integer.parseInt(args[1]);
+    Thread procs[] = new Thread[nprocs];
     newArgs[0] = args[1];
     Class c = Class.forName(className);
     method = c.getMethod("main", new Class[] { args.getClass() });
     method.setAccessible(true);
-    int mods = method.getModifiers();    
+    int mods = method.getModifiers();
 
-    if (method.getReturnType() != void.class || !Modifier.isStatic(mods) ||
-		    !Modifier.isPublic(mods)) {
-	    throw new NoSuchMethodException("main");
+    if (method.getReturnType() != void.class || !Modifier.isStatic(mods)
+	|| !Modifier.isPublic(mods)) {
+      throw new NoSuchMethodException("main");
     }
-    
-    for(int i=0 ; i< nprocs ; i++) { 
-      	    
-      procs[i] = new Thread(ab);		    
-      //newArgs[0] = String.valueOf(i);
+
+    for (int i = 0; i < nprocs; i++) {
+
+      procs[i] = new Thread(ab);
+      // newArgs[0] = String.valueOf(i);
       procs[i].start();
-      Thread.currentThread().sleep(50); 
+      Thread.currentThread().sleep(50);
     }
-    //System.out.println("className<"+className+">");
-    //System.out.println("nprocs<"+nprocs+">");    
+    // System.out.println("className<"+className+">");
+    // System.out.println("nprocs<"+nprocs+">");
     System.out.println("Calling join ");
-    for(int i=0 ; i< nprocs ; i++) { 
-      procs[i].join();		    
+    for (int i = 0; i < nprocs; i++) {
+      procs[i].join();
     }
     System.out.println("Exiting multithreadstarter");
 
   }
-  
+
 }

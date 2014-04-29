@@ -86,7 +86,7 @@ public class Wrapper extends Thread {
 
     try {
       System.out.println("Starting process <" + rank + "> on <" + hostName
-          + ">");
+	  + ">");
 
       String arvs[] = new String[nargs.length + 3];
 
@@ -95,24 +95,25 @@ public class Wrapper extends Thread {
       arvs[2] = deviceName;
 
       for (int i = 0; i < nargs.length; i++) {
-        arvs[i + 3] = nargs[i];
+	arvs[i + 3] = nargs[i];
       }
 
       Method m = c.getMethod("main", new Class[] { arvs.getClass() });
       m.setAccessible(true);
       int mods = m.getModifiers();
       if (m.getReturnType() != void.class || !Modifier.isStatic(mods)
-          || !Modifier.isPublic(mods)) {
-        throw new NoSuchMethodException("main");
+	  || !Modifier.isPublic(mods)) {
+	throw new NoSuchMethodException("main");
       }
 
       m.invoke(null, new Object[] { arvs });
 
       System.out.println("Stopping process <" + rank + "> on <" + hostName
-          + ">");
-    } catch (Exception ioe) {
+	  + ">");
+    }
+    catch (Exception ioe) {
       System.out
-          .println("multi-threaded starter: exception" + ioe.getMessage());
+	  .println("multi-threaded starter: exception" + ioe.getMessage());
       ioe.printStackTrace();
     }
 
@@ -121,7 +122,8 @@ public class Wrapper extends Thread {
   public void run() {
     try {
       execute(args);
-    } catch (Exception ex) {
+    }
+    catch (Exception ex) {
       ex.printStackTrace();
     }
   }

@@ -40,13 +40,16 @@
  */
 package runtime.daemon;
 
-import java.util.*;
-import java.net.*;
-import java.io.*;
-import java.lang.reflect.*;
+import java.io.File;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.net.InetAddress;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.StringTokenizer;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
-import java.lang.Integer;
+
 import xdev.smpdev.SMPDevProcess;
 
 public class HybridStarter {
@@ -139,12 +142,8 @@ public class HybridStarter {
                     + mpjHome + "/lib/mpjdev.jar";
               }
 
-              // System.out.println("className = "+className) ;
-
               if (className.endsWith(".jar")) {
                 if ((new File(className)).isAbsolute()) {
-                  // System.out.println("AbsolutePath") ;
-                  // System.out.println("className = "+className) ;
                   appPath = className;
                 } else {
                   appPath = wdir + "/" + className;
@@ -156,8 +155,6 @@ public class HybridStarter {
               appPath = appPath + File.pathSeparator + libPath;
 
               ClassLoader systemLoader = ClassLoader.getSystemClassLoader();
-
-              // System.out.println("appPath = "+appPath) ;
 
               StringTokenizer tok = new StringTokenizer(appPath,
                   File.pathSeparator);
@@ -176,20 +173,14 @@ public class HybridStarter {
               Thread.currentThread().setContextClassLoader(ucl);
 
               if (className.endsWith(".jar")) {
-                // System.out.println("Hello i am jar loader");
-                // System.out.println("wdir ="+wdir) ;
                 String jarFileName = className;
-                // System.out.println("jarFileName ="+jarFileName) ;
                 JarFile jarFile = new JarFile(jarFileName);
                 Attributes attr = jarFile.getManifest().getMainAttributes();
                 name = attr.getValue(Attributes.Name.MAIN_CLASS);
                 c[index] = Class.forName(name, true, ucl);
               } else {
                 name = className;
-                // System.out.println("num --" + num + " Thread "
-                // +Thread.currentThread()+" Time "+System.nanoTime());
                 c[index] = Class.forName(name, true, ucl);
-                // c[num] = Class.forName(name);
               }
 
             } catch (Exception exx) {
@@ -218,7 +209,6 @@ public class HybridStarter {
                     || !Modifier.isStatic(mods) || !Modifier.isPublic(mods)) {
                   throw new NoSuchMethodException("main");
                 }
-                // m.invoke(null, new Object[] {arvs});
                 method[index] = m[index];
               }
             } catch (Exception exp) {
@@ -232,14 +222,10 @@ public class HybridStarter {
             rank = new Integer(val);
             arvs[0] = rank.toString();
             argNew[0] = rank.toString();
-            // System.out.println("rank " + rank);
           }
 
-          // argNew[1] = arvs[1];
-          // argNew[2] = arvs[2];
           for (int k = 1; k < arvs.length; k++) {
             argNew[k] = arvs[k];
-            // System.out.println(" arg new " + argNew[k]);
           }
 
           // FIXME: need an elegant way to fill the index 1

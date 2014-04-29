@@ -1,8 +1,11 @@
 /*
  The MIT License
 
- Copyright (c) 2010
-   1. Aamir Shafi (2010)
+ Copyright (c) 2005 - 2008
+   1. Distributed Systems Group, University of Portsmouth (2005)
+   2. Aamir Shafi (2005 - 2008)
+   3. Bryan Carpenter (2005 - 2008)
+   4. Mark Baker (2005 - 2008)
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -22,39 +25,32 @@
  DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
  THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ */
 /*
- * File         : PortScan.java 
- * Author       : Kamran Hameed
- * Created      : Tue Jan 26 17:12:50 PKT 2010
+ * File         : MPJRuntimeException.java
+ * Author       : Aamir Shafi, Bryan Carpenter
+ * Created      : Fri Aug 12 16:50:29 BST 2005
  * Revision     : $Revision: 1.1 $
- * Updated      : $Date: Tue Jan 26 17:12:50 PKT 2010
+ * Updated      : $Date: 2005/08/12 19:13:06 $
  */
 
-package runtime.starter;
+package runtime.common; 
 
-import java.net.*;
-import java.io.*;
-public class PortScan {
-  public static void main(String [] args) {
-    try {
-      InetAddress address = InetAddress.getByName(args[0]);
-      System.exit(isBusy(address,Integer.parseInt(args[1])) ? 0 : 1) ;
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-    }
+import mpjdev.MPJDevException; 
+
+public class MPJRuntimeException extends RuntimeException {
+
+  public MPJRuntimeException() {
+    super();
   }
 
-  static boolean isBusy(final InetAddress remote,int port) {
-    try {
-      Socket s = new Socket(remote,port);
-      s.close();
-      return true;
-    }
-    catch (Exception e) {
-      return false;
-    }
+  public MPJRuntimeException(String message) {
+    super(message);
   }
+
+  public MPJRuntimeException(Throwable cause) {
+    super(cause);
+  }
+
 }
 
