@@ -91,16 +91,12 @@ public class DMThreadUtil {
 	} else if (type.equals(DMConstants.INFO)) {
 	  thread = new ProcessInfoThread(host);
 	}
-	if (thread != null) {
-	  if (options.isbThreading())
-	    threads.add(thread);
-	  else
-	    thread.run();
+	if (thread != null) {	
+	  threads.add(thread);
 	}
 
-      }
-      if (options.isbThreading())
-	ExecuteThreads(threads, options.getThreadCount());
+      }     
+      ExecuteThreads(threads, options.getThreadCount());
     }
   }
 

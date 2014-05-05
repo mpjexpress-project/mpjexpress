@@ -48,13 +48,11 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 
 import runtime.common.MPJUtil;
-import runtime.daemonmanager.CLOptions;
 
 public class CLOptions {
 
   private ArrayList<String> machineList;
   private int threadCount;
-  private boolean bThreading;
   private String cmdType;
   private String userCmd;
   private String machineFilePath;
@@ -65,7 +63,6 @@ public class CLOptions {
     super();
     this.machineList = machineList;
     this.threadCount = threadCount;
-    this.bThreading = bThreading;
     this.cmdType = cmdType;
     this.userCmd = userCmd;
     this.port = port;
@@ -83,7 +80,6 @@ public class CLOptions {
     super();
     this.machineList = new ArrayList<String>();
     this.threadCount = 20;
-    this.bThreading = true;
     this.cmdType = DMConstants.STATUS;
     this.userCmd = "";
     this.machineFilePath = "";
@@ -105,14 +101,6 @@ public class CLOptions {
 
   public void setThreadCount(int nThreads) {
     this.threadCount = nThreads;
-  }
-
-  public boolean isbThreading() {
-    return bThreading;
-  }
-
-  public void setbThreading(boolean bThreading) {
-    this.bThreading = bThreading;
   }
 
   public String getCmdType() {
@@ -145,7 +133,6 @@ public class CLOptions {
     for (String hostname : this.machineList)
       System.out.println("Host Name: " + hostname);
     System.out.println("No of Threads: " + this.threadCount);
-    System.out.println("Threading On/Off: " + this.bThreading);
 
   }
 
@@ -218,8 +205,6 @@ public class CLOptions {
 	.create(DMConstants.HOSTS_OPT));
     options.addOption(new Option(DMConstants.THREAD_COUNT_OPT,
 	DMConstants.THREAD_COUNT, true, DMMessages.CMD_OPT_THREAD_COUNT));
-    options.addOption(new Option(DMConstants.THREADED_OPT,
-	DMConstants.THREADED, true, DMMessages.CMD_OPT_THREADED));
     options.addOption(new Option(DMConstants.PORT_OPT, DMConstants.PORT, true,
 	DMMessages.CMD_OPT_PORT));
     options.addOption(new Option(DMConstants.WIN_BOOT_OPT,
@@ -248,11 +233,15 @@ public class CLOptions {
 
       if (line.hasOption(DMConstants.HOSTS)) {
 	String[] hosts = line.getOptionValues(DMConstants.HOSTS);
-	for (String host : hosts)
+	for (String host : hosts) {
 	  this.getMachineList().add(host);
+	  this.setThreadCount(this.getMachineList().size());
+	}
       } else if (line.hasOption(DMConstants.MACHINE_FILE)) {
 	String machineFilePath = line.getOptionValue(DMConstants.MACHINE_FILE);
 	this.setMachineFilePath(machineFilePath);
+	int nThreads = MPJUtil.readMachineFile(machineFilePath).size();
+	this.setThreadCount(nThreads);
       }
 
       if (line.hasOption(DMConstants.THREAD_COUNT)) {
@@ -260,11 +249,7 @@ public class CLOptions {
 	    .getOptionValue(DMConstants.THREAD_COUNT));
 	this.setThreadCount(nThreads);
       }
-      if (line.hasOption(DMConstants.THREADED)) {
-	boolean bThread = Boolean.parseBoolean(line
-	    .getOptionValue(DMConstants.THREADED));
-	this.setbThreading(bThread);
-      }
+
       if (line.hasOption(DMConstants.PORT)) {
 	Integer port = Integer.parseInt(line.getOptionValue(DMConstants.PORT));
 	this.setPort(port.toString());
