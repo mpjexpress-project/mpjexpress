@@ -275,7 +275,7 @@ public class MPJProcessTicket {
     return ToXML(true);
   }
 
-  private MPJXml ToXML(boolean src) {
+  public MPJXml ToXML(boolean src) {
     MPJXml processInfoXML = new MPJXml(getTag(RTConstants.MPJ_PROCESS_INFO));
 
     MPJXml ticketIDXML = new MPJXml(getTag(RTConstants.TICKET_ID));

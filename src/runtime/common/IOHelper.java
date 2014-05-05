@@ -32,13 +32,14 @@
  * Author       : Khurram Shahzad, Mohsan Jameel, Aamir Shafi, Bryan Carpenter
  * Created      : Oct 28, 2013
  * Revision     : $
- * Updated      : Nov 05, 2013 
+ * Updated      : Nov 05, 2013
+ *
+ *
+ *  Zipping and Unzipping methods are taken from this link: http://pastebin.com/ZS1p4N5P
  */
 
 package runtime.common;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,10 +48,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.Enumeration;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import org.w3c.dom.CharacterData;
@@ -276,126 +276,154 @@ public final class IOHelper {
   public static void zipFolder(String srcDir, String zipFile) {
 
     try {
-
-      FileOutputStream fos = new FileOutputStream(zipFile);
-
-      ZipOutputStream zos = new ZipOutputStream(fos);
-
-      File srcFile = new File(srcDir);
-
-      addDirToArchive(zos, srcFile);
-
-      // close the ZipOutputStream
-      zos.close();
-
+      zipDirectory(srcDir, zipFile);
     }
-    catch (IOException ioe) {
-      System.out.println("Error creating zip file: " + ioe);
+    catch (Exception e) {
     }
-
   }
 
-  private static void addDirToArchive(ZipOutputStream zos, File srcFile) {
+  private static void zipDirectory(String srcFolder, String destZipFile)
+      throws Exception {
+    ZipOutputStream zip = null;
+    FileOutputStream fileWriter = null;
+    /*
+     * create the output stream to zip file result
+     */
+    fileWriter = new FileOutputStream(destZipFile);
+    zip = new ZipOutputStream(fileWriter);
+    /*
+     * add the folder to the zip
+     */
+    addFolderToZip("", srcFolder, zip);
+    /*
+     * close the zip objects
+     */
+    zip.flush();
+    zip.close();
+  }
 
-    File[] files = srcFile.listFiles();
-    System.out.println("Adding directory: " + srcFile.getName());
-    for (int i = 0; i < files.length; i++) {
+  /*
+   * recursively add files to the zip files
+   */
+  private static void addFileToZip(String path, String srcFile,
+      ZipOutputStream zip, boolean flag) throws Exception {
+    /*
+     * create the file object for inputs
+     */
+    File folder = new File(srcFile);
 
-      // if the file is directory, use recursion
-      if (files[i].isDirectory()) {
-	addDirToArchive(zos, files[i]);
-	continue;
-      }
-
-      try {
-
-	System.out.println("tAdding file: " + files[i].getName());
-
-	// create byte buffer
-	byte[] buffer = new byte[1024];
-
-	FileInputStream fis = new FileInputStream(files[i]);
-
-	zos.putNextEntry(new ZipEntry(files[i].getName()));
-
-	int length;
-
-	while ((length = fis.read(buffer)) > 0) {
-	  zos.write(buffer, 0, length);
+    /*
+     * if the folder is empty add empty folder to the Zip file
+     */
+    if (flag == true) {
+      zip.putNextEntry(new ZipEntry(path + "/" + folder.getName() + "/"));
+    } else { /*
+	      * if the current name is directory, recursively traverse it to get
+	      * the files
+	      */
+      if (folder.isDirectory()) {
+	/*
+	 * if folder is not empty
+	 */
+	addFolderToZip(path, srcFile, zip);
+      } else {
+	/*
+	 * write the file to the output
+	 */
+	byte[] buf = new byte[1024];
+	int len;
+	FileInputStream in = new FileInputStream(srcFile);
+	zip.putNextEntry(new ZipEntry(path + "/" + folder.getName()));
+	while ((len = in.read(buf)) > 0) {
+	  /*
+	   * Write the Result
+	   */
+	  zip.write(buf, 0, len);
 	}
-	zos.closeEntry();
-	// close the InputStream
-	fis.close();
-
       }
-      catch (IOException ioe) {
-	System.out.println("IOException :" + ioe);
-      }
-
     }
+  }
 
+  /*
+   * add folder to the zip file
+   */
+  private static void addFolderToZip(String path, String srcFolder,
+      ZipOutputStream zip) throws Exception {
+    File folder = new File(srcFolder);
+
+    /*
+     * check the empty folder
+     */
+    if (folder.list().length == 0) {
+      System.out.println(folder.getName());
+      addFileToZip(path, srcFolder, zip, true);
+    } else {
+      /*
+       * list the files in the folder
+       */
+      for (String fileName : folder.list()) {
+	if (path.equals("")) {
+	  addFileToZip(folder.getName(), srcFolder + "/" + fileName, zip, false);
+	} else {
+	  addFileToZip(path + "/" + folder.getName(), srcFolder + "/"
+	      + fileName, zip, false);
+	}
+      }
+    }
+  }
+
+  public static void main(String args[]) {
+    IOHelper.zipFolder("/home/aleem/code/test", "/home/aleem/code/test.zip");
+    IOHelper.ExtractZip("/home/aleem/code/test.zip", "/home/aleem/code/test2");
   }
 
   public static void ExtractZip(String srcFileName, String targetFolder) {
-
-    File srcFile = new File(srcFileName);
-    File temp = new File(targetFolder);
-    temp.mkdir();
-
-    ZipFile zFile = null;
-
+    ZipInputStream zis = null;
     try {
 
-      zFile = new ZipFile(srcFile);
+      zis = new ZipInputStream(new FileInputStream(srcFileName));
+      ZipEntry entry;
 
-      Enumeration<ZipEntry> e = (Enumeration<ZipEntry>) zFile.entries();
+      while ((entry = zis.getNextEntry()) != null) {
 
-      while (e.hasMoreElements()) {
-
-	ZipEntry entry = e.nextElement();
-
-	File destinationPath = new File(targetFolder, entry.getName());
-
-	destinationPath.getParentFile().mkdirs();
-
+	// Create a file on HDD in the destinationPath directory
+	// destinationPath is a "root" folder, where you want to extract your
+	// ZIP file
+	File entryFile = new File(targetFolder, entry.getName());
 	if (entry.isDirectory()) {
-	  continue;
-	} else {
 
-	  BufferedInputStream bis = new BufferedInputStream(
-	      zFile.getInputStream(entry));
-
-	  int b;
-	  byte buffer[] = new byte[1024];
-
-	  FileOutputStream fos = new FileOutputStream(destinationPath);
-
-	  BufferedOutputStream bos = new BufferedOutputStream(fos, 1024);
-
-	  while ((b = bis.read(buffer, 0, 1024)) != -1) {
-	    bos.write(buffer, 0, b);
+	  if (entryFile.exists()) {
+	  } else {
+	    entryFile.mkdirs();
 	  }
 
-	  bos.close();
-	  bis.close();
+	} else {
+
+	  // Make sure all folders exists (they should, but the safer, the
+	  // better ;-))
+	  if (entryFile.getParentFile() != null
+	      && !entryFile.getParentFile().exists()) {
+	    entryFile.getParentFile().mkdirs();
+	  }
+
+	  // Create file on disk...
+	  if (!entryFile.exists()) {
+	    entryFile.createNewFile();
+	  }
+
+	  FileOutputStream fileoutputstream = new FileOutputStream(entryFile);
+	  byte[] buf = new byte[1024];
+	  int n;
+	  while ((n = zis.read(buf, 0, 1024)) > -1) {
+	    fileoutputstream.write(buf, 0, n);
+	  }
 
 	}
-
       }
-
     }
-    catch (IOException ioe) {
-      System.out.println("Unable to open zip file" + ioe);
-    }
-    finally {
-      try {
-	if (zFile != null) {
-	  zFile.close();
-	}
-      }
-      catch (IOException ioe) {
-	System.out.println("Unable to close zip file" + ioe);
-      }
+    catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     }
   }
 
