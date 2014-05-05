@@ -82,7 +82,7 @@
             depends="generateJava">
         
 	<javac srcdir="${src.dir}" 
-	classpath="lib/wrapper.jar:lib/org.mortbay.jetty.jar:lib/log4j-1.2.11.jar:lib/commons-cli-1.2.jar:lib\commons-codec-1.8.jar" 
+	classpath="lib/wrapper.jar:lib/org.mortbay.jetty.jar:lib/log4j-1.2.11.jar:lib/commons-cli-1.2.jar:lib\commons-codec-1.8.jar:lib\commons-io-2.4.jar" 
 	sourcepath="${src.dir}"
 	debug="true"
 	/>
@@ -173,7 +173,7 @@
 					<attribute name="Main-class" 
 		               value="runtime.daemon.MPJDaemon" /> 
 					<attribute name="Class-path" 
-		    value="wrapper.jar log4j-1.2.11.jar commons-codec-1.8.jar runtimecommon.jar"/> 
+		    value="log4j-1.2.11.jar commons-codec-1.8.jar commons-io-2.4.jar runtimecommon.jar "/> 
 				</manifest>  
 			</jar>
 
@@ -303,29 +303,29 @@
     <target name="java-docs" depends="figures">
       <javadoc
         destdir="${doc.dir}/javadocs"
-	classpath="${lib.dir}/org.mortbay.jetty.jar:${lib.dir}/javax.servlet.jar:${lib.dir}/wrapper.jar:${lib.dir}/log4j-1.2.11.jar">
-        <fileset dir="${mpi.dir}" defaultexcludes="yes">
-          <include name="**/Cartcomm.java"/>
-          <include name="**/CartParms.java"/>
-          <include name="**/Comm.java"/>
-          <include name="**/Datatype.java"/>
-          <include name="**/Errhandler.java"/>
-          <include name="**/Graphcomm.java"/>
-          <include name="**/GraphParms.java"/>
-          <include name="**/Group.java"/>
-          <include name="**/Intercomm.java"/>
-          <include name="**/Intracomm.java"/>
-          <include name="**/MPI.java"/>
-          <include name="**/MPIException.java"/>
-          <include name="**/Op.java"/>
-          <include name="**/Prequest.java"/>
-          <include name="**/Request.java"/>
-          <include name="**/ShiftParms.java"/>
-          <include name="**/Status.java"/>
-          <include name="**/User_function.java"/>
-        </fileset>
-      </javadoc>
-    </target>
+	classpath="${lib.dir}/org.mortbay.jetty.jar:${lib.dir}/javax.servlet.jar:${lib.dir}/wrapper.jar:${lib.dir}/log4j-1.2.11.jar;${lib.dir}/commons-cli-1.2.jar">
+			<fileset dir="${mpi.dir}" defaultexcludes="yes">
+				<include name="**/Cartcomm.java"/>
+				<include name="**/CartParms.java"/>
+				<include name="**/Comm.java"/>
+				<include name="**/Datatype.java"/>
+				<include name="**/Errhandler.java"/>
+				<include name="**/Graphcomm.java"/>
+				<include name="**/GraphParms.java"/>
+				<include name="**/Group.java"/>
+				<include name="**/Intercomm.java"/>
+				<include name="**/Intracomm.java"/>
+				<include name="**/MPI.java"/>
+				<include name="**/MPIException.java"/>
+				<include name="**/Op.java"/>
+				<include name="**/Prequest.java"/>
+				<include name="**/Request.java"/>
+				<include name="**/ShiftParms.java"/>
+				<include name="**/Status.java"/>
+				<include name="**/User_function.java"/>
+			</fileset>
+		</javadoc>
+	</target>
 
     <target name="all" depends="compile,jars,clean"
             description="All"/>
