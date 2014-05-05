@@ -24,6 +24,40 @@ public class ProcessArgumentsManager {
   int rankArgumentIndex;
   int debug_argument_index;
 
+  String userDir = "";
+  String usersDir = "";
+  String sourcePath = "";
+
+  public void setSourcePath(String sourcePath) {
+    File f = new File(sourcePath);
+    String files[] = f.list();
+    this.sourcePath = sourcePath + "/" + files[0];
+  }
+
+  public String getUsersDir() {
+    return usersDir;
+  }
+
+  public void setUsersDir(String usersDir) {
+    this.usersDir = usersDir;
+  }
+
+  public String getTicketDir() {
+    return ticketDir;
+  }
+
+  public void setTicketDir(String ticketDir) {
+    this.ticketDir = ticketDir;
+  }
+
+  public String getUserDir() {
+    return userDir;
+  }
+
+  public void setUserDir(String userDir) {
+    this.userDir = userDir;
+  }
+
   public ProcessArgumentsManager(MPJProcessTicket pTicket) {
     this.pTicket = pTicket;
   }
@@ -67,8 +101,14 @@ public class ProcessArgumentsManager {
     Map<String, String> map = System.getenv();
     String mpjHomeDir = map.get("MPJ_HOME");
     String workingDirectory = pTicket.getWorkingDirectory();
-    if (pTicket.isZippedSource())
-      workingDirectory = sourceFolder;
+    if (pTicket.isZippedSource()) {
+      if (pTicket.getClassPath().endsWith(".jar")) {
+	File f = new File(pTicket.getClassPath());
+	pTicket.setClassPath(sourcePath + "/" + f.getName());
+
+      }
+      workingDirectory = sourcePath;
+    }
 
     boolean now = false;
     boolean noSwitch = true;
@@ -183,9 +223,14 @@ public class ProcessArgumentsManager {
     boolean noSwitch = true;
     String cmdClassPath = " ";
     String workingDirectory = pTicket.getWorkingDirectory();
-    if (pTicket.isZippedSource())
-      workingDirectory = sourceFolder;
+    if (pTicket.isZippedSource()) {
+      if (pTicket.getClassPath().endsWith(".jar")) {
+	File f = new File(pTicket.getClassPath());
+	pTicket.setClassPath(sourcePath + "/" + f.getName());
 
+      }
+      workingDirectory = sourcePath;
+    }
     String[] jArgs = pTicket.getJvmArgs().toArray(new String[0]);
     for (int e = 0; e < jArgs.length; e++) {
 
@@ -336,12 +381,6 @@ public class ProcessArgumentsManager {
 	  .debug("HybridDaemon: Command for process-builder object index: value ");
     }
 
-    for (int i = 0; i < arguments.length; i++) {
-      if (MPJDaemon.DEBUG && MPJDaemon.logger.isDebugEnabled()) {
-	MPJDaemon.logger.debug(i + ": " + arguments[i]);
-      }
-    }
-
     if (MPJDaemon.DEBUG && MPJDaemon.logger.isDebugEnabled()) {
       MPJDaemon.logger.debug("HybridDaemon: creating process-builder object ");
     }
@@ -391,7 +430,7 @@ public class ProcessArgumentsManager {
 	  String[] tokens = token.split("@");
 	  ports.add(Integer.parseInt(tokens[1]));
 	  if (pTicket.getDeviceName() != "mxdev")
-	   ports.add(Integer.parseInt(tokens[2]));
+	    ports.add(Integer.parseInt(tokens[2]));
 	}
 	cout.println(token);
       }
@@ -409,14 +448,14 @@ public class ProcessArgumentsManager {
   }
 
   private void WriteSourceFile() {
-    String USERS = "users";
+    String USERS = "mpj_users";
     String SRC_DIR = "src";
     String SRC_ZIP = "src.zip";
     Map<String, String> map = System.getenv();
     String mpjHomeDir = map.get("MPJ_HOME");
-    String usersDir = mpjHomeDir + File.separator + USERS;
+    usersDir = System.getProperty("user.home") + File.separator + "." + USERS;
     IOHelper.CreateDirectory(usersDir);
-    String userDir = usersDir + File.separator + pTicket.getUserID();
+    userDir = usersDir + File.separator + pTicket.getUserID();
     IOHelper.CreateDirectory(userDir);
     ticketDir = userDir + File.separator + pTicket.getTicketID().toString();
     IOHelper.CreateDirectory(ticketDir);
@@ -428,6 +467,7 @@ public class ProcessArgumentsManager {
       byte[] contents = Base64.decodeBase64(pTicket.getSourceCode());
       IOHelper.writeFile(sourceZip, contents);
       IOHelper.ExtractZip(sourceZip, sourceFolder);
+      setSourcePath(sourceFolder);
     }
 
   }

@@ -37,11 +37,16 @@
 
 package runtime.daemon;
 
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.DailyRollingFileAppender;
@@ -55,7 +60,7 @@ import runtime.common.MPJRuntimeException;
 public class MPJDaemon {
 
   private int D_SER_PORT = 10000;
-  static final boolean DEBUG = false;
+  static final boolean DEBUG = true;
   static Logger logger = null;
   private String mpjHomeDir = null;
   public volatile static ConcurrentHashMap<Socket, ProcessLauncher> servSockets;
@@ -112,6 +117,8 @@ public class MPJDaemon {
 	LoggerRepository rep = rootLogger.getLoggerRepository();
 	rootLogger.setLevel((Level) Level.ALL);
 	logger = Logger.getLogger("mpjdaemon");
+	String level = getValueFromWrapper("wrapper.logfile.loglevel.mpjdaemon");
+	logger.setLevel(Level.toLevel(level.toUpperCase(), Level.OFF));
       }
       catch (Exception e) {
 	throw new MPJRuntimeException(e);
@@ -154,9 +161,45 @@ public class MPJDaemon {
 
   }
 
+  private static String getValueFromWrapper(String Parameter) {
+
+    String value = "";
+    FileInputStream in = null;
+    DataInputStream din = null;
+    BufferedReader reader = null;
+    String line = "";
+
+    try {
+
+      String path = System.getenv("MPJ_HOME") + "/conf/wrapper.conf";
+      in = new FileInputStream(path);
+      din = new DataInputStream(in);
+      reader = new BufferedReader(new InputStreamReader(din));
+
+      while ((line = reader.readLine()) != null) {
+	if (line.startsWith(Parameter)) {
+	  String trimmedLine = line.replaceAll("\\s+", "");
+	  StringTokenizer tokenizer = new StringTokenizer(trimmedLine, "=");
+	  tokenizer.nextToken();
+	  value = tokenizer.nextToken();
+	  break;
+	}
+      }
+
+      in.close();
+
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    return value;
+
+  }
+
   public static void main(String args[]) {
     try {
-		
+
       MPJDaemon dae = new MPJDaemon(args);
     }
     catch (Exception e) {

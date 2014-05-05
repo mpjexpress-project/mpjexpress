@@ -45,14 +45,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
 import runtime.common.MPJProcessTicket;
-import runtime.common.RTConstants;
 
 public class ProcessLauncher extends Thread {
 
-  boolean DEBUG = false;
+  boolean DEBUG = true;
   private Process p[] = null;
   private Socket sockserver = null;
   private Logger logger = MPJDaemon.logger;
@@ -79,11 +79,12 @@ public class ProcessLauncher extends Thread {
       String ticketString = getStringFromInputStream(sockserver
 	  .getInputStream());
 
-      if (DEBUG && logger.isDebugEnabled()) {
-	logger.debug(ticketString);
-      }
       if (ticketString != "")
 	pTicket.FromXML(ticketString);
+      if (DEBUG && logger.isDebugEnabled()) {
+	logger.debug(pTicket.ToXML(false).toXmlString());
+      }
+
     }
     catch (IOException e3) {
       e3.printStackTrace();
@@ -132,7 +133,6 @@ public class ProcessLauncher extends Thread {
       String currentDir = System.getProperty("user.dir");
       pb.directory(new File(currentDir));
       pb.redirectErrorStream(true);
-      ;
 
       if (DEBUG && logger.isDebugEnabled()) {
 	logger.debug("starting the process ");
@@ -182,7 +182,9 @@ public class ProcessLauncher extends Thread {
 	DataOutputStream out = new DataOutputStream(outToServer);
 	out.write("EXIT".getBytes(), 0, "EXIT".getBytes().length);
 	System.out.println("Job finished");
-
+	if (!DEBUG || !logger.isDebugEnabled()) {
+	  FileUtils.deleteDirectory(new File(argManager.getUsersDir()));
+	}
       }
       catch (IOException e1) {
 	e1.printStackTrace();
@@ -228,6 +230,16 @@ public class ProcessLauncher extends Thread {
     catch (Exception e) {
       e.printStackTrace();
     }
+
+    try {
+      if (!DEBUG || !logger.isDebugEnabled()) {
+	FileUtils.deleteDirectory(new File(argManager.getUsersDir()));
+      }
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
+
   }
 
   private String getStringFromInputStream(InputStream is) {
