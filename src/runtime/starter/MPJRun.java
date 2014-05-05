@@ -36,13 +36,6 @@
 
 package runtime.starter;
 
-import java.io.BufferedWriter;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -50,6 +43,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.UUID;
 import java.util.Vector;
 import java.util.jar.Attributes;
@@ -66,13 +60,15 @@ import runtime.common.IOHelper;
 import runtime.common.MPJProcessTicket;
 import runtime.common.MPJRuntimeException;
 import runtime.common.MPJUtil;
+import runtime.common.RTConstants;
 
 public class MPJRun {
 
   final String DEFAULT_MACHINES_FILE_NAME = "machines";
   final int DEFAULT_PROTOCOL_SWITCH_LIMIT = 128 * 1024; // 128K
 
-  private int D_SER_PORT = getPortFromWrapper(2);
+  private int D_SER_PORT = Integer
+      .parseInt(getValueFromWrapper("wrapper.app.parameter.2"));
 
   private String CONF_FILE_CONTENTS = "#temp line";
   private int mxBoardNum = 0;
@@ -86,7 +82,7 @@ public class MPJRun {
   String[] aArgs = null;
   static Logger logger = null;
   private Vector<Socket> peerSockets;
-  private String hostIP = "";
+
   private ArrayList<String> machineList = new ArrayList<String>();
   int nprocs = Runtime.getRuntime().availableProcessors();
   String deviceName = "multicore";
@@ -99,7 +95,7 @@ public class MPJRun {
   String className = null;
   String applicationClassPathEntry = null;
 
-  static final boolean DEBUG = false;
+  static final boolean DEBUG = true;
   static final String VERSION = "0.40.1";
   private static int RUNNING_JAR_FILE = 2;
   private static int RUNNING_CLASS_FILE = 1;
@@ -112,7 +108,8 @@ public class MPJRun {
   private boolean APROFILE = false;
   private int DEBUG_PORT = 24500;
   private final String CONF_FILE_NAME = "mpjdev.conf";
-  private int portManagerPort = getPortFromWrapper(3);
+  private int portManagerPort = Integer
+      .parseInt(getValueFromWrapper("wrapper.app.parameter.3"));
 
   /**
    * Every thing is being inside this constructor :-)
@@ -165,9 +162,7 @@ public class MPJRun {
     }
 
     machineList = MPJUtil.readMachineFile(machinesFile);
-    if (hostIP == "") {
-      getHostIP();
-    }
+
     machinesSanityCheck();
     // Changed to incorporate hybrid device configuration
     if (deviceName.equals("hybdev"))
@@ -266,11 +261,6 @@ public class MPJRun {
 	i++;
       }
 
-      else if (args[i].equals("-headnodeip")) {
-	hostIP = args[i + 1];
-	i++;
-      }
-
       else if (args[i].equals("-dev")) {
 	deviceName = args[i + 1];
 	i++;
@@ -278,8 +268,9 @@ public class MPJRun {
 	    || deviceName.equals("mxdev") || deviceName.equals("multicore"))) {
 	  System.out.println("MPJ Express currently does not support the <"
 	      + deviceName + "> device.");
-	  System.out.println("Possible options are niodev, hybdev, mxdev, and "
-	      + "multicore devices.");
+	  System.out
+	      .println("Possible options are niodev, hybdev, mxdev, natdev, and "
+		  + "multicore devices.");
 	  System.out.println("exiting ...");
 	  System.exit(0);
 	}
@@ -396,31 +387,6 @@ public class MPJRun {
       if (DEBUG && logger.isDebugEnabled())
 	logger.debug("###########################");
     }
-  }
-
-  private void getHostIP() {
-    try {
-      if (machineList.size() == 1
-	  && machineList.get(0) == InetAddress.getLocalHost().getHostAddress()) {
-	hostIP = machineList.get(0);
-	return;
-      }
-
-      if (InetAddress.getLocalHost().isLoopbackAddress()
-	  || InetAddress.getLocalHost().isLinkLocalAddress()) {
-	System.out
-	    .println("Not a valid head node ip, please provide headnode ip using -headnodeip command line switch.");
-	System.exit(0);
-      }
-
-      hostIP = InetAddress.getLocalHost().getHostAddress();
-
-    }
-    catch (UnknownHostException e) {
-
-      e.printStackTrace();
-    }
-
   }
 
   /*
@@ -541,6 +507,8 @@ public class MPJRun {
 	rootLogger.setLevel((Level) Level.ALL);
 	// rep.setThreshold((Level) Level.OFF ) ;
 	logger = Logger.getLogger("runtime");
+	String level = getValueFromWrapper("wrapper.logfile.loglevel.mpjrun");
+	logger.setLevel(Level.toLevel(level.toUpperCase(), Level.OFF));
       }
       catch (Exception e) {
 	throw new MPJRuntimeException(e);
@@ -559,7 +527,7 @@ public class MPJRun {
 	    + "\n   -dev val           -- <multicore>"
 	    + "\n   -dport val         -- <read from wrapper.conf>"
 	    + "\n   -wdir val          -- $MPJ_HOME/bin"
-	    + "\n   -mpjport val       -- 20000"
+	    + "\n   -mpjport val       -- Deprecated"
 	    + "\n   -mxboardnum val    -- 0"
 	    + "\n   -headnodeip val    -- ..."
 	    + "\n   -psl val           -- 128Kbytes"
@@ -584,7 +552,8 @@ public class MPJRun {
     CONF_FILE_CONTENTS += ";" + nprocs;
     CONF_FILE_CONTENTS += ";" + "# Protocol Switch Limit";
     CONF_FILE_CONTENTS += ";" + psl;
-    CONF_FILE_CONTENTS += ";" + "# Entry, HOST_NAME/IP@SERVERPORT@RANK";
+    CONF_FILE_CONTENTS += ";"
+	+ "# Entry, HOST_NAME/IP@READPORT@WRITEPORT@RANK@DEBUGPORT";
 
     /*
      * number of requested parallel processes are less than or equal to compute
@@ -723,7 +692,8 @@ public class MPJRun {
     CONF_FILE_CONTENTS += ";" + networkProcesscount;
     CONF_FILE_CONTENTS += ";" + "# Protocol Switch Limit";
     CONF_FILE_CONTENTS += ";" + psl;
-    CONF_FILE_CONTENTS += ";" + "# Entry, HOST_NAME/IP@SERVERPORT@NETID";
+    CONF_FILE_CONTENTS += ";"
+	+ "# Entry, HOST_NAME/IP@READPORT@WRITEPORT@NETID@DEBUGPORT";
     // One NIO Process per machine is being implemented, SMP Threads per
     // node will be decided in SMPDev
     for (int i = 0; i < networkProcesscount; i++) {
@@ -800,9 +770,9 @@ public class MPJRun {
 
   }
 
-  private static int getPortFromWrapper(int appParameter) {
+  private static String getValueFromWrapper(String Parameter) {
 
-    int port = 0;
+    String value = "";
     FileInputStream in = null;
     DataInputStream din = null;
     BufferedReader reader = null;
@@ -816,11 +786,11 @@ public class MPJRun {
       reader = new BufferedReader(new InputStreamReader(din));
 
       while ((line = reader.readLine()) != null) {
-	// appParameter=2 for D_SERVER_PORT and appParameter=3 for
-	// portManagerPort
-	if (line.startsWith("wrapper.app.parameter." + appParameter)) {
+	if (line.startsWith(Parameter)) {
 	  String trimmedLine = line.replaceAll("\\s+", "");
-	  port = Integer.parseInt(trimmedLine.substring(24));
+	  StringTokenizer tokenizer = new StringTokenizer(trimmedLine, "=");
+	  tokenizer.nextToken();
+	  value = tokenizer.nextToken();
 	  break;
 	}
       }
@@ -832,7 +802,7 @@ public class MPJRun {
       e.printStackTrace();
     }
 
-    return port;
+    return value;
 
   }
 
