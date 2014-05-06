@@ -414,10 +414,6 @@ public class Buffer {
     public int offset() {
       return bufoffset ;	    
     }
-    
-    public void setOffset( int offSet) {
-      this.bufoffset=offSet ;	    
-    }
 
     /**
      * Creates a buffer with specified rawbuffer, and staring
@@ -688,18 +684,19 @@ public class Buffer {
 
         int headerStart = 8 * ((readPtr + 7) / 8) ;
                 // Round up to multiple of 8.
-
+			//	System.out.println("headerStart = "+headerStart+" bufoffset = "+bufoffset);
         int newReadPtr = headerStart + SECTION_OVERHEAD ;
 
         if(newReadPtr > size) {
-            throw new BufferUnderflowException("Trying to read " +
-                                               "past end of buffer.") ;
+             throw new BufferUnderflowException("Trying to read " +
+                                               "past end of buffer. < newReadPtr > size > "+newReadPtr+" > "+size) ;
         }
 
         int typeCode = staticBuffer.getByte(headerStart+bufoffset) ;
         sectionSize = staticBuffer.getInt(headerStart + 4 +bufoffset,
                                           encoding != localEncoding) ;
-        readPtr = newReadPtr ;
+		//		System.out.println("typeCode = "+typeCode+" sectionSize = "+sectionSize);         
+				readPtr = newReadPtr ;
         currentSectionType = Type.getType(typeCode) ;
         elementsRemaining  = sectionSize ;
  
@@ -5437,7 +5434,13 @@ public class Buffer {
     public void setSize(int size) {
         this.size = size ;
     }
-
+    /**
+     * Get total number of bytes -- capacity of the static buffer.
+     * Low-level method used for in native device for receiving the buffer.
+     */
+    public int getCapacity() {
+        return capacity ;
+    }
     /**
      * Get bytes of the dynamic buffer.
      * Low-level method used for sending and receiving the buffer.
