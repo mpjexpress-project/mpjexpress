@@ -41,8 +41,8 @@ import runtime.common.MPJUtil;
 public class DMMessages {
   public static String MPJ_HOME_DIR_NOT_AVIABLBE = "MPJ_Home directoy is not avialable";
   public static String UNKNOWN_HOST = "Name or service not known";
-  public static String INVALID_PORT = "Invalid port specified in wrapper.app.parameter.2 property of wrapper.config file";
-  public static String BUSY_PORT = "Port is not avialable, Set a different port by modifying the wrapper.app.parameter.2 property in the"
+  public static String INVALID_PORT = "Invalid port specified in wrapper.app.parameter.2 property of wrapper.config file ";
+  public static String BUSY_PORT = "Port is not avialable, Set a different port by modifying the wrapper.app.parameter.2 property in the "
       + MPJUtil.getWrapperConfPath();
   public static String MPJDAEMON_ALREADY_RUNNING = "MPJ daemon already running with process id: ";
   public static String MACHINE_FILE_NOT_SPECIFED = "Machine file is not specified";
@@ -57,7 +57,7 @@ public class DMMessages {
   public static String CMD_OPT_BOOT = "Start MPJ Express daemons on given machine(s)";
   public static String CMD_OPT_HALT = "Stop MPJ Express daemons on given  machine(s)";
   public static String CMD_OPT_CLEAN = "Clean all java  process on given machine(s)";
-  public static String CMD_OPT_STATUS = "Get status of MPJ Express daemons on given  machine(s)";
+  public static String CMD_OPT_STATUS = "Get status of MPJ Express daemons on given  machine(s) ";
   public static String CMD_OPT_INFO = "Get all java processes on given  machine(s)";
 
   public static String CMD_OPT_MACHINE_FILE = "Machine File e.g. <machines>";
