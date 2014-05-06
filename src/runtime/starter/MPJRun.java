@@ -96,7 +96,7 @@ public class MPJRun {
   String applicationClassPathEntry = null;
 
   static final boolean DEBUG = true;
-  static final String VERSION = "0.40.1";
+  static final String VERSION = "0.42";
   private static int RUNNING_JAR_FILE = 2;
   private static int RUNNING_CLASS_FILE = 1;
   private boolean zippedSource = false;
