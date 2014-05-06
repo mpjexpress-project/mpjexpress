@@ -158,7 +158,7 @@ public class MPJRun {
 
     } else { /* cluster configuration */
       System.out.println("MPJ Express (" + VERSION + ") is started in the "
-	  + "cluster configuration");
+	  + "cluster configuration with " + deviceName);
     }
 
     machineList = MPJUtil.readMachineFile(machinesFile);
