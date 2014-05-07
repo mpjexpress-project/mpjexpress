@@ -77,11 +77,6 @@ Running MPJ Express Programs in the Cluster Configuration
 
 For detials read the windowsguide.pdf that can be found in $MPJ_HOME/doc
 
-Known Issues
-============
-
-Users of Windows Vista and 7 might need to turn off their firewalls for installing
-the MPJ Daemon as service and running MPJ Express programs.
 
 Additional Documentation
 ========================
