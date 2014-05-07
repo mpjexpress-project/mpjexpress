@@ -96,7 +96,7 @@ public class MPJRun {
   String applicationClassPathEntry = null;
 
   static final boolean DEBUG = true;
-  static final String VERSION = "0.42";
+  static final String VERSION = "0.40.1";
   private static int RUNNING_JAR_FILE = 2;
   private static int RUNNING_CLASS_FILE = 1;
   private boolean zippedSource = false;
@@ -162,6 +162,9 @@ public class MPJRun {
     }
 
     machineList = MPJUtil.readMachineFile(machinesFile);
+    for (int i = machineList.size(); i > nprocs; i--) {
+      machineList.remove(i - 1);
+    }
 
     machinesSanityCheck();
     // Changed to incorporate hybrid device configuration
@@ -243,6 +246,12 @@ public class MPJRun {
 
 	try {
 	  nprocs = new Integer(args[i + 1]).intValue();
+	  if (nprocs < 1) {
+	    System.out
+		.println("Number of Processes should be equal to or greater than 1");
+	    System.out.println("exiting ...");
+	    System.exit(0);
+	  }
 	}
 	catch (NumberFormatException e) {
 	  nprocs = Runtime.getRuntime().availableProcessors();
@@ -331,7 +340,6 @@ public class MPJRun {
       } else if (args[i].equals("-profile")) {
 	APROFILE = true;
       } else {
-
 	// these are JVM options ..
 	if (parallelProgramNotYetEncountered) {
 	  if (args[i].startsWith("-")) {
