@@ -5,4 +5,5 @@ if [ $# -ne 1 ]; then
   exit 127
 fi 
 
+
 java -jar $MPJ_HOME/lib/daemonmanager.jar -clean -m "$@"
