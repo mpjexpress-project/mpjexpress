@@ -32,6 +32,10 @@
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
  THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-2. MPJ uses one third party software: the Java Service Wrapper project. 
-   The license for the Java service wrapper project can be seen at
-   $MPJ_HOME/THIRDPARTYLICENSES file.
+2. MPJ uses following third party software developed by Apache:
+    a. commons-cli-1.2
+    b. commons-codec-1.8
+    c. commons-io-2.4
+   The license for these projects can be seen at
+   $MPJ_HOME/THIRDPARTYLICENSES file and notice can be seen at
+   $MPJ_HOME/THIRDPARTYNOTICES file.

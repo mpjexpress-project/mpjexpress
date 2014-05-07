@@ -1,6 +1,6 @@
            QuickStart Guide: Running MPJ Express on Windows Platform 
-                  Last Updated: Wed Apr 15 4:51:16 PKT 2014
-                                Version 0.41
+                  Last Updated: Wed May 07 12:44:20 PKT 2014
+                                Version 0.42
 
 Introduction
 ============
@@ -62,22 +62,12 @@ Running MPJ Express Programs in the Cluster Configuration
 	 IP addresses of all machines involved in the parallel execution.
 3. Execution:
 -- For niodev, hybdev and mxdev
-	i) Start daemons:
-		a) Windows XP: Run %MPJ_HOME%/bin/installmpjd-windows.bat 
-		   (Vista and 7 users need to right-click this script and 
-	           "Run as Administrator")
-		b) Goto Control-Panel->Administrative Tools->Services
-		                     -> MPJ Daemon and start the service. 
-        	   It is important to start the daemon as a user process instead
-		   of a SYSTEM process. For this, right-Click 
-		   MPJ Daemon ->Properties, click "Log On" tab, 
-		   For the option "Log on as:", select This account and put in
-		   the user name and password of this account, and start
-		   the service. 
+	i) Start daemons: mpjdaemon.bat -boot
+		- You will need to manually run this command on every machine to start 
+		  daemons.
 	ii) Execute: mpjrun.bat -np 4 -dev niodev HelloWorld
 		-- For -dev <device> here device can be niodev, hybdev or mxdev
-	iii) Stop daemons: Go-to Control-Panel->Administrative Tools->Services
-					     -> MPJ Daemon and stop the service.
+	iii) Stop daemons: mpjdaemon.bat -halt
 -- For native deive
 	i) Compile JNI wrapper library: Follow the windowsguide.pdf 
 					instructions on how to compile and
@@ -108,4 +98,6 @@ your query/problem is still not resolved, contact us by emailing:
 2. Aamir Shafi (aamir.shafi@seecs.edu.pk)
 3. Mohsan Jameel (mohsan.jameel@seecs.edu.pk)
 4. Bryan Carpenter (bryan.carpenter@port.ac.uk)
-5. Guillermo Lopez Taboada (http://www.des.udc.es/~gltaboada)
+5. Muhammad Ansar Javed (muhammad.ansar@seecs.edu.pk)
+6. Bibrak Qamar (bibrak.qamar@seecs.edu.pk)
+7. Aleem Akhtar (09bicseaasif@seecs.edu.pk)

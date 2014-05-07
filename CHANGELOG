@@ -1,10 +1,151 @@
+Version 0.42
+------------
+
+1. This release mainly introduces updated runtime system for MPJ Express to 
+   support parallel job execution by multiple users. Following are major changes
+   to support parallel job execution in MPJ Express.
+   a. Addition of multi-threaded Job launcher in MPJ Daemon. Whenever a 
+      process request posted to MPJ Daemon it launches a new thread to execute it.
+   
+   b. Java NIO Sockets are replaced with Java I/O Sockets in both MPJ Daemon 
+       and MPJRun code.
+   
+   c. Separate channels are introduced for I/O messages delivery to each job
+      executer.
+	  
+   d. Optimized mechanism for port allocation to processes for inter-process 
+      communication while distributing job on cluster. Read/Write ports are 
+      now assigned dynamically.
+   
+   e. Dynamically allocated ports are now written in mpjdev.conf file and 
+      NIODevice reads both ports from mpjdev.conf
+    
+   f. XML based process ticket has been introduced to send processes information
+      between MPJRun and MPJDaemon.
+	    
+2. This release also introduces support for using MPJ Express on non-shared 
+   file system.
+
+3. In this release dependency of "Java Service Wrapper Project" has been removed 
+   and a new mechanism to launch daemons has been introduced. To support this new
+   mechanism some useful scripts has also been added in MPJ Express.
+   * mpjboot <machines_files>: To start MPJ daemons
+   * mpjhalt <machines_files>: To stop MPJ daemons
+   * mpjstatus <machines_files>: To check current status of MPJ daemons
+   * mpjinfo <machines_files>: To get information about Java process
+   * mpjclean <machines_files>: To kill MPJ daemons
+   * mpjdaemon.sh <query> <hostnames>: To perform operations on MPJ daemons manually
+                                      like boot, halt, status
+   * mpjdaemon.bat <query>: Windows version of mpjdaemon.
+
+4. Changes in individual files and addition of new file:
+    (+ indicates addition of a new file or directory)
+    $MPJ_HOME/
+		build.xml - Added support for compiling $MPJ_HOME/src/common and daemonmanager
+		README-win.txt
+		README
+		CHANGELOG - This file
+        LICENSE.txt - License for Java Service Wrapper Project removed
+        THIRDPARTYLICENSES - modified to add Apache License
+        +THIRDPARTYNOTICES - Apache License Notice for each Apache project used
+    $MPJ_HOME/bin/
+        mpjboot.sh - modified to start daemons using new mechanism. Dependency of
+		             Java Service Wrapper Project removed
+        mpjhalt.sh - modified to stop daemons using new mechanism. 
+        mpjdaemon.bat - modified to handle daemon operations on Windows OS
+        +mpjstatus.sh
+        +mpjclean.sh
+        +mpjinfo.sh
+        +mpjdaemon.sh
+        -wrapper.exe
+        -daemon_linux_ppc_64
+        -daemon_linux_x86_32
+        -daemon_linux_x86_64
+        -daemon_macosx
+        -daemon_macosx_ppc_32
+        -daemon_solaris_sparc_32
+        -daemon_solaris_sparc_64
+        -mpjdaemon_linux_ppc_64
+        -mpjdaemon_linux_x86_32
+        -mpjdaemon_linux_x86_64
+        -mpjdaemon_macosx
+        -mpjdaemon_macosx_ppc_32
+        -mpjdaemon_solaris_sparc_32
+        -mpjdaemon_solaris_sparc_64
+        -starter.sh
+        -starter.bat
+        -installmpjd-windows.bat
+        -uninstallmpjd-windows.bat
+        
+    $MPJ_HOME/conf/
+        wrapper.conf - modified to add Logfile parameters for MPJRun and MPJDaemon.
+		               App parameter for PortManager also added
+	 
+    $MPJ_HOME/lib/
+        +commons-cli-1.2.jar
+        +commons-codec-1.8.jar
+        +commons-io-2.4.jar
+        
+    $MPJ_HOME/doc/
+        linuxguide.pdf
+        windowsguide.pdf
+		
+    $MPJ_HOME/src/runtime/
+        +common  (new directory)
+		    +IOHelper.java
+            +MPJProcessTicket.java
+            +MPJUtil.java
+            +MPJXml.java
+            +RTConstants.java
+            MPJRuntimeException.java - moved from /runtime/ Package to /common/
+             
+        +daemonmanager (new directory)
+            +BootThread.java
+            +CleanUpThread.java
+            +CLOptions.java
+            +DaemonUtil.java
+            +DMConstants.java
+            +DMMessages.java
+            +DMThread.java
+            +DMThreadUtil.java
+            +HaltThread.java
+            +MPJBoot.java
+            +MPJCleanup.java
+            +MPJDaemonManager.java
+            +MPJHalt.java
+            +MPJProcessInfo.java
+            +MPJStatus.java
+            +ProcessInfoThread.java
+            +StatusThread.java
+            +WinBoot.java
+            +WinHalt.java
+            
+        /daemon
+            MPJDaemon.java - modified to work with new runtime system
+            +ConnectionManager
+            +OutputHandler
+            +PortManager
+            +PortManagerThread
+            +PortRequesterThread
+            +ProcessArgumentsManager
+            +ProcessLauncher
+            -HybridDaemon.java
+            -WrapperSimpleApp.java
+            -MPJProcessStream.java
+        
+        /starter
+            MPJRun.java - modified to work with new runtime system
+            +IOMessageThread.java
+            -PortScan.java
+            
+
 Version 0.41
 ------------
 
 1. This release mainly introduces support for using a Native MPI Implementation 
    from MPJ Express. We call this native device. 
 
-2. This release also introduces support for MPJ Express Profiler. The Prolifer
+2. This release also introduces support for MPJ Express Profiler. The Profiler
    generates profiles and traces of MPJ Express applications. Currently the
    Profiler does not support native device.
 
@@ -20,28 +161,28 @@ Version 0.41
 6. Changes in individual files and addition of new file:
 	 (+ indicates addition of a new file or directory)
 	 $MPJ_HOME/
-		build.xml - Added supoort for compiling $MPJ_HOME/src/mpjdev/natmpjdev and javampjdev
+		build.xml - Added support for compiling $MPJ_HOME/src/mpjdev/natmpjdev and javampjdev
 		README-win.txt
 		README
 		CHANGELOG - This file
 	 $MPJ_HOME/test/
 		+nativetest (new directory)
-			+README
 			+compile.sh
 			+runtest.sh
-			mpi - Added main() method in testcases
-			mpjdev - Added main() method in Buffer testcases
+			+compile.bat
+			+runtest.bat
+		mpi - Added main() method in testcases
+		mpjdev - Added main() method in Buffer testcases
 	 $MPJ_HOME/bin/
 		mpjrun.sh - modified to detect -dev native, if found then calls
    			    mpirun instead of invoking $MPJ_HOME/lib/starter.jar
 	 $MPJ_HOME/doc/
 		linuxguide.pdf
-		linuxguide.doc
 		windowsguide.pdf
-		windowsguide.doc
-		+RunningandDebuggingMPJExpressWithEclipse.pdf
-		+RunningandDebuggingMPJExpresswithEclipse.doc
-	 $MPJ_HOME/runtime/
+		RunningandDebuggingMPJExpressWithEclipse.pdf (Renamed)
+		+MPJExpressProfilerUserGuide.pdf
+		
+	 $MPJ_HOME/src/runtime/
 		 /starter/MPJRun.java (version 0.41)
 	 $MPJ_HOME/mpjbuf/
 		NIOBuffer.java.in - Now using allocateDirect()
