@@ -106,7 +106,8 @@ public class ProcessArgumentsManager {
 	File f = new File(pTicket.getClassPath());
 	pTicket.setClassPath(sourcePath + "/" + f.getName());
 
-      }
+      } else
+        pTicket.setClassPath(sourcePath);
       workingDirectory = sourcePath;
     }
 
@@ -228,7 +229,8 @@ public class ProcessArgumentsManager {
 	File f = new File(pTicket.getClassPath());
 	pTicket.setClassPath(sourcePath + "/" + f.getName());
 
-      }
+      } else
+        pTicket.setClassPath(sourcePath);
       workingDirectory = sourcePath;
     }
     String[] jArgs = pTicket.getJvmArgs().toArray(new String[0]);
