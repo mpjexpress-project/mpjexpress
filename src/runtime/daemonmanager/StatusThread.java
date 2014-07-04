@@ -53,10 +53,10 @@ public class StatusThread extends DMThread {
     String pid = DaemonUtil.getMPJProcessID(host);
     if (pid != "")
       System.out.println(MPJUtil.FormatMessage(host,
-	  DMMessages.MPJDAEMON_AVIALBLE + pid));
+	  DMMessages.MPJDAEMON_AVAILABLE + pid));
     else
       System.out.println(MPJUtil.FormatMessage(host,
-	  DMMessages.MPJDAEMON_NOT_AVIALBLE));
+	  DMMessages.MPJDAEMON_NOT_AVAILABLE));
   }
 
 }

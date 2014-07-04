@@ -8,8 +8,7 @@ public class WinHalt {
   private String host = "localhost";
 
   public void haltMPJExpress() {
-    ProcessBuilder pb = new ProcessBuilder();
-    String pid = DaemonUtil.getMPJProcessID(host, pb);
+    String pid = DaemonUtil.getMPJProcessID(host);
     if (pid != "") {
       String[] command = { "taskkill", "/f", "/pid", pid, };
       ArrayList<String> consoleMessages = DaemonUtil.runProcess(command);
@@ -24,7 +23,7 @@ public class WinHalt {
 	    DMMessages.MPJDAEMON_STOPPED));
     } else
       System.out.println(MPJUtil.FormatMessage(host,
-	  DMMessages.MPJDAEMON_NOT_AVIALBLE));
+	  DMMessages.MPJDAEMON_NOT_AVAILABLE));
   }
 
 }

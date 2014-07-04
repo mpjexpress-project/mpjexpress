@@ -40,7 +40,11 @@ package runtime.daemonmanager;
 import java.io.IOException;
 
 public class MPJDaemonManager {
+
+  static boolean DEBUG = false; //FIXME: must be read from CLI
+
   public static void main(String[] args) {
+
     CLOptions options = new CLOptions();
     options.parseCommandLineArgs(args);
 
@@ -48,36 +52,52 @@ public class MPJDaemonManager {
       options.PrintHelp();
       return;
     }
+
+    /* mpjboot - linux*/
     if (options.getCmdType().toLowerCase().equals(DMConstants.BOOT)) {
       MPJBoot mpBoot = new MPJBoot();
       mpBoot.bootMPJExpress(options);
+
+    /* mpjhalt -linux */
     } else if (options.getCmdType().equals(DMConstants.HALT)) {
       MPJHalt mpHalt = new MPJHalt();
       mpHalt.haltMPJExpress(options);
+
+    /* mpjclean */
     } else if (options.getCmdType().equals(DMConstants.CLEAN)) {
       MPJCleanup mpCleanup = new MPJCleanup();
       mpCleanup.cleanupMPJEnviroment(options);
+
+    /* mpjstatus */
     } else if (options.getCmdType().equals(DMConstants.STATUS)) {
       MPJStatus mpQuery = new MPJStatus();
       mpQuery.getMPJExpressStatus(options);
+
+    /* mpjinfo */
     } else if (options.getCmdType().equals(DMConstants.INFO)) {
       MPJProcessInfo mpInfo = new MPJProcessInfo();
       mpInfo.getJavaProcessInfo(options);
+
+    /* mpjboot - windows */
     } else if (options.getCmdType().equals(DMConstants.WIN_BOOT)) {
       WinBoot winBoot = new WinBoot();
       try {
 	winBoot.startMPJExpress();
       }
       catch (IOException e) {
-	System.out.println(e.getMessage());
+	e.printStackTrace();
       }
-    } else if (options.getCmdType().equals(DMConstants.WIN_HALT)) {
+    } 
+    /* mpjhalt - windows */
+    else if (options.getCmdType().equals(DMConstants.WIN_HALT)) {
       WinHalt winHalt = new WinHalt();
       winHalt.haltMPJExpress();
+    /* otherwise print Help */
     } else {
       options.PrintHelp();
     }
-    System.exit(0);
-  }
 
+    System.exit(0);
+
+  }
 }

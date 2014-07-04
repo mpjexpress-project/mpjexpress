@@ -47,6 +47,7 @@ import runtime.daemonmanager.CLOptions;
 import runtime.daemonmanager.DMThread;
 
 public class DMThreadUtil {
+
   public static ExecutorService getThreadExecutor(int nThreads) {
     return Executors.newFixedThreadPool(nThreads);
   }
@@ -54,33 +55,39 @@ public class DMThreadUtil {
   public static void ExecuteThreads(ArrayList<Thread> threads, int nThreads) {
 
     ExecutorService tpes = getThreadExecutor(nThreads);
+
     for (Thread thread : threads) {
       tpes.execute(thread);
     }
+
     tpes.shutdown();
+
     try {
 
       tpes.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-
+    } catch (InterruptedException e) {
+      e.printStackTrace();
     }
-    catch (InterruptedException e) {
-      // e.printStackTrace();
-    }
-
   }
 
   public static void ExecuteCommand(CLOptions options) {
+
     String type = options.getCmdType();
     ArrayList<Thread> threads = new ArrayList<Thread>();
     ArrayList<String> machinesList = new ArrayList<String>();
+
     if (options.getMachineList().size() > 0)
       machinesList = options.getMachineList();
     else
       machinesList = MPJUtil.readMachineFile(options.getMachineFilePath());
+
     if (machinesList != null && machinesList.size() > 0) {
+
       for (String host : machinesList) {
+
 	DMThread thread = null;
-	if (type.equals(DMConstants.BOOT)) {
+
+	if (type.equals(DMConstants.BOOT)) { 
 	  thread = new BootThread(host, options.getPort());
 	} else if (type.equals(DMConstants.HALT)) {
 	  thread = new HaltThread(host);
@@ -95,9 +102,10 @@ public class DMThreadUtil {
 	  threads.add(thread);
 	}
 
-      }     
+      } //end for
+
       ExecuteThreads(threads, options.getThreadCount());
+
     }
   }
-
 }

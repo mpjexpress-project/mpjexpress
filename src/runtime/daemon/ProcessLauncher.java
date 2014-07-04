@@ -71,7 +71,9 @@ public class ProcessLauncher extends Thread {
 
   private void ExecuteJob() {
 
-    System.out.println("Job Started");
+    if (DEBUG && logger.isDebugEnabled())
+      logger.debug("Job Started");
+
     MPJProcessTicket pTicket = new MPJProcessTicket();
 
     try {
@@ -181,7 +183,10 @@ public class ProcessLauncher extends Thread {
 
 	DataOutputStream out = new DataOutputStream(outToServer);
 	out.write("EXIT".getBytes(), 0, "EXIT".getBytes().length);
-	System.out.println("Job finished");
+
+        if (DEBUG && logger.isDebugEnabled())
+          logger.debug("Job Finished");
+
 	if (!DEBUG || !logger.isDebugEnabled()) {
 	  FileUtils.deleteDirectory(new File(argManager.getUsersDir()));
 	}

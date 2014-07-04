@@ -49,6 +49,7 @@ public class ConnectionManager extends Thread {
 
   public void run() {
 
+
     while (isRun) {
       for (Socket sock : MPJDaemon.servSockets.keySet()) {
 	OutputStream outToServer = null;
@@ -60,6 +61,8 @@ public class ConnectionManager extends Thread {
 
 	}
 	catch (Exception e) {
+          if (MPJDaemon.DEBUG && MPJDaemon.logger.isDebugEnabled())
+            MPJDaemon.logger.debug("Error 0.. ");
 	  System.out.println("Client Disconnected");
 	  MPJDaemon.servSockets.get(sock).killProcesses();
 	  MPJDaemon.servSockets.remove(sock);
@@ -68,6 +71,8 @@ public class ConnectionManager extends Thread {
 	  Thread.sleep(1000);
 	}
 	catch (InterruptedException e) {
+          if (MPJDaemon.DEBUG && MPJDaemon.logger.isDebugEnabled())
+            MPJDaemon.logger.debug("Error 1.. ");
 	  e.printStackTrace();
 	}
       }
@@ -75,6 +80,8 @@ public class ConnectionManager extends Thread {
 	Thread.sleep(1000);
       }
       catch (InterruptedException e) {
+        if (MPJDaemon.DEBUG && MPJDaemon.logger.isDebugEnabled())
+          MPJDaemon.logger.debug("Error 2 .. ");
 	e.printStackTrace();
       }
     }

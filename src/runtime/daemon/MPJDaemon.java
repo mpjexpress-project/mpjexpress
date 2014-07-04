@@ -29,7 +29,7 @@
 
 /*
  * File         : MPJDaemon.java 
- * Author       : Aamir Shafi, Bryan Carpenter, Khurram Shahzad, Mohsan Jameel, Aamir Shafi, Bryan Carpenter
+ * Author       : Aamir Shafi, Bryan Carpenter, Khurram Shahzad, Mohsan Jameel
  * Created      : Sun Dec 12 12:22:15 BST 2004
  * Revision     : $Revision: 1.28 $
  * Updated      : $Date: 2013/11/05 17:24:47 $
@@ -68,8 +68,7 @@ public class MPJDaemon {
   PortManagerThread pManager;
 
   public MPJDaemon(String args[]) throws Exception {
-
-    System.out.println("MPJ Daemon started");
+ 
     InetAddress localaddr = InetAddress.getLocalHost();
     String hostName = localaddr.getHostName();
     servSockets = new ConcurrentHashMap<Socket, ProcessLauncher>();
@@ -91,11 +90,22 @@ public class MPJDaemon {
     } else {
       throw new MPJRuntimeException("Usage: java MPJDaemon daemonServerPort");
     }
+
+    if (DEBUG && logger.isDebugEnabled())
+        logger.debug("Starting PortManager thread .. ");
+
     pManager = new PortManagerThread();
     pManager.start();
 
+    if (DEBUG && logger.isDebugEnabled())
+        logger.debug("Starting ConnectionManager thread .. ");
+
     connectionManager = new ConnectionManager();
     connectionManager.start();
+
+    if (DEBUG && logger.isDebugEnabled())
+        logger.debug("serverSocketInit .. ");
+
     serverSocketInit();
 
   }
@@ -127,12 +137,27 @@ public class MPJDaemon {
   }
 
   private void serverSocketInit() {
+    if (DEBUG && logger.isDebugEnabled()) {
+      logger.debug("serverSocketInit called .. ");
+    }
 
     ServerSocket serverSocket = null;
     try {
       serverSocket = new ServerSocket(D_SER_PORT);
       do {
-	Socket servSock = serverSocket.accept();
+
+        if (DEBUG && logger.isDebugEnabled()) {
+          logger.debug("Accepting connection ..");
+        }
+
+	Socket servSock = null; 
+
+        try {
+           servSock = serverSocket.accept();
+ 	} catch(Exception eee) { 
+	   eee.printStackTrace(); 
+	} 
+
 	if (DEBUG && logger.isDebugEnabled()) {
 	  logger.debug("Accepted connection");
 	}
@@ -142,9 +167,16 @@ public class MPJDaemon {
       } while (true);
     }
     catch (IOException ioEx) {
+      if (DEBUG && logger.isDebugEnabled()) {
+        logger.debug("Unable to attach to port!");
+      }
       System.out.println("Unable to attach to port!");
       System.exit(1);
+    } 
+    catch (Exception e) { 
+      e.printStackTrace();
     }
+
     if (!serverSocket.isClosed())
       try {
 	serverSocket.close();

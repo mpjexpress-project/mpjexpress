@@ -39,17 +39,18 @@ package runtime.daemonmanager;
 import runtime.common.MPJUtil;
 
 public class DMMessages {
-  public static String MPJ_HOME_DIR_NOT_AVIABLBE = "MPJ_Home directoy is not avialable";
+  public static String MPJ_HOME_DIR_NOT_AVAILABLE = "MPJ_HOME directoy is not available";
   public static String UNKNOWN_HOST = "Name or service not known";
   public static String INVALID_PORT = "Invalid port specified in wrapper.app.parameter.2 property of wrapper.config file ";
-  public static String BUSY_PORT = "Port is not avialable, Set a different port by modifying the wrapper.app.parameter.2 property in the "
+  public static String BUSY_PORT = "Port is not available, Set a different port by modifying the wrapper.app.parameter.2 property in the "
       + MPJUtil.getWrapperConfPath();
   public static String MPJDAEMON_ALREADY_RUNNING = "MPJ daemon already running with process id: ";
   public static String MACHINE_FILE_NOT_SPECIFED = "Machine file is not specified";
-  public static String MPJDAEMON_STARTED = "MPJ Deamon started successfully with process id: ";
-  public static String MPJDAEMON_NOT_AVIALBLE = "MPJ Deamon is not running ";
-  public static String MPJDAEMON_AVIALBLE = "MPJ Deamon is running with process id: ";
-  public static String MPJDAEMON_STOPPED = "MPJ Deamon stopped ";
+  public static String MPJDAEMON_STARTED = "MPJ Daemon started successfully with process id: ";
+  public static String MPJDAEMON_NOT_STARTED = "Unable to start MPJ Express daemon";
+  public static String MPJDAEMON_NOT_AVAILABLE = "MPJ Daemon is not running ";
+  public static String MPJDAEMON_AVAILABLE = "MPJ Daemon is running with process id: ";
+  public static String MPJDAEMON_STOPPED = "MPJ Daemon stopped ";
   public static String HOST_INACESSABLE = " is not accessable";
   public static String JAVA_PROCESS_KILLED = " Killed all java processes";
   public static String NO_JAVA_PROCESS_RUNNING = " No java process is running";
@@ -64,7 +65,7 @@ public class DMMessages {
   public static String CMD_OPT_THREAD_COUNT = "Number of threads";
   public static String CMD_OPT_THREADED = "<true|false> use multithreading";
   public static String CMD_OPT_HOSTS = "Host name seperated by space <localhost1 localhost2 ... >";
-  public static String CMD_OPT_PORT = "Port no for MPJ Express Deamon listerner";
+  public static String CMD_OPT_PORT = "Port no for MPJ Express Daemon listerner";
   public static String CMD_OPT_HELP = "Help for process manager command line option";
 
 }

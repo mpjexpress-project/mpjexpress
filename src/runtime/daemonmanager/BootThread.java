@@ -45,8 +45,9 @@ import java.util.ArrayList;
 import runtime.common.MPJUtil;
 
 public class BootThread extends DMThread {
-  private String host = "localhost";
-  private String port = "8888";
+
+  private String host = "";
+  private String port = "";
   ProcessBuilder pb = null;
 
   public BootThread(String machineName, String daemonPort) {
@@ -58,44 +59,48 @@ public class BootThread extends DMThread {
   public void run() {
     try {
       bootNetWorkMachines();
-    }
-    catch (IOException e) {
+    } catch (IOException e) {
       e.printStackTrace();
     }
   }
 
   public void bootNetWorkMachines() throws IOException {
 
+    long tid = Thread.currentThread().getId(); 
+
     if (validExecutionParams()) {
       try {
-	String[] command = { "ssh", host, "nohup", "java", "-cp",
+	String[] command = { "ssh", host, "java", "-cp",
 	    MPJUtil.getJarPath("daemon") + ":.", "runtime.daemon.MPJDaemon",
 	    port,
-
 	};
-	ArrayList<String> consoleMessages = DaemonUtil.runProcess(command,
-	    false);
+
+	ArrayList<String> consoleMessages = 
+			DaemonUtil.runProcess(command, false);
 	String pid = DaemonUtil.getMPJProcessID(host);
-	if (!pid.equals("") && Integer.parseInt(pid) > -1
-	    && Integer.parseInt(pid) < 30000) {
+
+	if(MPJDaemonManager.DEBUG)
+          System.out.println("BootThread.run: tid ="+tid+", pid ="+pid);
+					   
+	if (!pid.equals("") && Integer.parseInt(pid) > -1) {
 	  System.out.println(MPJUtil.FormatMessage(host,
 	      DMMessages.MPJDAEMON_STARTED + pid));
 	} else {
-	  for (String message : consoleMessages)
-	    System.out.println(message);
+	  System.out.println(MPJUtil.FormatMessage(host,
+	      DMMessages.MPJDAEMON_NOT_STARTED + pid)); 
+	  for (String message : consoleMessages) //leaving here for legacy 
+	    System.out.println(message); // reasons .. this does not make sense
 	}
-
+      } catch (Exception ex) {
+	ex.printStackTrace();
       }
-      catch (Exception ex) {
-	System.out.print(ex.getMessage());
-      }
-    }
 
+    } 
   }
 
   private boolean validExecutionParams() {
 
-    String pid = DaemonUtil.getMPJProcessID(host, pb);
+    String pid = DaemonUtil.getMPJProcessID(host);
     if (!pid.equals("")) {
       System.out.println(MPJUtil.FormatMessage(host,
 	  DMMessages.MPJDAEMON_ALREADY_RUNNING + pid));

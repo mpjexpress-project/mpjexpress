@@ -40,36 +40,63 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.io.File;
 
 public class DaemonUtil {
-  public static ArrayList<String> runProcess(String[] command,
-      boolean waitOutput) {
+
+ /**
+   * runProcess.
+   */
+  public static ArrayList<String> runProcess(
+				String[] command, boolean waitOutput) {
+
+    String cmd = "";
+
+    if(MPJDaemonManager.DEBUG) { 
+      for(int i=0 ; i<command.length ;i++) {
+        cmd = cmd +" "+command[i];
+      }
+    }
+
+    long tid = Thread.currentThread().getId();
+
+    if(MPJDaemonManager.DEBUG) { 
+      System.out.println("DaemonUtil.runProcess called by tid<"+tid+">"+
+						      " with cmd<"+cmd+">"); 
+    }
+				
     ArrayList<String> consoleMessages = new ArrayList<String>();
+
     try {
+
       ProcessBuilder pb = new ProcessBuilder(command);
       pb.redirectErrorStream(true);
-      Process process = pb.start();
-      if (waitOutput) {
 
+      if(!waitOutput)
+        pb.inheritIO();
+
+      Process process = pb.start();
+
+      /* wait and print all output */
+      if (waitOutput) {
 	InputStreamReader isr = new InputStreamReader(process.getInputStream());
 	BufferedReader br = new BufferedReader(isr);
 	String line = null;
 	while ((line = br.readLine()) != null) {
+	  
 	  if (line.trim().length() > 0) {
 	    consoleMessages.add(line);
+            if(MPJDaemonManager.DEBUG) 
+	      System.out.println("DU.runProcess ("+tid+")"+ line);
 	  }
 	}
 	process.getInputStream().close();
       }
+
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
-    catch (IOException ex) {
-      if (!Thread.currentThread().isInterrupted())
-	System.out.print(ex.getMessage());
-      System.out.print(ex.getMessage());
-    }
-    catch (Exception ex) {
-      System.out.print(ex.getMessage());
-    }
+			
     return consoleMessages;
   }
 
@@ -77,25 +104,21 @@ public class DaemonUtil {
     return runProcess(command, true);
   }
 
+  /* get id of any MPJDaemon processes running on the argument host */
   public static String getMPJProcessID(String host) {
-    ProcessBuilder pb = new ProcessBuilder();
-    return getMPJProcessID(host, pb);
-  }
 
-  public static ArrayList<String> getJavaProcesses(String host) {
-    ProcessBuilder pb = new ProcessBuilder();
-    return getJavaProcesses(host, pb);
-  }
-
-  public static String getMPJProcessID(String host, ProcessBuilder pb) {
     int index = 0;
     int space = 0;
     String pid = "";
+
     ArrayList<String> consoleMessages = new ArrayList<String>();
-    if (System.getProperty("os.name").startsWith("Windows"))
-      consoleMessages = getWinJavaProcesses(host, pb);
-    else
-      consoleMessages = getJavaProcesses(host, pb);
+
+    if (System.getProperty("os.name").startsWith("Windows")) {
+      consoleMessages = getWinJavaProcesses(host);
+    } else {
+      consoleMessages = getJavaProcesses(host);
+    }
+
     for (String message : consoleMessages) {
       index = message.indexOf("MPJDaemon");
       if (index > -1) {
@@ -104,23 +127,25 @@ public class DaemonUtil {
 	return pid;
       }
     }
+
+    // XXX Must report an error if this line gets executed .. 
+    // XXX this line always return empty pid .. which means that we think 
+    // XXX there is no daemon running on the compute node .. ..
     return pid;
   }
 
-  public static ArrayList<String> getJavaProcesses(String host,
-      ProcessBuilder pb) {
-    String[] command = { "ssh", host, "nohup", "jps", "-m", };
+  /* get details of Java processes on remote Linux system */
+  public static ArrayList<String> getJavaProcesses(String host) {
+    String[] command = { "ssh", host, "jps", "-m", };
     ArrayList<String> consoleMessages = runProcess(command);
     return consoleMessages;
-
   }
 
-  public static ArrayList<String> getWinJavaProcesses(String host,
-      ProcessBuilder pb) {
+  /* get details of Java processes on remote Windows system */
+  public static ArrayList<String> getWinJavaProcesses(String host) {
     String[] command = { "jps", "-m", };
     ArrayList<String> consoleMessages = runProcess(command);
     return consoleMessages;
-
   }
 
 }

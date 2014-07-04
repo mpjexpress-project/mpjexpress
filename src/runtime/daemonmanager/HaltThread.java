@@ -68,7 +68,7 @@ public class HaltThread extends DMThread {
 	    DMMessages.MPJDAEMON_STOPPED));
     } else
       System.out.println(MPJUtil.FormatMessage(host,
-	  DMMessages.MPJDAEMON_NOT_AVIALBLE));
+	  DMMessages.MPJDAEMON_NOT_AVAILABLE));
   }
 
 }

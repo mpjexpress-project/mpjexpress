@@ -38,7 +38,8 @@ public class NIOBuffer implements RawBuffer {
 
     NIOBuffer(int capacity) {
         this.capacity = capacity ;
-        buffer = ByteBuffer.allocate(capacity);
+				//for native device we introduce allocateDirect
+        buffer = ByteBuffer.allocateDirect(capacity);
     }
 
     public NIOBuffer(int capacity, ByteBuffer slicedBuffer) {

@@ -70,7 +70,7 @@ public class DMConstants {
   public static String THREAD_COUNT_OPT = "nt";
   public static String THREADED_OPT = "th";
   public static String MACHINE_FILE = "machinesfile";
-  public static String THREAD_COUNT = "nthraeds";
+  public static String THREAD_COUNT = "nthreads";
   public static String THREADED = "threaded";
   public static String HOSTS = "hosts";
   public static String PORT = "port";
