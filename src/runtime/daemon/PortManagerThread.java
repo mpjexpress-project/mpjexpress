@@ -72,6 +72,7 @@ public class PortManagerThread extends Thread {
     }
     catch (Exception cce) {
 
+      cce.printStackTrace();
       System.exit(0);
     }
 
