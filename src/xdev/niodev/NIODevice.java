@@ -681,7 +681,7 @@ public class NIODevice implements Device {
     UUID myuuid = UUID.randomUUID();
     id = new ProcessID(myuuid); // , rank);
     Map<String, String> map = System.getenv();
-    mpjHomeDir = map.get("MPJ_HOME");
+    //mpjHomeDir = map.get("MPJ_HOME");
 
     try {
 
