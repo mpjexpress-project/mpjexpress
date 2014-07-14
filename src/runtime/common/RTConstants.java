@@ -59,6 +59,8 @@ public class RTConstants {
   public static String TOTAL_PROCESS_COUNT = "TotalProcessCount";
   public static String NETWORK_PROCESS_COUNT = "NetworkProcessCount";
   public static String NETWORK_DEVICE = "NetworkDevice";
+  public static String MPJ_HOME = "MPJ_HOME";
+  public static String MPJ_HOME_DIR = System.getenv("MPJ_HOME");
   public static String DEBUG = "Debug";
   public static String DEBUG_PORT = "DebugPort";
   public static String PROFILER = "Profiler";

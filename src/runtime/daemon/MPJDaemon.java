@@ -56,13 +56,15 @@ import org.apache.log4j.PatternLayout;
 import org.apache.log4j.spi.LoggerRepository;
 
 import runtime.common.MPJRuntimeException;
+import runtime.common.RTConstants;
+
 
 public class MPJDaemon {
 
   private int D_SER_PORT = 10000;
   static final boolean DEBUG = true;
   static Logger logger = null;
-  private String mpjHomeDir = null;
+  private static String mpjHomeDir = null;
   public volatile static ConcurrentHashMap<Socket, ProcessLauncher> servSockets;
   ConnectionManager connectionManager;
   PortManagerThread pManager;
@@ -73,7 +75,18 @@ public class MPJDaemon {
     String hostName = localaddr.getHostName();
     servSockets = new ConcurrentHashMap<Socket, ProcessLauncher>();
     Map<String, String> map = System.getenv();
-    mpjHomeDir = map.get("MPJ_HOME");
+    try {
+      mpjHomeDir = map.get("MPJ_HOME");
+      RTConstants.MPJ_HOME_DIR = mpjHomeDir;
+      if (mpjHomeDir == null) {
+	throw new Exception("MPJ_HOME environment variable not set!!!");
+      }
+    }
+    catch (Exception exc) {
+      System.out.println("Error: " + exc.getMessage());
+      exc.printStackTrace();
+      return;
+    }
     createLogger(mpjHomeDir, hostName);
     if (DEBUG && logger.isDebugEnabled()) {
       logger.debug("mpjHomeDir " + mpjHomeDir);
@@ -203,7 +216,7 @@ public class MPJDaemon {
 
     try {
 
-      String path = System.getenv("MPJ_HOME") + "/conf/wrapper.conf";
+      String path = mpjHomeDir + "/conf/wrapper.conf";
       in = new FileInputStream(path);
       din = new DataInputStream(in);
       reader = new BufferedReader(new InputStreamReader(din));

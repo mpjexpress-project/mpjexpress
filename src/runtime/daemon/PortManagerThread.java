@@ -44,6 +44,9 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+
+import runtime.common.RTConstants;
+
 public class PortManagerThread extends Thread {
   public volatile boolean isRun = true;
 
@@ -87,8 +90,8 @@ public class PortManagerThread extends Thread {
     String line = "";
 
     try {
-
-      String path = System.getenv("MPJ_HOME") + "/conf/wrapper.conf";
+      
+      String path = RTConstants.MPJ_HOME_DIR + "/conf/wrapper.conf";
       in = new FileInputStream(path);
       din = new DataInputStream(in);
       reader = new BufferedReader(new InputStreamReader(din));

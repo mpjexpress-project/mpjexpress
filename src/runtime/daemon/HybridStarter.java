@@ -50,6 +50,7 @@ import java.util.StringTokenizer;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
+import runtime.common.RTConstants;
 import xdev.smpdev.SMPDevProcess;
 
 public class HybridStarter {
@@ -129,7 +130,7 @@ public class HybridStarter {
           synchronized (monitor) {
 
             try {
-              String mpjHome = System.getenv("MPJ_HOME");
+              String mpjHome = RTConstants.MPJ_HOME_DIR;
 
               String libPath = null;
 

@@ -43,6 +43,8 @@ import java.lang.reflect.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.lang.Integer;
+
+import runtime.common.RTConstants;
 import runtime.daemon.JarClassLoader;
 import xdev.smpdev.SMPDevProcess;
 
@@ -141,8 +143,8 @@ public class MulticoreStarter {
 	  synchronized (monitor) {
 
 	    try {
-	      String mpjHome = System.getenv("MPJ_HOME");
-
+	      String mpjHome = RTConstants.MPJ_HOME_DIR;
+	      	
 	      String libPath = null;
 
 	      if (!cmdClassPath.equals("EMPTY")) {

@@ -119,9 +119,7 @@ public class MPJUtil {
   }
 
   public static String getMPJHomeDir() {
-    String mpjHomeDir = "";
-    Map<String, String> map = System.getenv();
-    mpjHomeDir = map.get("MPJ_HOME");
+    String mpjHomeDir = RTConstants.MPJ_HOME_DIR;
     if (mpjHomeDir != "") {
       if (!mpjHomeDir.endsWith("/"))
 	mpjHomeDir = mpjHomeDir + File.separator;

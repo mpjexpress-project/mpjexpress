@@ -86,7 +86,7 @@ public class MulticoreDaemon {
 
   public MulticoreDaemon(String mcClassName, String mcJarName, int classOrJar,
       int numOfProcessors, String workingDirectory, ArrayList<String> jvmArgs,
-      ArrayList<String> appArgs, boolean ADEBUG, boolean APROFILE,
+      ArrayList<String> appArgs, String mpjHomeDir, boolean ADEBUG, boolean APROFILE,
       int DEBUG_PORT) throws Exception {
 
     this.jvmArgs = jvmArgs;
@@ -102,6 +102,7 @@ public class MulticoreDaemon {
     this.deviceName = "smpdev";
     this.loader = "useLocalLoader"; // don't need this
 
+    this.mpjHomeDir = mpjHomeDir;
     this.ADEBUG = ADEBUG;
     this.APROFILE = APROFILE;
     this.DEBUG_PORT = DEBUG_PORT;

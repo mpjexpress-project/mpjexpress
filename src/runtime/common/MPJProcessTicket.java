@@ -65,6 +65,8 @@ public class MPJProcessTicket {
   private boolean isDebug;
   private boolean isProfiler;
   private int debugPort;
+  private String mpjHomeDir;
+  
 
   public String getClassPath() {
     return classPath;
@@ -217,6 +219,14 @@ public class MPJProcessTicket {
   public void setDebugPort(int debugPort) {
     this.debugPort = debugPort;
   }
+  
+  public String getMpjHomeDir() {
+    return mpjHomeDir;
+  }
+
+  public void setMpjHomeDir(String mpjHomeDir) {
+    this.mpjHomeDir = mpjHomeDir;
+  }
 
   public MPJProcessTicket() {
     this.classPath = "";
@@ -239,6 +249,7 @@ public class MPJProcessTicket {
     isDebug = false;
     isProfiler = false;
     debugPort = 24500;
+    mpjHomeDir = null;
   }
 
   public MPJProcessTicket(UUID ticketID, String classPath, int processCount,
@@ -246,7 +257,7 @@ public class MPJProcessTicket {
       String mainClass, boolean zippedCode, String codeFolder,
       String deviceName, String confFileContents, ArrayList<String> appArgs,
       int clientPort, String clientHostAddress, String userID,
-      int nioProcessCount, int totalProcessCount, String networkDevice,
+      int nioProcessCount, int totalProcessCount, String networkDevice, String mpjHomeDir,
       boolean isDebug, boolean isProfiler, int debugPort) {
     super();
     this.ticketID = ticketID;
@@ -267,6 +278,7 @@ public class MPJProcessTicket {
     this.isDebug = isDebug;
     this.isProfiler = isProfiler;
     this.debugPort = debugPort;
+    this.mpjHomeDir = mpjHomeDir;
   }
 
   public MPJXml ToXML() {
@@ -355,6 +367,10 @@ public class MPJProcessTicket {
     networkDeviceXML.setText(this.networkDevice);
     processInfoXML.appendChild(networkDeviceXML);
 
+    MPJXml mpjHomeXML = new MPJXml(getTag(RTConstants.MPJ_HOME));
+    mpjHomeXML.setText(this.mpjHomeDir);
+    processInfoXML.appendChild(mpjHomeXML);
+    
     MPJXml debugXML = new MPJXml(getTag(RTConstants.DEBUG));
     debugXML.setText(Boolean.toString(this.isDebug));
     processInfoXML.appendChild(debugXML);
@@ -414,6 +430,9 @@ public class MPJProcessTicket {
       MPJXml deviceNameXML = processInfoXml.getChild(RTConstants.DEVICE_NAME);
       this.deviceName = deviceNameXML.getText();
 
+      MPJXml mpjHomeXML = processInfoXml.getChild(RTConstants.MPJ_HOME);
+      this.mpjHomeDir = mpjHomeXML.getText();
+      
       MPJXml confFileContentsXML = processInfoXml
 	  .getChild(RTConstants.CONF_FILE_CONTENTS);
       this.confFileContents = confFileContentsXML.getText();

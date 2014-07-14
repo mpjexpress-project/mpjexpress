@@ -99,7 +99,7 @@ public class ProcessArgumentsManager {
     WriteConfigFile();
 
     Map<String, String> map = System.getenv();
-    String mpjHomeDir = map.get("MPJ_HOME");
+    String mpjHomeDir = pTicket.getMpjHomeDir();
     String workingDirectory = pTicket.getWorkingDirectory();
     if (pTicket.isZippedSource()) {
       if (pTicket.getClassPath().endsWith(".jar")) {
@@ -219,7 +219,7 @@ public class ProcessArgumentsManager {
     WriteConfigFile();
 
     Map<String, String> map = System.getenv();
-    String mpjHomeDir = map.get("MPJ_HOME");
+    String mpjHomeDir = pTicket.getMpjHomeDir();
     boolean now = false;
     boolean noSwitch = true;
     String cmdClassPath = " ";

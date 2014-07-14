@@ -67,8 +67,7 @@ public class MPJRun {
   final String DEFAULT_MACHINES_FILE_NAME = "machines";
   final int DEFAULT_PROTOCOL_SWITCH_LIMIT = 128 * 1024; // 128K
 
-  private int D_SER_PORT = Integer
-      .parseInt(getValueFromWrapper("wrapper.app.parameter.2"));
+  private int D_SER_PORT = 10000;
 
   private String CONF_FILE_CONTENTS = "#temp line";
   private int mxBoardNum = 0;
@@ -86,7 +85,7 @@ public class MPJRun {
   private ArrayList<String> machineList = new ArrayList<String>();
   int nprocs = Runtime.getRuntime().availableProcessors();
   String deviceName = "multicore";
-  String mpjHomeDir = null;
+  static String mpjHomeDir = null;
   byte[] urlArray = null;
   Hashtable procsPerMachineTable = new Hashtable();
   int endCount = 0;
@@ -108,8 +107,7 @@ public class MPJRun {
   private boolean APROFILE = false;
   private int DEBUG_PORT = 24500;
   private final String CONF_FILE_NAME = "mpjdev.conf";
-  private int portManagerPort = Integer
-      .parseInt(getValueFromWrapper("wrapper.app.parameter.3"));
+  private int portManagerPort = 15000;
 
   /**
    * Every thing is being inside this constructor :-)
@@ -124,7 +122,23 @@ public class MPJRun {
     }
 
     Map<String, String> map = System.getenv();
-    mpjHomeDir = map.get("MPJ_HOME");
+    try {
+      mpjHomeDir = map.get("MPJ_HOME");
+      RTConstants.MPJ_HOME_DIR = mpjHomeDir;
+      if (mpjHomeDir == null) {
+	throw new Exception("MPJ_HOME environment variable not set!!!");
+      }
+    }
+    catch (Exception exc) {
+      System.out.println("Error: " + exc.getMessage());
+      exc.printStackTrace();
+      return;
+    }
+
+    D_SER_PORT = Integer
+	.parseInt(getValueFromWrapper("wrapper.app.parameter.2"));
+    portManagerPort = Integer
+	.parseInt(getValueFromWrapper("wrapper.app.parameter.3"));
 
     createLogger(args);
 
@@ -153,7 +167,7 @@ public class MPJRun {
 
       MulticoreDaemon multicoreDaemon = new MulticoreDaemon(className,
 	  applicationClassPathEntry, jarOrClass, nprocs, wdir, jvmArgs,
-	  appArgs, ADEBUG, APROFILE, DEBUG_PORT);
+	  appArgs, mpjHomeDir, ADEBUG, APROFILE, DEBUG_PORT);
       return;
 
     } else { /* cluster configuration */
@@ -421,7 +435,7 @@ public class MPJRun {
     }
 
     MPJProcessTicket ticket = new MPJProcessTicket();
-
+    ticket.setMpjHomeDir(mpjHomeDir);
     ticket.setClassPath(new String(urlArray));
     ticket.setProcessCount(nProcesses);
     ticket.setStartingRank(start_rank);
@@ -788,7 +802,7 @@ public class MPJRun {
 
     try {
 
-      String path = System.getenv("MPJ_HOME") + "/conf/wrapper.conf";
+      String path = mpjHomeDir + "/conf/wrapper.conf";
       in = new FileInputStream(path);
       din = new DataInputStream(in);
       reader = new BufferedReader(new InputStreamReader(din));
