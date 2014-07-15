@@ -28,17 +28,19 @@
  THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 /*
- * File         : Intracomm.java
- * Author       : Aamir Shafi, Bryan Carpenter
+ * File         : PureIntracomm.java
+ * Author       : Aamir Shafi, Bryan Carpenter, Bibrak Qamar, Mansoor Ahmed, Aleem Akhtar
  * Created      : Fri Sep 10 12:22:15 BST 2004
  * Revision     : $Revision: 1.30 $
- * Updated      : $Date: 2006/10/20 17:24:47 $
+ * Updated      : $Date: 2014/07/10 12:24:47 $
  */
 
 package mpi;
 
 import mpjdev.*;
 import mpjbuf.*;
+
+import java.util.*;
 
 public class PureIntracomm extends IntracommImpl {
 
@@ -56,6 +58,8 @@ public class PureIntracomm extends IntracommImpl {
   int allreduceTag = (34 * 1000) + 11;
   int reducescatterTag = (34 * 1000) + 12;
   int scanTag = (34 * 1000) + 13;
+
+  public static boolean isOldSelected = false;
 
   PureIntracomm() {
   }
@@ -79,7 +83,7 @@ public class PureIntracomm extends IntracommImpl {
    **/
 
   PureIntracomm(mpjdev.Comm mpjdevComm, mpjdev.Group group) throws MPIException {
-    // System.out.println("PureIntracomm");
+
     // MPI.logger.debug("--Intracomm--");
     this.mpjdevComm = mpjdevComm;
     this.group = new Group(group);
@@ -196,12 +200,6 @@ public class PureIntracomm extends IntracommImpl {
    * <p>
    * Java binding of the MPI operation <tt>MPI_COMM_SPLIT</tt>.
    */
-
-  // FIXME: This was returning Intracomm I have changed it to return
-  // PureIntracomm ? This needs a study to find out how natives will be
-  // dealth ?
-  // Fixed it to Intracomm should work now
-  // TODO: remove the above comments
   public IntracommImpl Split(int color, int key) throws MPIException {
     PureIntracomm icomm = null; // THIS was Intracomm previously !!!
     int[][] b = new int[this.group.Size()][3];
@@ -274,8 +272,7 @@ public class PureIntracomm extends IntracommImpl {
      */
     try {
       mpjdev.Comm ncomm = mpjdevComm.create(nids);
-      icomm = new PureIntracomm(ncomm, ncomm.group); // Check the reference type
-						     // ??
+      icomm = new PureIntracomm(ncomm, ncomm.group);
     }
     catch (Exception e) {
       throw new MPIException(e);
@@ -502,7 +499,6 @@ public class PureIntracomm extends IntracommImpl {
    * Java binding of the MPI operation <tt>MPI_BARRIER</tt>.
    */
   public void Barrier() throws MPIException {
-    // System.out.println("Dummy: PureIntracomm Barrier");
     if (Size() == 1) {
       return;
     }
@@ -595,10 +591,24 @@ public class PureIntracomm extends IntracommImpl {
    * <p>
    * Java binding of the MPI operation <tt>MPI_BCST</tt>.
    */
+  public void Bcast(Object buf, int offset, int count, Datatype datatype,
+      int root) throws MPIException {
+    if (isOldSelected) {
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	MPI.logger.debug("-------Flat Tree Broadcast selected------");
+      FT_Bcast(buf, offset, count, datatype, root);
+    } else {
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	MPI.logger.debug("-------MST Broadcast selected------");
+      // ------------------------------------------MST_BCAST------------------------------------------------------
+      int left = 0;
+      int right = Size() - 1;
+      MST_Broadcast(buf, offset, count, datatype, root, left, right);
+    }
+  }
 
-  public void Bcast(Object buf, int offset, int count, Datatype type, int root)
-      throws MPIException {
-
+  public void FT_Bcast(Object buf, int offset, int count, Datatype type,
+      int root) throws MPIException {
     int index = Rank();
 
     if (root != 0) {
@@ -688,6 +698,43 @@ public class PureIntracomm extends IntracommImpl {
       bcast_tag = 35 * 1000;
     }
     bcast_tag++;
+
+  }
+
+  private void MST_Broadcast(Object buf, int offset, int count, Datatype type,
+      int root, int left, int right) throws MPIException {
+
+    int mid;
+    int dest;
+    int me = Rank();
+
+    if (left == right)
+      return;
+    mid = (left + right) / 2;
+
+    if (root <= mid)
+      dest = right;
+    else
+      dest = left;
+
+    if (me == root) {
+      send(buf, offset, count, type, dest, bcast_tag, false);
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	MPI.logger.debug("Sent to " + dest);
+    }
+    if (me == dest) {
+      recv(buf, offset, count, type, root, bcast_tag, false);
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	MPI.logger.debug(me + " got from " + root);
+    }
+    if (me <= mid && root <= mid)
+      MST_Broadcast(buf, offset, count, type, root, left, mid);
+    else if (me <= mid && root > mid)
+      MST_Broadcast(buf, offset, count, type, dest, left, mid);
+    else if (me > mid && root <= mid)
+      MST_Broadcast(buf, offset, count, type, dest, mid + 1, right);
+    else if (me > mid && root > mid)
+      MST_Broadcast(buf, offset, count, type, root, mid + 1, right);
   }
 
   /**
@@ -737,7 +784,85 @@ public class PureIntracomm extends IntracommImpl {
   public void Gather(Object sendbuf, int sendoffset, int sendcount,
       Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
       Datatype recvtype, int root) throws MPIException {
+    // ------------------------------------------------MST_Gather---------------------------------------------------------
+    if (sendcount * sendtype.Size() <= 16384 && !isOldSelected) {
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled()) {
+	MPI.logger.debug("-------MST Gather selected------");
+	MPI.logger.debug("Small Data Size 0 - 16 KB");
+      }
+      int left = 0;
+      int right = Size() - 1;
+      System.arraycopy(sendbuf, sendoffset, recvbuf, Rank() * sendcount,
+	  recvcount);
+      MST_Gather(recvbuf, recvoffset, recvcount, recvtype, root, left, right);
+    }
+    // ------------------------------------------------FT_Gather---------------------------------------------------------
+    else {
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled()) {
+	MPI.logger.debug("-------Flat Tree Gather selected------");
+	if (!isOldSelected)
+	  MPI.logger.debug("Large Data Size > 16.1 KB");
+      }
+      FT_Gather(sendbuf, sendoffset, sendcount, sendtype, recvbuf, recvoffset,
+	  recvcount, recvtype, root);
+    }
+  }
 
+  private void MST_Gather(Object buf, int offset, int count, Datatype datatype,
+      int root, int left, int right) throws MPIException {
+    if (left == right)
+      return;
+
+    int mid = (left + right) / 2;
+    int me = Rank();
+    int srce;
+
+    if (root <= mid)
+      srce = right;
+    else
+      srce = left;
+
+    if (me <= mid && root <= mid)
+      MST_Gather(buf, offset, count, datatype, root, left, mid);
+    else if (me <= mid && root > mid)
+      MST_Gather(buf, offset, count, datatype, srce, left, mid);
+    else if (me > mid && root <= mid)
+      MST_Gather(buf, offset, count, datatype, srce, mid + 1, right);
+    else if (me > mid && root > mid)
+      MST_Gather(buf, offset, count, datatype, root, mid + 1, right);
+
+    if (root <= mid) {
+      if (me == srce) {
+	send(buf, (mid + 1) * count, ((right - (mid + 1)) + 1) * count,
+	    datatype, root, gatherTag, false);
+	if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	  MPI.logger.debug("Sent to " + root);
+      }
+      if (me == root) {
+	recv(buf, (mid + 1) * count, ((right - (mid + 1)) + 1) * count,
+	    datatype, srce, gatherTag, false);
+	if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	  MPI.logger.debug("Root " + root + " got from " + srce);
+      }
+    } else {
+      if (me == srce) {
+	send(buf, left * count, ((mid - left) + 1) * count, datatype, root,
+	    gatherTag, false);
+	if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	  MPI.logger.debug("Sent to " + root);
+      }
+      if (me == root) {
+	recv(buf, left * count, ((mid - left) + 1) * count, datatype, srce,
+	    gatherTag, false);
+	if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	  MPI.logger.debug("Root " + root + " got from " + srce);
+      }
+    }
+  }
+
+  private void FT_Gather(Object sendbuf, int sendoffset, int sendcount,
+      Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
+      Datatype recvtype, int root) throws MPIException {
     if (MPI.DEBUG && MPI.logger.isDebugEnabled())
       MPI.logger.debug("--Gather--");
     int rcount = -1, roffset = -1, soffset = -1, scount = -1;
@@ -932,7 +1057,83 @@ public class PureIntracomm extends IntracommImpl {
   public void Scatter(Object sendbuf, int sendoffset, int sendcount,
       Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
       Datatype recvtype, int root) throws MPIException {
+    // ------------------------------------------------MST_Scatter---------------------------------------------------------
+    if (sendcount * sendtype.Size() <= 16384 && !isOldSelected) {
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled()) {
+	MPI.logger.debug("-------MST Scatter selected------");
+	MPI.logger.debug("Small Data Size 0 - 16 KB");
+      }
+      int left = 0;
+      int right = Size() - 1;
+      MST_Scatter(sendbuf, sendoffset, sendcount, sendtype, root, left, right);
+      System.arraycopy(sendbuf, Rank() * recvcount, recvbuf, 0, recvcount);
+    }
+    // ------------------------------------------------FT_Scatter---------------------------------------------------------
+    else {
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled()) {
+	MPI.logger.debug("-------Flat Tree Scatter selected------");
+	if (!isOldSelected)
+	  MPI.logger.debug("Large Data Size > 16.1 KB");
+      }
+      FT_Scatter(sendbuf, sendoffset, sendcount, sendtype, recvbuf, recvoffset,
+	  recvcount, recvtype, root);
+    }
+  }
 
+  private void MST_Scatter(Object buf, int offset, int count,
+      Datatype datatype, int root, int left, int right) throws MPIException {
+    if (left == right)
+      return;
+    int mid = (left + right) / 2;
+    int me = Rank();
+    int dest;
+
+    if (root <= mid)
+      dest = right;
+    else
+      dest = left;
+
+    if (root <= mid) {
+      if (me == root) {
+	send(buf, (mid + 1) * count, ((right - (mid + 1)) + 1) * count,
+	    datatype, dest, scatterTag, false);
+	if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	  MPI.logger.debug("Sent to " + dest);
+      }
+      if (me == dest) {
+	recv(buf, (mid + 1) * count, ((right - (mid + 1)) + 1) * count,
+	    datatype, root, scatterTag, false);
+	if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	  MPI.logger.debug(me + " got from " + root);
+      }
+    } else {
+      if (me == root) {
+	send(buf, left * count, ((mid - left) + 1) * count, datatype, dest,
+	    scatterTag, false);
+	if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	  MPI.logger.debug("Sent to " + dest);
+      }
+      if (me == dest) {
+	recv(buf, left * count, ((mid - left) + 1) * count, datatype, root,
+	    scatterTag, false);
+	if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	  MPI.logger.debug(me + " got from " + root);
+      }
+    }
+
+    if (me <= mid && root <= mid)
+      MST_Scatter(buf, offset, count, datatype, root, left, mid);
+    else if (me <= mid && root > mid)
+      MST_Scatter(buf, offset, count, datatype, dest, left, mid);
+    else if (me > mid && root <= mid)
+      MST_Scatter(buf, offset, count, datatype, dest, mid + 1, right);
+    else if (me > mid && root > mid)
+      MST_Scatter(buf, offset, count, datatype, root, mid + 1, right);
+  }
+
+  private void FT_Scatter(Object sendbuf, int sendoffset, int sendcount,
+      Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
+      Datatype recvtype, int root) throws MPIException {
     // MPI.logger.debug("--Scatter--");
     Request[] reqs = new Request[Size()];
     int soffset = -1, scount = -1;
@@ -1055,8 +1256,6 @@ public class PureIntracomm extends IntracommImpl {
 	  reqs[i].Wait();
       }
     }
-
-    // MPI.logger.debug("--Scatter ends--");
   }
 
   /**
@@ -1101,6 +1300,83 @@ public class PureIntracomm extends IntracommImpl {
    */
 
   public void Allgather(Object sendbuf, int sendoffset, int sendcount,
+      Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
+      Datatype recvtype) throws MPIException {
+    if (isOldSelected) {
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	MPI.logger.debug("-------Flat Tree Allgather Selected------");
+      FT_Allgather(sendbuf, sendoffset, sendcount, sendtype, recvbuf,
+	  recvoffset, recvcount, recvtype);
+    } else {
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	MPI.logger.debug("-------MST Allgather Selected------");
+      System.arraycopy(sendbuf, sendoffset, recvbuf, Rank() * sendcount,
+	  recvcount);
+      BKT_Allgather(recvbuf, sendoffset, sendcount, sendtype);
+    }
+  }
+
+  private void BKT_Allgather(Object buf, int offset, int count,
+      Datatype datatype) throws MPIException {
+
+    int me = Rank();
+    int prev = me - 1;
+    int size = Size(); // p = Size
+    if (prev < 0)
+      prev = size - 1;
+    int next = me + 1;
+
+    if (next == size)
+      next = 0;
+    int curi = me;
+
+    Request s_req[] = new Request[Size() - 1];
+    Request r_req[] = new Request[Size() - 1];
+
+    for (int i = 0; i < (size - 1); i++) {
+      s_req[i] = isend(buf, curi * count, count, datatype, next, allgatherTag,
+	  false);
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	MPI.logger.debug("Sent to " + next);
+      curi = curi - 1;
+      if (curi < 0)
+	curi = size - 1;
+      r_req[i] = irecv(buf, curi * count, count, datatype, prev, allgatherTag,
+	  false);
+      r_req[i].Wait();
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	MPI.logger.debug(me + " got from " + prev);
+    }
+    for (int i = 0; i < (size - 1); i++) {
+      s_req[i].Wait();
+
+    }
+
+    // This following code version posts all receive operations before send
+    // commences
+    // followed by synchronisation operation. Also works perfectly.
+    /*
+     * int me = Rank(); int prev = me -1; int size = Size(); //p = Size if (prev
+     * < 0) prev = size - 1; int next = me + 1; if (next == size) next = 0;
+     * 
+     * Request s_req[] = new Request[Size()-1]; Request r_req[] = new
+     * Request[Size()-1];
+     * 
+     * int curi = me; for(int i=0; i < (size-1); i++){ curi = curi - 1; if (curi
+     * < 0) curi = size - 1; r_req[i] = irecv(buf, curi*count, count, datatype,
+     * prev, allgatherTag, false); }
+     * 
+     * Barrier(); // Synchronization
+     * 
+     * curi = me; for(int i=0; i < (size-1); i++){
+     * 
+     * s_req[i] = isend(buf, curi*count, count, datatype, next, allgatherTag,
+     * false); r_req[i].Wait(); curi = curi - 1; if (curi < 0) curi = size - 1;
+     * } for(int i=0; i < (size-1); i++){ s_req[i].Wait(); }
+     */
+  }
+
+  public void FT_Allgather(Object sendbuf, int sendoffset, int sendcount,
       Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
       Datatype recvtype) throws MPIException {
 
@@ -1596,7 +1872,6 @@ public class PureIntracomm extends IntracommImpl {
 
       req[i].Wait();
     }
-
   }
 
   /**
@@ -1648,6 +1923,77 @@ public class PureIntracomm extends IntracommImpl {
    */
 
   public void Reduce(Object sendbuf, int sendoffset, Object recvbuf,
+      int recvoffset, int count, Datatype datatype, Op op, int root)
+      throws MPIException {
+    if (isOldSelected) {
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	MPI.logger.debug("-------Flat Tree Reduce Selected------");
+      FT_Reduce(sendbuf, sendoffset, recvbuf, recvoffset, count, datatype, op,
+	  root);
+    } else {
+      // ------------------------------------------MST_Reduce------------------------------------------------------
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	MPI.logger.debug("-------MST Reduce Selected------");
+      int left = 0;
+      int right = Size() - 1;
+      System.arraycopy(sendbuf, sendoffset, recvbuf, recvoffset, count
+	  * datatype.size);
+      MST_Reduce(recvbuf, sendoffset, count, datatype, op, root, left, right);
+    }
+  }
+
+  private void MST_Reduce(Object buf, int offset, int count, Datatype datatype,
+      Op op, int root, int left, int right) throws MPIException {
+    int mid;
+    int srce;
+    int me = Rank();
+
+    if (left == right)
+      return;
+    mid = (left + right) / 2;
+    if (root <= mid)
+      srce = right;
+    else
+      srce = left;
+
+    if (me <= mid && root <= mid)
+      MST_Reduce(buf, offset, count, datatype, op, root, left, mid);
+    else if (me <= mid && root > mid)
+      MST_Reduce(buf, offset, count, datatype, op, srce, left, mid);
+    else if (me > mid && root <= mid)
+      MST_Reduce(buf, offset, count, datatype, op, srce, mid + 1, right);
+    else if (me > mid && root > mid)
+      MST_Reduce(buf, offset, count, datatype, op, root, mid + 1, right);
+
+    if (me == srce) {
+      send(buf, offset, count, datatype, root, reduceTag, false);
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	MPI.logger.debug("Sent to root " + root);
+    }
+    if (me == root) {
+      if (op.worker == null) {
+	Object tmpbuf = createTemporaryBuffer(datatype, count);
+	System.arraycopy(buf, offset, tmpbuf, offset, count * datatype.size);
+	recv(buf, offset, count, datatype, srce, reduceTag, false);
+	op.funct.Call(buf, offset, tmpbuf, offset, count, datatype);
+	System.arraycopy(tmpbuf, offset, buf, offset, count * datatype.size);
+      } else {
+	Op opx = op.worker.getWorker(datatype);
+	opx.createInitialBuffer(buf, offset, count); // create temp array and
+						     // copy contents of recvbuf
+						     // to temp array
+	recv(buf, offset, count, datatype, srce, reduceTag, false);
+	opx.perform(buf, offset, count); // opx performs the calculation
+	opx.getResultant(buf, offset, count); // opx copies the result to recv
+					      // buffer
+
+      }
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	MPI.logger.debug("Root " + root + " got from " + srce);
+    }
+  }
+
+  public void FT_Reduce(Object sendbuf, int sendoffset, Object recvbuf,
       int recvoffset, int count, Datatype datatype, Op op, int root)
       throws MPIException {
 
@@ -1823,6 +2169,25 @@ public class PureIntracomm extends IntracommImpl {
 
   public void Allreduce(Object sendbuf, int sendoffset, Object recvbuf,
       int recvoffset, int count, Datatype datatype, Op op) throws MPIException {
+    if (isOldSelected) {
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	MPI.logger.debug("-------Flat Tree Allreduce Selected------");
+      FT_Allreduce(sendbuf, sendoffset, recvbuf, recvoffset, count, datatype,
+	  op);
+    } else {
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	MPI.logger.debug("-------MST Reduce + MST Broadcast Selected------");
+      // ------------------------------------------------MSTReduce +
+      // MSTBcast---------------------------------------------------------
+      int root = 0;
+      Reduce(sendbuf, sendoffset, recvbuf, recvoffset, count, datatype, op,
+	  root);
+      Bcast(recvbuf, recvoffset, count, datatype, root);
+    }
+  }
+
+  public void FT_Allreduce(Object sendbuf, int sendoffset, Object recvbuf,
+      int recvoffset, int count, Datatype datatype, Op op) throws MPIException {
 
     if (MPI.DEBUG && MPI.logger.isDebugEnabled()) {
       MPI.logger.debug("Allreduce called");
@@ -1988,7 +2353,94 @@ public class PureIntracomm extends IntracommImpl {
    * <p>
    * Java binding of the MPI operation <tt>MPI_REDUCE_SCATTER</tt>.
    */
+
   public void Reduce_scatter(Object sendbuf, int sendoffset, Object recvbuf,
+      int recvoffset, int[] recvcounts, Datatype datatype, Op op)
+      throws MPIException {
+    if (isOldSelected) {
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	MPI.logger.debug("-------Flat Tree Reduce_Scatter selected------");
+
+      FT_Reduce_scatter(sendbuf, sendoffset, recvbuf, recvoffset, recvcounts,
+	  datatype, op);
+
+    } else {
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	MPI.logger.debug("-------BKT Reduce_Scatter selected------");
+      // ---------------------MSTReduce +
+      // MSTScatter(v)---------------------------------------
+
+      BKT_Reduce_scatter(sendbuf, sendoffset, recvbuf, recvoffset, recvcounts,
+	  datatype, op);
+
+    }
+  }
+
+  private void BKT_Reduce_scatter(Object buf, int offset, Object recvbuf,
+      int recvoffset, int[] recvcounts, Datatype datatype, Op op)
+      throws MPIException {
+
+    int me = Rank();
+    int size = Size();
+    int prev = me - 1;
+    if (prev < 0)
+      prev = size - 1;
+    int next = me + 1;
+    if (next == size)
+      next = 0;
+
+    int count = 0;
+    for (int i = 0; i < recvcounts.length; i++)
+      count += recvcounts[i];
+
+    Request s_req[] = new Request[Size() - 1];
+    Request r_req[] = new Request[Size() - 1];
+
+    int isend_offset = 0, irecv_offset = 0;
+    for (int i = 0; i < prev; i++)
+      isend_offset += recvcounts[i];
+    for (int i = 0; i < me; i++)
+      irecv_offset += recvcounts[i];
+
+    Op opx = null;
+    if (op.worker != null) {
+      opx = op.worker.getWorker(datatype);
+      opx.createInitialBuffer(buf, offset, count);
+    }
+
+    Object tmpbuf = createTemporaryBuffer(datatype, count);
+
+    for (int i = (size - 2); i >= 0; i--) {
+      s_req[i] = isend(buf, isend_offset, recvcounts[prev], datatype, prev,
+	  reducescatterTag, false);
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	MPI.logger.debug("Sent to " + prev);
+      r_req[i] = irecv(tmpbuf, irecv_offset, recvcounts[me], datatype, next,
+	  reducescatterTag, false);
+      r_req[i].Wait();
+      if (MPI.DEBUG && MPI.logger.isDebugEnabled())
+	MPI.logger.debug(me + " got from " + next);
+      if (op.worker == null) {
+	op.funct.Call(buf, irecv_offset, tmpbuf, irecv_offset, recvcounts[me],
+	    datatype);
+	System.arraycopy(tmpbuf, irecv_offset, buf, irecv_offset,
+	    recvcounts[me]);
+      } else {
+	opx.perform(tmpbuf, offset, count); // opx perform calculations
+	opx.getResultant(buf, offset, count); // opx copies the result
+					      // to buf
+      }
+    }
+
+    for (int i = (size - 2); i >= 0; i--) {
+      s_req[i].Wait();
+    }
+    // copy resultant of each process to recvbuf
+    System
+	.arraycopy(buf, irecv_offset, recvbuf, recvoffset, recvcounts[Rank()]);
+  }
+
+  public void FT_Reduce_scatter(Object sendbuf, int sendoffset, Object recvbuf,
       int recvoffset, int[] recvcounts, Datatype datatype, Op op)
       throws MPIException {
 
