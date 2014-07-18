@@ -1,3 +1,42 @@
+Version 0.43
+------------
+
+1. This release mainly introduces optimized collective communication primitives
+   added in MPJ Express to improve pure Java collective communication performance.
+   Minimum Spanning Tree and Bucket or Cyclic Algorithms are used to implement 
+   optimized collectives. Following collective communication primitives are updated:
+   
+   a. Broadcast updated to Minimum Spanning Tree implementation.
+   
+   b. Gather updated to Minimum Spanning Tree implementation for Small Data Size
+      0 - 16 KB and Flat Tree (old) implementation for Large Data Size > 16 KB.
+   
+   c. Scatter updated to Minimum Spanning Tree implementation for Small Data Size
+      0 - 16 KB and Flat Tree (old) implementation for Large Data Size > 16 KB.
+   
+   d. Allgather updated to Bucket Algorithm implementation.
+   
+   e. Reduce updated to Minimum Spanning Tree implementation.
+   
+   f. Allreduce updated to MST_Reduce + MST_Bcast implementation.
+   
+   g. Reduce_scatter updated to Bucket Algorithm implementation.
+	    
+2. In this release $MPJ_HOME/conf/wrapper.conf is modified to $MPJ_HOME/conf/mpjexpress.conf
+   Following are other modifications done in this file.
+   
+   a. Unused configurations are removed.
+   
+   b. Logfile parameter for logging of core libraries is added.
+   
+   c. MPJ Express version number is added.
+   
+   c. Switch for selection of old collectives is also added.
+   
+   d. MPJ Express ports and logging parameters are modified.
+ 
+ 3. Some minor bugs fixed.
+ 
 Version 0.42
 ------------
 
