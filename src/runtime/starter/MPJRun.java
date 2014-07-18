@@ -288,7 +288,7 @@ public class MPJRun {
 	  System.out.println("MPJ Express currently does not support the <"
 	      + deviceName + "> device.");
 	  System.out
-	      .println("Possible options are niodev, hybdev, mxdev, natdev, and "
+	      .println("Possible options are niodev, hybdev, mxdev, native, and "
 		  + "multicore devices.");
 	  System.out.println("exiting ...");
 	  System.exit(0);
