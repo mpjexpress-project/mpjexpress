@@ -132,8 +132,7 @@ public class ProcessLauncher extends Thread {
       }
 
       ProcessBuilder pb = new ProcessBuilder(arguments);
-      String currentDir = System.getProperty("user.dir");
-      pb.directory(new File(currentDir));
+      pb.directory(new File(pTicket.getWorkingDirectory()));
       pb.redirectErrorStream(true);
 
       if (DEBUG && logger.isDebugEnabled()) {
