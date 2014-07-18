@@ -37,6 +37,7 @@
 package runtime.common;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
@@ -44,6 +45,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import runtime.daemonmanager.DMConstants;
 
@@ -97,7 +99,7 @@ public class MPJUtil {
   }
 
   public static String getConfigValue(String property) {
-    for (String configLine : readWrapperConfigFile()) {
+    for (String configLine : readMPJExpressConfigFile()) {
       if (configLine.indexOf(property) > -1) {
 	String[] tokens = configLine.split("=");
 	if (tokens.length > 1)
@@ -107,14 +109,14 @@ public class MPJUtil {
     return "";
   }
 
-  public static ArrayList<String> readWrapperConfigFile() {
-    String path = getWrapperConfPath();
+  public static ArrayList<String> readMPJExpressConfigFile() {
+    String path = getMPJExpressConfPath();
     return readMPJFile(path);
   }
 
-  public static String getWrapperConfPath() {
+  public static String getMPJExpressConfPath() {
     return getMPJHomeDir() + DMConstants.CONF + File.separator
-	+ DMConstants.WRAPPER_CONF;
+	+ DMConstants.MPJEXPRESS_CONF;
 
   }
 
@@ -127,9 +129,9 @@ public class MPJUtil {
     return mpjHomeDir;
   }
 
-  public static String getWrapperLogPath() {
+  public static String getMPJExpressLogPath() {
     return getMPJHomeDir() + DMConstants.LOGS + File.separator
-	+ DMConstants.WRAPPER_LOG;
+	+ DMConstants.MPJEXPRESS_LOG;
   }
 
   public static String getJarPath(String jarName) {
@@ -158,6 +160,45 @@ public class MPJUtil {
 
   public static String FormatMessage(String host, String message) {
     return "[" + host + "] " + message;
+  }
+
+  public static void readConfigFile() {
+    FileInputStream in = null;
+    DataInputStream din = null;
+    BufferedReader reader = null;
+    String line = "";
+
+    try {
+
+      String path = getMPJExpressConfPath();
+      in = new FileInputStream(path);
+      din = new DataInputStream(in);
+      reader = new BufferedReader(new InputStreamReader(din));
+
+      while ((line = reader.readLine()) != null) {
+	if (line.startsWith(RTConstants.MPJ_DAEMON_PORT_KEY)) {
+	  RTConstants.MPJ_DAEMON_PORT = confValue(line);
+	} else if (line.startsWith(RTConstants.MPJ_PORTMANAGER_PORT_KEY)) {
+	  RTConstants.MPJ_PORTMANAGER_PORT = confValue(line);
+	} else if (line.startsWith(RTConstants.MPJ_DAEMON_LOGLEVEL_KEY)) {
+	  RTConstants.MPJ_DAEMON_LOGLEVEL = confValue(line);
+	} 
+      }
+
+      in.close();
+
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+
+  }
+
+  public static String confValue(String line) {
+    String trimmedLine = line.replaceAll("\\s+", "");
+    StringTokenizer tokenizer = new StringTokenizer(trimmedLine, "=");
+    tokenizer.nextToken();
+    return tokenizer.nextToken();
   }
 
 }
