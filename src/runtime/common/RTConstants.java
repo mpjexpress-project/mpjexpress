@@ -64,5 +64,16 @@ public class RTConstants {
   public static String DEBUG = "Debug";
   public static String DEBUG_PORT = "DebugPort";
   public static String PROFILER = "Profiler";
+  
+  public static String MPJ_DAEMON_PORT_KEY = "mpjexpress.mpjdaemon.port.1";
+  public static String MPJ_PORTMANAGER_PORT_KEY = "mpjexpress.mpjdaemon.port.2";
+  public static String MPJ_DAEMON_PORT = "10000";
+  public static String MPJ_PORTMANAGER_PORT = "10002";
+  public static String MPJ_DAEMON_LOGLEVEL_KEY = "mpjexpress.mpjdaemon.loglevel";
+  public static String MPJ_RUN_LOGLEVEL_KEY = "mpjexpress.mpjrun.loglevel";
+  public static String MPJ_DAEMON_LOGLEVEL = "OFF";
+  public static String MPJEXPRESS_VERSION_KEY = "mpjexpress.version";
+  public static String MPJEXPRESS_CONF_FILE = "conf/mpjexpress.conf";
+  public static String MPJDEV_CONF_FILE = "mpjdev.conf";
 
 }
