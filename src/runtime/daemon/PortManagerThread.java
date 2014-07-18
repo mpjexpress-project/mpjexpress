@@ -43,18 +43,21 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.StringTokenizer;
 
-
+import runtime.common.MPJProcessTicket;
+import runtime.common.MPJUtil;
 import runtime.common.RTConstants;
+import runtime.daemonmanager.DMConstants;
 
 public class PortManagerThread extends Thread {
   public volatile boolean isRun = true;
 
-  public PortManagerThread() {
-
+  public PortManagerThread(int port) {
+    this.port = port;
   }
 
-  private int port = getServerSocketPortFromWrapper();;
+  private int port;
 
   @Override
   public void run() {
@@ -64,7 +67,6 @@ public class PortManagerThread extends Thread {
   private void serverSocketInit() {
 
     try {
-
       ServerSocket servSock = new ServerSocket(port);
       while (isRun) {
 	Socket sock = servSock.accept();
@@ -75,43 +77,8 @@ public class PortManagerThread extends Thread {
     }
     catch (Exception cce) {
 
-      cce.printStackTrace();
       System.exit(0);
     }
-
-  }
-
-  private static int getServerSocketPortFromWrapper() {
-
-    int port = 0;
-    FileInputStream in = null;
-    DataInputStream din = null;
-    BufferedReader reader = null;
-    String line = "";
-
-    try {
-      
-      String path = RTConstants.MPJ_HOME_DIR + "/conf/wrapper.conf";
-      in = new FileInputStream(path);
-      din = new DataInputStream(in);
-      reader = new BufferedReader(new InputStreamReader(din));
-
-      while ((line = reader.readLine()) != null) {
-	if (line.startsWith("wrapper.app.parameter.3")) {
-	  String trimmedLine = line.replaceAll("\\s+", "");
-	  port = Integer.parseInt(trimmedLine.substring(24));
-	  break;
-	}
-      }
-
-      in.close();
-
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    return port;
 
   }
 
