@@ -13,10 +13,10 @@ public class WinBoot {
   }
 
   private String host = "localhost";
-  private String port = MPJUtil.getConfigValue(DMConstants.CONF_PORT_KEY);
+  private String port = "";// MPJUtil.getConfigValue(DMConstants.CONF_PORT_KEY);
 
-  public void startMPJExpress() throws IOException {
-
+  public void startMPJExpress(String port) throws IOException {
+    this.port = port;
     if (validExecutionParams()) {
       try {
 	String[] command = { "java", "-cp",
@@ -25,8 +25,7 @@ public class WinBoot {
 	ArrayList<String> consoleMessages = DaemonUtil.runProcess(command,
 	    false);
 	String pid = DaemonUtil.getMPJProcessID(host);
-	if (!pid.equals("") && Integer.parseInt(pid) > -1
-	    && Integer.parseInt(pid) < 30000) {
+	if (!pid.equals("") && Integer.parseInt(pid) > -1) {
 	  System.out.println(MPJUtil.FormatMessage(host,
 	      DMMessages.MPJDAEMON_STARTED + pid));
 	} else {
