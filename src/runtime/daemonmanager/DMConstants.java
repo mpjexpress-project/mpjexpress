@@ -37,6 +37,8 @@
 
 package runtime.daemonmanager;
 
+import runtime.common.MPJUtil;
+
 public class DMConstants {
   public static String BOOT = "boot";
   public static String WIN_BOOT = "winboot";
@@ -48,8 +50,8 @@ public class DMConstants {
   public static String CONF = "conf";
   public static String LIB = "lib";
   public static String LOGS = "logs";
-  public static String WRAPPER_LOG = "wrapper.log";
-  public static String WRAPPER_CONF = "wrapper.conf";
+  public static String MPJEXPRESS_LOG = "mpjexpress.log";
+  public static String MPJEXPRESS_CONF = "mpjexpress.conf";
   public static String EXT_JAR = ".jar";
   public static String MACHINES = "machines";
   public static String MPJDAEMON = "MPJDaemon";
@@ -75,6 +77,5 @@ public class DMConstants {
   public static String HOSTS = "hosts";
   public static String PORT = "port";
   public static String HELP = "help";
-  public static String DAEMON_PORT_NUMBER = "10000";
-  public static String CONF_PORT_KEY = "wrapper.app.parameter.2";
+
 }
