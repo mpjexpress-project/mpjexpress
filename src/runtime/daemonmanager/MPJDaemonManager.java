@@ -44,7 +44,7 @@ public class MPJDaemonManager {
   static boolean DEBUG = false; //FIXME: must be read from CLI
 
   public static void main(String[] args) {
-
+    MPJUtil.readConfigFile();
     CLOptions options = new CLOptions();
     options.parseCommandLineArgs(args);
 
@@ -82,7 +82,7 @@ public class MPJDaemonManager {
     } else if (options.getCmdType().equals(DMConstants.WIN_BOOT)) {
       WinBoot winBoot = new WinBoot();
       try {
-	winBoot.startMPJExpress();
+	winBoot.startMPJExpress(options.getPort());
       }
       catch (IOException e) {
 	e.printStackTrace();
