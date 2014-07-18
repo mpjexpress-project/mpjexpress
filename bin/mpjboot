@@ -5,6 +5,4 @@ if [ $# -ne 1 ]; then
   exit 127
 fi 
 
-port=`grep wrapper.app.parameter.2 $MPJ_HOME/conf/wrapper.conf |cut -d = -f2`
-
-java -jar $MPJ_HOME/lib/daemonmanager.jar -boot -p $port -m "$@"
+java -jar $MPJ_HOME/lib/daemonmanager.jar -boot -m "$@"

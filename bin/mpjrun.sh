@@ -14,8 +14,10 @@ if [ "$IS_NATIVE" == "false" ]; then
 	java -jar $MPJ_HOME/lib/starter.jar "$@"	
 	
 else
-   # use natmpjdev  
-echo "MPJ Express (0.42) is started in cluster configuration with native device"  
+   # use natmpjdev
+   
+version=`grep mpjexpress.version $MPJ_HOME/conf/mpjexpress.conf |cut -d = -f2`
+echo "MPJ Express ($version) is started in cluster configuration with native device"  
 MACHINESFILE=""
 CP=$MPJ_HOME/lib/mpj.jar                                                                              
 for i in $@; do     

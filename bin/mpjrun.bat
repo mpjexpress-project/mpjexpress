@@ -19,7 +19,11 @@ IF %IS_NATIVE%==false (
 	java -jar "%MPJ_HOME%"/lib/starter.jar %*
 	goto :EOF
 )
-echo "MPJ Express (0.41) is started in the native MPI configuration"
+
+for /f "eol=: tokens=2 delims==" %%a in ('find "mpjexpress.version" %MPJ_HOME%/conf/mpjexpress.conf') do (
+   set version=%%a
+   )
+echo "MPJ Express (%version%) is started in the native MPI configuration"
 
 SET MACHINESFILE=""
 SET CP="%MPJ_HOME%"/lib/mpj.jar
