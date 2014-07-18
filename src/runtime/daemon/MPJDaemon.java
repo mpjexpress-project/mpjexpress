@@ -39,6 +39,7 @@ package runtime.daemon;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -56,13 +57,17 @@ import org.apache.log4j.PatternLayout;
 import org.apache.log4j.spi.LoggerRepository;
 
 import runtime.common.MPJRuntimeException;
+import runtime.common.MPJUtil;
 import runtime.common.RTConstants;
-
+import runtime.daemonmanager.DMConstants;
+import runtime.daemonmanager.MPJHalt;
 
 public class MPJDaemon {
 
-  private int D_SER_PORT = 10000;
+  private int D_SER_PORT;
+  private int portManagerPort;
   static final boolean DEBUG = true;
+  private String logLevel = "OFF";
   static Logger logger = null;
   private static String mpjHomeDir = null;
   public volatile static ConcurrentHashMap<Socket, ProcessLauncher> servSockets;
@@ -87,6 +92,8 @@ public class MPJDaemon {
       exc.printStackTrace();
       return;
     }
+
+    readValuesFromMPJExpressConf();
     createLogger(mpjHomeDir, hostName);
     if (DEBUG && logger.isDebugEnabled()) {
       logger.debug("mpjHomeDir " + mpjHomeDir);
@@ -107,7 +114,7 @@ public class MPJDaemon {
     if (DEBUG && logger.isDebugEnabled())
         logger.debug("Starting PortManager thread .. ");
 
-    pManager = new PortManagerThread();
+    pManager = new PortManagerThread(portManagerPort);
     pManager.start();
 
     if (DEBUG && logger.isDebugEnabled())
@@ -131,22 +138,24 @@ public class MPJDaemon {
       DailyRollingFileAppender fileAppender = null;
 
       try {
-	fileAppender = new DailyRollingFileAppender(new PatternLayout(
-	    " %-5p %c %x - %m\n"), homeDir + "/logs/daemon-" + hostName
-	    + ".log", "yyyy-MM-dd-a");
+	if (logLevel.toUpperCase().equals("DEBUG")) {
+	  fileAppender = new DailyRollingFileAppender(new PatternLayout(
+	      " %-5p %c %x - %m\n"), homeDir + "/logs/daemon-" + hostName
+	      + ".log", "yyyy-MM-dd-a");
 
-	Logger rootLogger = Logger.getRootLogger();
-	rootLogger.addAppender(fileAppender);
-	LoggerRepository rep = rootLogger.getLoggerRepository();
-	rootLogger.setLevel((Level) Level.ALL);
+	  Logger rootLogger = Logger.getRootLogger();
+	  rootLogger.addAppender(fileAppender);
+	  LoggerRepository rep = rootLogger.getLoggerRepository();
+	  rootLogger.setLevel((Level) Level.ALL);
+	}
 	logger = Logger.getLogger("mpjdaemon");
-	String level = getValueFromWrapper("wrapper.logfile.loglevel.mpjdaemon");
-	logger.setLevel(Level.toLevel(level.toUpperCase(), Level.OFF));
+	logger.setLevel(Level.toLevel(logLevel.toUpperCase(), Level.OFF));
       }
       catch (Exception e) {
 	throw new MPJRuntimeException(e);
       }
     }
+
   }
 
   private void serverSocketInit() {
@@ -189,7 +198,6 @@ public class MPJDaemon {
     catch (Exception e) { 
       e.printStackTrace();
     }
-
     if (!serverSocket.isClosed())
       try {
 	serverSocket.close();
@@ -206,9 +214,8 @@ public class MPJDaemon {
 
   }
 
-  private static String getValueFromWrapper(String Parameter) {
+  private void readValuesFromMPJExpressConf() {
 
-    String value = "";
     FileInputStream in = null;
     DataInputStream din = null;
     BufferedReader reader = null;
@@ -216,18 +223,17 @@ public class MPJDaemon {
 
     try {
 
-      String path = mpjHomeDir + "/conf/wrapper.conf";
+      String path = mpjHomeDir + File.separator
+	  + RTConstants.MPJEXPRESS_CONF_FILE;
       in = new FileInputStream(path);
       din = new DataInputStream(in);
       reader = new BufferedReader(new InputStreamReader(din));
 
       while ((line = reader.readLine()) != null) {
-	if (line.startsWith(Parameter)) {
-	  String trimmedLine = line.replaceAll("\\s+", "");
-	  StringTokenizer tokenizer = new StringTokenizer(trimmedLine, "=");
-	  tokenizer.nextToken();
-	  value = tokenizer.nextToken();
-	  break;
+	if (line.startsWith(RTConstants.MPJ_PORTMANAGER_PORT_KEY)) {
+	  portManagerPort = Integer.parseInt(MPJUtil.confValue(line));
+	} else if (line.startsWith(RTConstants.MPJ_DAEMON_LOGLEVEL_KEY)) {
+	  logLevel = MPJUtil.confValue(line);
 	}
       }
 
@@ -237,8 +243,6 @@ public class MPJDaemon {
     catch (Exception e) {
       e.printStackTrace();
     }
-
-    return value;
 
   }
 
