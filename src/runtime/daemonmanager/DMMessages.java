@@ -39,11 +39,11 @@ package runtime.daemonmanager;
 import runtime.common.MPJUtil;
 
 public class DMMessages {
-  public static String MPJ_HOME_DIR_NOT_AVAILABLE = "MPJ_HOME directoy is not available";
+  public static String MPJ_HOME_DIR_NOT_AVAILABLE = "MPJ_HOME directory is not available";
   public static String UNKNOWN_HOST = "Name or service not known";
-  public static String INVALID_PORT = "Invalid port specified in wrapper.app.parameter.2 property of wrapper.config file ";
-  public static String BUSY_PORT = "Port is not available, Set a different port by modifying the wrapper.app.parameter.2 property in the "
-      + MPJUtil.getWrapperConfPath();
+  public static String INVALID_PORT = "Invalid port specified in mpjexpress.mpjdaemon.port.1 property of mpjexpress.conf file ";
+  public static String BUSY_PORT = "Port is not available, Set a different port by modifying the mpjexpress.mpjdaemon.port.1 property in the "
+      + MPJUtil.getMPJExpressConfPath();
   public static String MPJDAEMON_ALREADY_RUNNING = "MPJ daemon already running with process id: ";
   public static String MACHINE_FILE_NOT_SPECIFED = "Machine file is not specified";
   public static String MPJDAEMON_STARTED = "MPJ Daemon started successfully with process id: ";
