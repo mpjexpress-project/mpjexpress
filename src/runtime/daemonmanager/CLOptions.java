@@ -80,7 +80,7 @@ public class CLOptions {
   public CLOptions() {
     super();
     this.machineList = new ArrayList<String>();
-    this.threadCount = 20;
+    this.threadCount = (int)(Math.log(2)/Math.log(2));
     this.cmdType = DMConstants.STATUS;
     this.userCmd = "";
     this.machineFilePath = "";
@@ -241,7 +241,8 @@ public class CLOptions {
       } else if (line.hasOption(DMConstants.MACHINE_FILE)) {
 	String machineFilePath = line.getOptionValue(DMConstants.MACHINE_FILE);
 	this.setMachineFilePath(machineFilePath);
-	int nThreads = MPJUtil.readMachineFile(machineFilePath).size();
+	int nSize = MPJUtil.readMachineFile(machineFilePath).size();
+	int nThreads = (int)(Math.log(nSize)/Math.log(2));
 	this.setThreadCount(nThreads);
       }
 
