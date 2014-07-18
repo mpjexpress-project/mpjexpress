@@ -68,7 +68,8 @@ public class MPI {
   public static Intracomm COMM_WORLD;
   private static boolean initialized = false;
   static boolean debug = true;
-
+  public static boolean isOldSelected = false; // check for Flat Tree
+					       // Collectives
   static ByteBuffer buffer = null;
   static ArrayList<Request> pendingRequests = new ArrayList<Request>();
 
@@ -259,7 +260,11 @@ public class MPI {
 	  StringTokenizer tokenizer = new StringTokenizer(trimmedLine, "=");
 	  tokenizer.nextToken();
 	  level = tokenizer.nextToken();
-	  break;
+	} else if (line.startsWith("mpjexpress.mpi.old.collectives")) {
+	  String trimmedLine = line.replaceAll("\\s+", "");
+	  StringTokenizer tokenizer = new StringTokenizer(trimmedLine, "=");
+	  tokenizer.nextToken();
+	  isOldSelected = Boolean.parseBoolean(tokenizer.nextToken());
 	}
       }
 

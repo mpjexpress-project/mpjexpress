@@ -59,8 +59,6 @@ public class PureIntracomm extends IntracommImpl {
   int reducescatterTag = (34 * 1000) + 12;
   int scanTag = (34 * 1000) + 13;
 
-  public static boolean isOldSelected = false;
-
   PureIntracomm() {
   }
 
@@ -593,7 +591,7 @@ public class PureIntracomm extends IntracommImpl {
    */
   public void Bcast(Object buf, int offset, int count, Datatype datatype,
       int root) throws MPIException {
-    if (isOldSelected) {
+    if (MPI.isOldSelected) {
       if (MPI.DEBUG && MPI.logger.isDebugEnabled())
 	MPI.logger.debug("-------Flat Tree Broadcast selected------");
       FT_Bcast(buf, offset, count, datatype, root);
@@ -785,7 +783,7 @@ public class PureIntracomm extends IntracommImpl {
       Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
       Datatype recvtype, int root) throws MPIException {
     // ------------------------------------------------MST_Gather---------------------------------------------------------
-    if (sendcount * sendtype.Size() <= 16384 && !isOldSelected) {
+    if (sendcount * sendtype.Size() <= 16384 && !MPI.isOldSelected) {
       if (MPI.DEBUG && MPI.logger.isDebugEnabled()) {
 	MPI.logger.debug("-------MST Gather selected------");
 	MPI.logger.debug("Small Data Size 0 - 16 KB");
@@ -800,7 +798,7 @@ public class PureIntracomm extends IntracommImpl {
     else {
       if (MPI.DEBUG && MPI.logger.isDebugEnabled()) {
 	MPI.logger.debug("-------Flat Tree Gather selected------");
-	if (!isOldSelected)
+	if (!MPI.isOldSelected)
 	  MPI.logger.debug("Large Data Size > 16.1 KB");
       }
       FT_Gather(sendbuf, sendoffset, sendcount, sendtype, recvbuf, recvoffset,
@@ -1058,7 +1056,7 @@ public class PureIntracomm extends IntracommImpl {
       Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
       Datatype recvtype, int root) throws MPIException {
     // ------------------------------------------------MST_Scatter---------------------------------------------------------
-    if (sendcount * sendtype.Size() <= 16384 && !isOldSelected) {
+    if (sendcount * sendtype.Size() <= 16384 && !MPI.isOldSelected) {
       if (MPI.DEBUG && MPI.logger.isDebugEnabled()) {
 	MPI.logger.debug("-------MST Scatter selected------");
 	MPI.logger.debug("Small Data Size 0 - 16 KB");
@@ -1072,7 +1070,7 @@ public class PureIntracomm extends IntracommImpl {
     else {
       if (MPI.DEBUG && MPI.logger.isDebugEnabled()) {
 	MPI.logger.debug("-------Flat Tree Scatter selected------");
-	if (!isOldSelected)
+	if (!MPI.isOldSelected)
 	  MPI.logger.debug("Large Data Size > 16.1 KB");
       }
       FT_Scatter(sendbuf, sendoffset, sendcount, sendtype, recvbuf, recvoffset,
@@ -1302,7 +1300,7 @@ public class PureIntracomm extends IntracommImpl {
   public void Allgather(Object sendbuf, int sendoffset, int sendcount,
       Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
       Datatype recvtype) throws MPIException {
-    if (isOldSelected) {
+    if (MPI.isOldSelected) {
       if (MPI.DEBUG && MPI.logger.isDebugEnabled())
 	MPI.logger.debug("-------Flat Tree Allgather Selected------");
       FT_Allgather(sendbuf, sendoffset, sendcount, sendtype, recvbuf,
@@ -1925,7 +1923,7 @@ public class PureIntracomm extends IntracommImpl {
   public void Reduce(Object sendbuf, int sendoffset, Object recvbuf,
       int recvoffset, int count, Datatype datatype, Op op, int root)
       throws MPIException {
-    if (isOldSelected) {
+    if (MPI.isOldSelected) {
       if (MPI.DEBUG && MPI.logger.isDebugEnabled())
 	MPI.logger.debug("-------Flat Tree Reduce Selected------");
       FT_Reduce(sendbuf, sendoffset, recvbuf, recvoffset, count, datatype, op,
@@ -2169,7 +2167,7 @@ public class PureIntracomm extends IntracommImpl {
 
   public void Allreduce(Object sendbuf, int sendoffset, Object recvbuf,
       int recvoffset, int count, Datatype datatype, Op op) throws MPIException {
-    if (isOldSelected) {
+    if (MPI.isOldSelected) {
       if (MPI.DEBUG && MPI.logger.isDebugEnabled())
 	MPI.logger.debug("-------Flat Tree Allreduce Selected------");
       FT_Allreduce(sendbuf, sendoffset, recvbuf, recvoffset, count, datatype,
@@ -2357,7 +2355,7 @@ public class PureIntracomm extends IntracommImpl {
   public void Reduce_scatter(Object sendbuf, int sendoffset, Object recvbuf,
       int recvoffset, int[] recvcounts, Datatype datatype, Op op)
       throws MPIException {
-    if (isOldSelected) {
+    if (MPI.isOldSelected) {
       if (MPI.DEBUG && MPI.logger.isDebugEnabled())
 	MPI.logger.debug("-------Flat Tree Reduce_Scatter selected------");
 
