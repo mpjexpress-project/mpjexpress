@@ -32,18 +32,24 @@
  * Author       : Aamir Shafi, Bryan Carpenter
  * Created      : Fri Sep 10 12:22:15 BST 2004
  * Revision     : $Revision: 1.5 $
- * Updated      : $Date: 2014/03/11 13:26:15 PKT $
+ * Updated      : $Date: 2014/07/11 13:26:15 PKT $
  */
 
 package mpi;
 
 import mpjdev.*;
 import mpjbuf.*;
+
 import java.util.Hashtable;
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -55,7 +61,7 @@ import org.apache.log4j.spi.LoggerRepository;
 
 public class MPI {
 
-  public static final boolean DEBUG = false;
+  public static final boolean DEBUG = true;
   // public static final boolean DEBUG = false;
   static Logger logger = null;
 
@@ -233,19 +239,51 @@ public class MPI {
     int rank = Integer.parseInt(argv[0]);
     Map<String, String> map = System.getenv();
     String mpjHomeDir = map.get("MPJ_HOME");
+    String username = System.getProperty("user.name");
+    String level = "";
+    FileInputStream in = null;
+    DataInputStream din = null;
+    BufferedReader reader = null;
+    String line = "";
 
+    try {
+
+      String path = mpjHomeDir + "/conf/mpjexpress.conf";
+      in = new FileInputStream(path);
+      din = new DataInputStream(in);
+      reader = new BufferedReader(new InputStreamReader(din));
+
+      while ((line = reader.readLine()) != null) {
+	if (line.startsWith("mpjexpress.mpi.loglevel")) {
+	  String trimmedLine = line.replaceAll("\\s+", "");
+	  StringTokenizer tokenizer = new StringTokenizer(trimmedLine, "=");
+	  tokenizer.nextToken();
+	  level = tokenizer.nextToken();
+	  break;
+	}
+      }
+
+      in.close();
+
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
     if (logger == null && DEBUG) {
       try {
-	fileAppender = new DailyRollingFileAppender(new PatternLayout(
-	    " %-5p %c %x - %m\n"), mpjHomeDir + "/logs/mpj" + rank + ".log",
-	    "yyyy-MM-dd-HH");
+	if (level.toUpperCase().equals("DEBUG")) {
+	  fileAppender = new DailyRollingFileAppender(new PatternLayout(
+	      " %-5p %c %x - %m\n"), mpjHomeDir + "/logs/" + username + "-mpj-"
+	      + rank + ".log", "yyyy-MM-dd-HH");
 
-	Logger rootLogger = Logger.getRootLogger();
-	rootLogger.addAppender(fileAppender);
-	LoggerRepository rep = rootLogger.getLoggerRepository();
-	rootLogger.setLevel((Level) Level.ALL);
+	  Logger rootLogger = Logger.getRootLogger();
+	  rootLogger.addAppender(fileAppender);
+	  LoggerRepository rep = rootLogger.getLoggerRepository();
+	  rootLogger.setLevel((Level) Level.ALL);
+	}
 	// rep.setThreshold((Level) Level.OFF ) ;
 	logger = Logger.getLogger("mpj");
+	logger.setLevel(Level.toLevel(level.toUpperCase(), Level.OFF));
       }
       catch (Exception e) {
 	throw new MPIException(e);
@@ -261,17 +299,16 @@ public class MPI {
       RECV_OVERHEAD = MPJDev.getRecvOverhead();
 
       COMM_WORLD = new Intracomm(mpjdev.MPJDev.WORLD, mpjdev.MPJDev.WORLD.group);
-      
+
       int tagub = Integer.MAX_VALUE;
-      
-      if(mpjdev.Constants.isNative)
-       tagub = ((mpjdev.natmpjdev.Comm) COMM_WORLD.mpjdevComm).getMPI_TAG_UB();
-		
-		
+
+      if (mpjdev.Constants.isNative)
+	tagub = ((mpjdev.natmpjdev.Comm) COMM_WORLD.mpjdevComm).getMPI_TAG_UB();
+
       COMM_WORLD.Attr_put(MPI.TAG_UB, tagub);
       COMM_WORLD.Attr_put(MPI.HOST, PROC_NULL);
       COMM_WORLD.Attr_put(MPI.IO, COMM_WORLD.Rank());
-     
+
     }
     catch (Exception e) {
       throw new MPIException(e);
@@ -299,12 +336,12 @@ public class MPI {
      * then this '3' may have to be changed
      */
     String[] nargs = null;
-    if (argv[2].equals("hybdev")){
-	nargs = new String[(argv.length - 8)];
-	System.arraycopy(argv, 8, nargs, 0, nargs.length);
-    }else {
-    	nargs = new String[(argv.length - 3)];
-    	System.arraycopy(argv, 3, nargs, 0, nargs.length);
+    if (argv[2].equals("hybdev")) {
+      nargs = new String[(argv.length - 8)];
+      System.arraycopy(argv, 8, nargs, 0, nargs.length);
+    } else {
+      nargs = new String[(argv.length - 3)];
+      System.arraycopy(argv, 3, nargs, 0, nargs.length);
     }
     initialized = true;
 
