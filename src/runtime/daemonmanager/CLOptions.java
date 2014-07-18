@@ -48,6 +48,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 
 import runtime.common.MPJUtil;
+import runtime.common.RTConstants;
 
 public class CLOptions {
 
@@ -83,7 +84,7 @@ public class CLOptions {
     this.cmdType = DMConstants.STATUS;
     this.userCmd = "";
     this.machineFilePath = "";
-    this.port = MPJUtil.getConfigValue(DMConstants.CONF_PORT_KEY); // PMConstants.DAEMON_PORT_NUMBER;
+    this.port = RTConstants.MPJ_DAEMON_PORT;
     this.machineFilePath = MPJUtil.getMachineFilePath();
   }
 
