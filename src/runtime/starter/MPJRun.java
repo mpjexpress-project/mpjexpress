@@ -67,10 +67,11 @@ public class MPJRun {
   final String DEFAULT_MACHINES_FILE_NAME = "machines";
   final int DEFAULT_PROTOCOL_SWITCH_LIMIT = 128 * 1024; // 128K
 
-  private int D_SER_PORT = 10000;
-
   private String CONF_FILE_CONTENTS = "#temp line";
   private int mxBoardNum = 0;
+  private int D_SER_PORT = 0;
+  private int DEBUG_PORT = 0;
+  private int portManagerPort = 0;
 
   String machinesFile = DEFAULT_MACHINES_FILE_NAME;
   private int psl = DEFAULT_PROTOCOL_SWITCH_LIMIT;
@@ -85,6 +86,8 @@ public class MPJRun {
   private ArrayList<String> machineList = new ArrayList<String>();
   int nprocs = Runtime.getRuntime().availableProcessors();
   String deviceName = "multicore";
+  private String networkDevice = "niodev";
+
   static String mpjHomeDir = null;
   byte[] urlArray = null;
   Hashtable procsPerMachineTable = new Hashtable();
@@ -94,20 +97,18 @@ public class MPJRun {
   String className = null;
   String applicationClassPathEntry = null;
 
-  static final boolean DEBUG = true;
-  static final String VERSION = "0.42";
+  private static String VERSION = "";
   private static int RUNNING_JAR_FILE = 2;
   private static int RUNNING_CLASS_FILE = 1;
   private boolean zippedSource = false;
   private String sourceFolder = "";
   int networkProcesscount = -1;
 
-  private String networkDevice = "niodev";
   private boolean ADEBUG = false;
   private boolean APROFILE = false;
-  private int DEBUG_PORT = 24500;
-  private final String CONF_FILE_NAME = "mpjdev.conf";
-  private int portManagerPort = 15000;
+
+  static final boolean DEBUG = true;
+  private String logLevel = "OFF";
 
   /**
    * Every thing is being inside this constructor :-)
@@ -134,12 +135,7 @@ public class MPJRun {
       exc.printStackTrace();
       return;
     }
-
-    D_SER_PORT = Integer
-	.parseInt(getValueFromWrapper("wrapper.app.parameter.2"));
-    portManagerPort = Integer
-	.parseInt(getValueFromWrapper("wrapper.app.parameter.3"));
-
+    readValuesFromMPJExpressConf();
     createLogger(args);
 
     if (DEBUG && logger.isDebugEnabled()) {
@@ -513,24 +509,24 @@ public class MPJRun {
   }
 
   private void createLogger(String[] args) throws MPJRuntimeException {
-
+    String userDir = System.getProperty("user.dir");
     if (DEBUG && logger == null) {
 
       DailyRollingFileAppender fileAppender = null;
 
       try {
-	fileAppender = new DailyRollingFileAppender(new PatternLayout(
-	    " %-5p %c %x - %m\n"), mpjHomeDir + "/logs/mpjrun.log",
-	    "yyyy-MM-dd-a");
+	if (logLevel.toUpperCase().equals("DEBUG")) {
+	  fileAppender = new DailyRollingFileAppender(new PatternLayout(
+	      " %-5p %c %x - %m\n"), userDir + "/mpjrun.log", "yyyy-MM-dd-a");
 
-	Logger rootLogger = Logger.getRootLogger();
-	rootLogger.addAppender(fileAppender);
-	LoggerRepository rep = rootLogger.getLoggerRepository();
-	rootLogger.setLevel((Level) Level.ALL);
+	  Logger rootLogger = Logger.getRootLogger();
+	  rootLogger.addAppender(fileAppender);
+	  LoggerRepository rep = rootLogger.getLoggerRepository();
+	  rootLogger.setLevel((Level) Level.ALL);
+	}
 	// rep.setThreshold((Level) Level.OFF ) ;
 	logger = Logger.getLogger("runtime");
-	String level = getValueFromWrapper("wrapper.logfile.loglevel.mpjrun");
-	logger.setLevel(Level.toLevel(level.toUpperCase(), Level.OFF));
+	logger.setLevel(Level.toLevel(logLevel.toUpperCase(), Level.OFF));
       }
       catch (Exception e) {
 	throw new MPJRuntimeException(e);
@@ -540,14 +536,15 @@ public class MPJRun {
 
   private void printUsage() {
     System.out
-	.println("mpjrun.[bat/sh] [options] class [args...]"
+	.println("MPJ Express version " + VERSION
+	    + "\n\nmpjrun.[bat/sh] [options] class [args...]"
 	    + "\n                (to execute a class)"
 	    + "\nmpjrun.[bat/sh] [options] -jar jarfile [args...]"
 	    + "\n                (to execute a jar file)"
 	    + "\n\nwhere options include:"
 	    + "\n   -np val            -- <# of cores>"
 	    + "\n   -dev val           -- <multicore>"
-	    + "\n   -dport val         -- <read from wrapper.conf>"
+	    + "\n   -dport val         -- <read from mpjexpress.conf>"
 	    + "\n   -wdir val          -- $MPJ_HOME/bin"
 	    + "\n   -mpjport val       -- Deprecated"
 	    + "\n   -mxboardnum val    -- 0"
@@ -792,9 +789,8 @@ public class MPJRun {
 
   }
 
-  private static String getValueFromWrapper(String Parameter) {
+  private void readValuesFromMPJExpressConf() {
 
-    String value = "";
     FileInputStream in = null;
     DataInputStream din = null;
     BufferedReader reader = null;
@@ -802,18 +798,20 @@ public class MPJRun {
 
     try {
 
-      String path = mpjHomeDir + "/conf/wrapper.conf";
+      String path = mpjHomeDir + File.separator + RTConstants.MPJEXPRESS_CONF_FILE;
       in = new FileInputStream(path);
       din = new DataInputStream(in);
       reader = new BufferedReader(new InputStreamReader(din));
 
       while ((line = reader.readLine()) != null) {
-	if (line.startsWith(Parameter)) {
-	  String trimmedLine = line.replaceAll("\\s+", "");
-	  StringTokenizer tokenizer = new StringTokenizer(trimmedLine, "=");
-	  tokenizer.nextToken();
-	  value = tokenizer.nextToken();
-	  break;
+	if (line.startsWith(RTConstants.MPJ_DAEMON_PORT_KEY)) {
+	  D_SER_PORT = Integer.parseInt(MPJUtil.confValue(line));
+	} else if (line.startsWith(RTConstants.MPJ_PORTMANAGER_PORT_KEY)) {
+	  portManagerPort = Integer.parseInt(MPJUtil.confValue(line));
+	} else if (line.startsWith(RTConstants.MPJ_RUN_LOGLEVEL_KEY)) {
+	  logLevel = MPJUtil.confValue(line);
+	} else if (line.startsWith(RTConstants.MPJEXPRESS_VERSION_KEY)) {
+	  VERSION = MPJUtil.confValue(line);
 	}
       }
 
@@ -823,8 +821,6 @@ public class MPJRun {
     catch (Exception e) {
       e.printStackTrace();
     }
-
-    return value;
 
   }
 
@@ -872,7 +868,7 @@ public class MPJRun {
     // MPJ Express Debugger
     try {
       BufferedWriter out = new BufferedWriter(new FileWriter(
-	  System.getProperty("user.home") + File.separator + CONF_FILE_NAME));
+	  System.getProperty("user.home") + File.separator + RTConstants.MPJDEV_CONF_FILE));
       out.write(configurationFileData);
       out.close();
     }
