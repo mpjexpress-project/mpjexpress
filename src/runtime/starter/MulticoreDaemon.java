@@ -127,8 +127,6 @@ public class MulticoreDaemon {
     InetAddress localaddr = InetAddress.getLocalHost();
     hostName = localaddr.getHostName();
 
-    Map<String, String> map = System.getenv();
-    mpjHomeDir = map.get("MPJ_HOME");
 
     if (MPJRun.DEBUG && MPJRun.logger.isDebugEnabled()) {
       MPJRun.logger.debug("mpjHomeDir " + mpjHomeDir);
