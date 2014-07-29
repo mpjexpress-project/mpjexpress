@@ -257,6 +257,7 @@ public class ProcessArgumentsManager {
 	    + mpjHomeDir + "/lib/xdev.jar" + File.pathSeparator + ""
 	    + mpjHomeDir + "/lib/smpdev.jar" + File.pathSeparator + ""
 	    + mpjHomeDir + "/lib/niodev.jar" + File.pathSeparator + ""
+        + mpjHomeDir + "/lib/mxdev.jar" + File.pathSeparator + ""
 	    + mpjHomeDir + "/lib/mpjbuf.jar" + File.pathSeparator + ""
 	    + mpjHomeDir + "/lib/loader2.jar" + File.pathSeparator + ""
 	    + mpjHomeDir + "/lib/starter.jar" + File.pathSeparator
@@ -286,6 +287,7 @@ public class ProcessArgumentsManager {
 	  + mpjHomeDir + "/lib/xdev.jar" + File.pathSeparator + "" + mpjHomeDir
 	  + "/lib/smpdev.jar" + File.pathSeparator + "" + mpjHomeDir
 	  + "/lib/niodev.jar" + File.pathSeparator + "" + mpjHomeDir
+      + "/lib/mxdev.jar" + File.pathSeparator + "" + mpjHomeDir
 	  + "/lib/mpjbuf.jar" + File.pathSeparator + "" + mpjHomeDir
 	  + "/lib/loader2.jar" + File.pathSeparator + "" + mpjHomeDir
 	  + "/lib/starter.jar" + File.pathSeparator
@@ -372,8 +374,9 @@ public class ProcessArgumentsManager {
     arguments[indx + 1] = Integer.toString(pTicket.getNetworkProcessCount());
     arguments[indx + 2] = Integer.toString(pTicket.getStartingRank());
     arguments[indx + 3] = configFilePath;
-    arguments[indx + 4] = "niodev";
+    arguments[indx + 4] = pTicket.getNetworkDevice();
 
+    MPJDaemon.logger.debug("HybridDaemon: hybdrid network device: "+pTicket.getNetworkDevice() );
     for (int i = 0; i < aArgs.length; i++) {
       arguments[i + CMD_WORDS + jArgs.length + HYB_ARGS + nArgumentIncrement] = aArgs[i];
     }
@@ -387,66 +390,69 @@ public class ProcessArgumentsManager {
       MPJDaemon.logger.debug("HybridDaemon: creating process-builder object ");
     }
 
+    if (MPJDaemon.DEBUG && MPJDaemon.logger.isDebugEnabled()) {
+      MPJDaemon.logger.debug(" Argument list for hybdev");
+      for (int i=0;i<arguments.length;i++){
+        MPJDaemon.logger.debug(arguments[i]+" ");
+      }
+    }
     return arguments;
   }
 
   public ArrayList<Integer> WriteConfigFile() {
-    {
       String CONF_FILE_NAME = "mpjdev.conf";
       configFilePath = ticketDir + File.separator + CONF_FILE_NAME;
       if (MPJDaemon.DEBUG && MPJDaemon.logger.isDebugEnabled()) {
-	MPJDaemon.logger.debug("configFilePath");
+        MPJDaemon.logger.debug("configFilePath");
       }
 
       File configFile = new File(configFilePath);
       try {
-	configFile.createNewFile();
+        configFile.createNewFile();
       }
       catch (IOException e1) {
-	System.out.println("Unable to create config file ");
-	System.out.println(e1.getMessage() + "\r\n" + e1.getStackTrace());
-	MPJDaemon.logger.debug(e1.getMessage());
+        System.out.println("Unable to create config file ");
+        System.out.println(e1.getMessage() + "\r\n" + e1.getStackTrace());
+        MPJDaemon.logger.debug(e1.getMessage());
       }
 
       configFilePath = ticketDir + File.separator + CONF_FILE_NAME;
       if (MPJDaemon.DEBUG && MPJDaemon.logger.isDebugEnabled()) {
-	MPJDaemon.logger.debug("Config file created :");
+        MPJDaemon.logger.debug("Config file created :");
       }
 
       StringTokenizer conf_file_tokenizer = new StringTokenizer(
-	  pTicket.getConfFileContents(), ";");
+      pTicket.getConfFileContents(), ";");
       PrintStream cout;
       FileOutputStream cfos = null;
 
       try {
-	cfos = new FileOutputStream(configFile);
+        cfos = new FileOutputStream(configFile);
       }
       catch (FileNotFoundException e1) {
-	e1.printStackTrace();
+        e1.printStackTrace();
       }
       cout = new PrintStream(cfos);
 
       while (conf_file_tokenizer.hasMoreTokens()) {
-	String token = conf_file_tokenizer.nextToken();
-	if (token.contains("@") && !token.startsWith("#")) {
-	  String[] tokens = token.split("@");
-	  ports.add(Integer.parseInt(tokens[1]));
-	  if (pTicket.getDeviceName() != "mxdev")
-	    ports.add(Integer.parseInt(tokens[2]));
-	}
-	cout.println(token);
+        String token = conf_file_tokenizer.nextToken();
+        if (token.contains("@") && !token.startsWith("#")) {
+          String[] tokens = token.split("@");
+          ports.add(Integer.parseInt(tokens[1]));
+          if (pTicket.getDeviceName() != "mxdev")
+            ports.add(Integer.parseInt(tokens[2]));
+        }
+        cout.println(token);
       }
 
       cout.close();
       try {
-	cfos.close();
+        cfos.close();
       }
       catch (IOException e1) {
-	e1.printStackTrace();
+        e1.printStackTrace();
       }
       return ports;
-
-    }
   }
 
   private void WriteSourceFile() {
