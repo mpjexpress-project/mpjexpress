@@ -86,7 +86,7 @@ public class MPJRun {
   private ArrayList<String> machineList = new ArrayList<String>();
   int nprocs = Runtime.getRuntime().availableProcessors();
   String deviceName = "multicore";
-  private String networkDevice = "niodev";
+  private String networkDevice = "";
 
   static String mpjHomeDir = null;
   byte[] urlArray = null;
@@ -280,20 +280,41 @@ public class MPJRun {
 	i++;
       }
 
-      else if (args[i].equals("-dev")) {
-	deviceName = args[i + 1];
-	i++;
-	if (!(deviceName.equals("niodev") || deviceName.equals("hybdev")
-	    || deviceName.equals("mxdev") || deviceName.equals("multicore"))) {
-	  System.out.println("MPJ Express currently does not support the <"
-	      + deviceName + "> device.");
-	  System.out
-	      .println("Possible options are niodev, hybdev, mxdev, native, and "
-		  + "multicore devices.");
-	  System.out.println("exiting ...");
-	  System.exit(0);
-	}
+  else if (args[i].equals("-dev")) {
+    deviceName = args[i + 1];
+    if (!(deviceName.equals("niodev") || deviceName.contains("hybdev")
+        || deviceName.equals("mxdev") || deviceName.equals("multicore"))) {
+      System.out.println("MPJ Express currently does not support the <"
+          + deviceName + "> device.");
+      System.out
+          .println("Possible options are niodev, hybdev, mxdev, native, and "
+        + "multicore devices.");
+      System.out.println("exiting ...");
+      System.exit(0);
+    }
+    if (deviceName.toLowerCase().contains("hybdev")){
+      String temp [] = null;
+  //        System.out.println("MPJRUN: devicename contains hybdev "+ deviceName) ;
+      temp = deviceName.toLowerCase().split(":") ;
+      if (temp.length == 2){
+  //          System.out.println("MPJRUN: Temp String length 2: "+ temp[0]+" "+temp[1]) ;
+      deviceName = temp[0];
+      networkDevice = temp[1];
+      if ( !(deviceName.equals("hybdev") && (networkDevice.equals("mxdev") || networkDevice.equals("niodev")) )){
+        System.out.println("MPJ Express hybdev should be loaded by -dev switch with hybdev:niodev or hybdev:mxdev values");
+        System.out.println("exiting ...");
+        System.exit(0);
       }
+  //          System.out.println("MPJRUN: splitted strings for hybrid: Dev "+ deviceName+" netDev "+networkDevice) ;
+      }
+      else{
+      deviceName="hybdev" ;
+      networkDevice="niodev" ;
+      }
+      args[i + 1] = deviceName;
+    }
+    i++;
+  }
 
       else if (args[i].equals("-machinesfile")) {
 	machinesFile = args[i + 1];
@@ -716,16 +737,26 @@ public class MPJRun {
     // One NIO Process per machine is being implemented, SMP Threads per
     // node will be decided in SMPDev
     for (int i = 0; i < networkProcesscount; i++) {
-      procsPerMachineTable.put(
-	  InetAddress.getByName((String) machineList.get(i)).getHostAddress(),
-	  new Integer(1));
-      Integer[] ports = getNextAvialablePorts((String) machineList.get(i));
-      int readPort = ports[0];
-      int writePort = ports[1];
-      CONF_FILE_CONTENTS += ";"
-	  + InetAddress.getByName((String) machineList.get(i)).getHostAddress()
-	  + "@" + readPort + "@" + writePort + "@" + (netID++);
-      CONF_FILE_CONTENTS += "@" + (DEBUG_PORT);
+        procsPerMachineTable.put(
+        InetAddress.getByName((String) machineList.get(i)).getHostAddress(),
+        new Integer(1));
+      if (networkDevice.equals("niodev")) {
+        //System.out.println(" writing niodev network content");
+        Integer[] ports = getNextAvialablePorts((String) machineList.get(i));
+        int readPort = ports[0];
+        int writePort = ports[1];
+        CONF_FILE_CONTENTS += ";"
+        + InetAddress.getByName((String) machineList.get(i)).getHostAddress()
+        + "@" + readPort + "@" + writePort + "@" + (netID++);
+        CONF_FILE_CONTENTS += "@" + (DEBUG_PORT);
+      }
+
+      else if (networkDevice.equals("mxdev")) {
+        //System.out.println(" writing mxdev network content");
+        CONF_FILE_CONTENTS += ";" + (String) machineList.get(i) + "@"
+        + mxBoardNum + "@" + (netID++);
+        CONF_FILE_CONTENTS += "@" + (DEBUG_PORT);
+      }
     }
 
     if (DEBUG && logger.isDebugEnabled()) {
