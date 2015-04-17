@@ -1,6 +1,6 @@
-QuickStart Guide: Running MPJ Express on UNIX/Linux/Mac platform
-                  Last Updated: Friday July 18 12:44:20 PKT 2014
-                                Version 0.43
+      QuickStart Guide: Running MPJ Express on UNIX/Linux/Mac platform
+                  Last Updated: Friday April 17 11:51:20 PKT 2015
+                                Version 0.44
 
 Introduction
 ============
@@ -81,6 +81,11 @@ Running MPJ Express Programs in the Cluster Configuration
 
 For detials read the linuxguide.pdf that can be found in $MPJ_HOME/doc
 
+Running MPJ Express Programs on HADOOP Clusters
+=========================================================
+To run your MPJ programs on HADOOP Clusters, please refer to "yarnguide.pdf"
+in $MPJ_HOME/doc folder
+
 Known Issues
 ============
 
@@ -111,5 +116,5 @@ your query/problem is still not resolved, contact us by emailing:
 5. Muhammad Ansar Javed (muhammad.ansar@seecs.edu.pk)
 6. Bibrak Qamar (bibrak.qamar@seecs.edu.pk)
 7. Aleem Akhtar (aleem.akhtar@seecs.edu.pk)
-
+8. Hamza Zafar (11bscshzafar@seecs.edu.pk)
 

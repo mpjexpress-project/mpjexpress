@@ -1,3 +1,20 @@
+Version 0.44
+------------
+
+1. This release mainly introduces the Hadoop YARN runtime for MPJ Express
+
+   a. For running MPJ programs on Hadoop clusters, refer to "yarnguide.pdf"
+      in $MPJ_HOME/doc folder
+
+   b. MPJYarnClient MPJAppMaster MPJYarnWrapper classes have been added
+      to starter package
+ 
+   c. Port allocation has been moved to niodev.init
+
+   d  Build.xml is changed:
+      "ant" command compiles the normal runtime
+      "and hadoop" command compiles the MPJ Hadoop runtime
+
 Version 0.43
 ------------
 

@@ -1,7 +1,7 @@
          
           QuickStart Guide: Running MPJ Express on Windows Platform 
                   Last Updated: Friday July 18 12:44:20 PKT 2014
-                                Version 0.43
+                                Version 0.44
 
 Introduction
 ============
@@ -97,3 +97,4 @@ your query/problem is still not resolved, contact us by emailing:
 5. Muhammad Ansar Javed (muhammad.ansar@seecs.edu.pk)
 6. Bibrak Qamar (bibrak.qamar@seecs.edu.pk)
 7. Aleem Akhtar (aleem.akhtar@seecs.edu.pk)
+8. Hamza Zafar (11bscshzafar@seecs.edu.pk)
