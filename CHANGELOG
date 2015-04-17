@@ -13,7 +13,7 @@ Version 0.44
 
    d  Build.xml is changed:
       "ant" command compiles the normal runtime
-      "and hadoop" command compiles the MPJ Hadoop runtime
+      "ant hadoop" command compiles the MPJ Hadoop runtime
 
 Version 0.43
 ------------
