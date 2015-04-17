@@ -1,3 +1,42 @@
+/*
+ The MIT License
+
+ Copyright (c) 2013 - 2014
+   1. High Performance Computing Group, 
+   School of Electrical Engineering and Computer Science (SEECS), 
+   National University of Sciences and Technology (NUST)
+   2. Khurram Shahzad, Mohsan Jameel, Aamir Shafi, Bryan Carpenter (2013 - 2014)
+
+ Permission is hereby granted, free of charge, to any person obtaining
+ a copy of this software and associated documentation files (the
+ "Software"), to deal in the Software without restriction, including
+ without limitation the rights to use, copy, modify, merge, publish,
+ distribute, sublicense, and/or sell copies of the Software, and to
+ permit persons to whom the Software is furnished to do so, subject to
+ the following conditions:
+
+ The above copyright notice and this permission notice shall be included
+ in all copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+ DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/*
+ * File         : ProcessArgumentsManager.java 
+ * Author(s)    : Aamir Shafi, Bryan Carpenter, Khurram Shahzad,
+ *		  Farrukh Khan
+ * Created      : Oct 10, 2013
+ * Revision     : $
+ * Updated      : Aug 27, 2014
+ */
+
+
 package runtime.daemon;
 
 import java.io.File;
@@ -157,11 +196,9 @@ public class ProcessArgumentsManager {
       }
     }
 
-    /* ends Here */
-    /*
-     * FIX ME BY RIZWAN HANIF : making arguments to launch MPI Processes
-     */
-    int N_ARG_COUNT = 7;
+    // This segment of the code reads values from ticket and makes an
+    // argument array
+    int N_ARG_COUNT = 9;
     int increment = 1;
 
     int nArgumentIncrement = 0;
@@ -177,7 +214,7 @@ public class ProcessArgumentsManager {
       increment++;
     } else
       arguments[0] = "java";
-    // System.arraycopy ... can be used ..here ...
+
     for (int i = 0; i < pTicket.getJvmArgs().size(); i++) {
       arguments[i + increment] = pTicket.getJvmArgs().get(i);
     }
@@ -191,21 +228,34 @@ public class ProcessArgumentsManager {
 
     arguments[indx] = "runtime.daemon.Wrapper";
     indx++;
-    arguments[indx] = configFilePath;
+
+    // Modifying argument processing for NIODevInit
+    if(pTicket.getDeviceName().equals("mxdev")){
+      arguments[indx] = configFilePath;
+    }
+    else{
+      arguments[indx] = pTicket.getConfFileContents();
+      arguments[indx] = arguments[indx].replace(' ','|');
+    }
     indx++;
     arguments[indx] = Integer.toString(pTicket.getProcessCount());
     indx++;
     arguments[indx] = pTicket.getDeviceName();
     indx++;
+
+    // Two extra arguments added to include MPJRun.java server
+    // IP and port number
+    arguments[indx] = pTicket.getMasterNode();
+    indx++;
+    arguments[indx] = pTicket.getMasterPort();
+    indx++;
+
     arguments[indx] = "" + (-1);
-    /*
-     * FIX ME BY RIZWAN HANIF : This index value is actually the rank of each
-     * MPI Processes
-     */
+    
     rankArgumentIndex = indx;
     indx++;
     arguments[indx] = pTicket.getMainClass();
-    // System.arraycopy ... can be used ..here ...
+    
     for (int i = 0; i < pTicket.getAppArgs().size(); i++) {
       arguments[i + N_ARG_COUNT + pTicket.getJvmArgs().size()
 	  + nArgumentIncrement] = pTicket.getAppArgs().get(i);
@@ -257,7 +307,6 @@ public class ProcessArgumentsManager {
 	    + mpjHomeDir + "/lib/xdev.jar" + File.pathSeparator + ""
 	    + mpjHomeDir + "/lib/smpdev.jar" + File.pathSeparator + ""
 	    + mpjHomeDir + "/lib/niodev.jar" + File.pathSeparator + ""
-        + mpjHomeDir + "/lib/mxdev.jar" + File.pathSeparator + ""
 	    + mpjHomeDir + "/lib/mpjbuf.jar" + File.pathSeparator + ""
 	    + mpjHomeDir + "/lib/loader2.jar" + File.pathSeparator + ""
 	    + mpjHomeDir + "/lib/starter.jar" + File.pathSeparator
@@ -287,7 +336,6 @@ public class ProcessArgumentsManager {
 	  + mpjHomeDir + "/lib/xdev.jar" + File.pathSeparator + "" + mpjHomeDir
 	  + "/lib/smpdev.jar" + File.pathSeparator + "" + mpjHomeDir
 	  + "/lib/niodev.jar" + File.pathSeparator + "" + mpjHomeDir
-      + "/lib/mxdev.jar" + File.pathSeparator + "" + mpjHomeDir
 	  + "/lib/mpjbuf.jar" + File.pathSeparator + "" + mpjHomeDir
 	  + "/lib/loader2.jar" + File.pathSeparator + "" + mpjHomeDir
 	  + "/lib/starter.jar" + File.pathSeparator
@@ -373,10 +421,10 @@ public class ProcessArgumentsManager {
     arguments[indx + 0] = Integer.toString(pTicket.getTotalProcessCount());
     arguments[indx + 1] = Integer.toString(pTicket.getNetworkProcessCount());
     arguments[indx + 2] = Integer.toString(pTicket.getStartingRank());
-    arguments[indx + 3] = configFilePath;
-    arguments[indx + 4] = pTicket.getNetworkDevice();
+   // arguments[indx + 3] = configFilePath;
+    arguments[indx + 3] = pTicket.getConfFileContents().replace(' ','|');
+    arguments[indx + 4] = "niodev";
 
-    MPJDaemon.logger.debug("HybridDaemon: hybdrid network device: "+pTicket.getNetworkDevice() );
     for (int i = 0; i < aArgs.length; i++) {
       arguments[i + CMD_WORDS + jArgs.length + HYB_ARGS + nArgumentIncrement] = aArgs[i];
     }
@@ -390,69 +438,66 @@ public class ProcessArgumentsManager {
       MPJDaemon.logger.debug("HybridDaemon: creating process-builder object ");
     }
 
-    if (MPJDaemon.DEBUG && MPJDaemon.logger.isDebugEnabled()) {
-      MPJDaemon.logger.debug(" Argument list for hybdev");
-      for (int i=0;i<arguments.length;i++){
-        MPJDaemon.logger.debug(arguments[i]+" ");
-      }
-    }
     return arguments;
   }
 
   public ArrayList<Integer> WriteConfigFile() {
+    {
       String CONF_FILE_NAME = "mpjdev.conf";
       configFilePath = ticketDir + File.separator + CONF_FILE_NAME;
       if (MPJDaemon.DEBUG && MPJDaemon.logger.isDebugEnabled()) {
-        MPJDaemon.logger.debug("configFilePath");
+	MPJDaemon.logger.debug("configFilePath");
       }
 
       File configFile = new File(configFilePath);
       try {
-        configFile.createNewFile();
+	configFile.createNewFile();
       }
       catch (IOException e1) {
-        System.out.println("Unable to create config file ");
-        System.out.println(e1.getMessage() + "\r\n" + e1.getStackTrace());
-        MPJDaemon.logger.debug(e1.getMessage());
+	System.out.println("Unable to create config file ");
+	System.out.println(e1.getMessage() + "\r\n" + e1.getStackTrace());
+	MPJDaemon.logger.debug(e1.getMessage());
       }
 
       configFilePath = ticketDir + File.separator + CONF_FILE_NAME;
       if (MPJDaemon.DEBUG && MPJDaemon.logger.isDebugEnabled()) {
-        MPJDaemon.logger.debug("Config file created :");
+	MPJDaemon.logger.debug("Config file created :");
       }
 
       StringTokenizer conf_file_tokenizer = new StringTokenizer(
-      pTicket.getConfFileContents(), ";");
+	  pTicket.getConfFileContents(), ";");
       PrintStream cout;
       FileOutputStream cfos = null;
 
       try {
-        cfos = new FileOutputStream(configFile);
+	cfos = new FileOutputStream(configFile);
       }
       catch (FileNotFoundException e1) {
-        e1.printStackTrace();
+	e1.printStackTrace();
       }
       cout = new PrintStream(cfos);
 
       while (conf_file_tokenizer.hasMoreTokens()) {
-        String token = conf_file_tokenizer.nextToken();
-        if (token.contains("@") && !token.startsWith("#")) {
-          String[] tokens = token.split("@");
-          ports.add(Integer.parseInt(tokens[1]));
-          if (pTicket.getDeviceName() != "mxdev")
-            ports.add(Integer.parseInt(tokens[2]));
-        }
-        cout.println(token);
+	String token = conf_file_tokenizer.nextToken();
+	if (token.contains("@") && !token.startsWith("#")) {
+	  String[] tokens = token.split("@");
+	  ports.add(Integer.parseInt(tokens[1]));
+	  if (pTicket.getDeviceName() != "mxdev")
+	    ports.add(Integer.parseInt(tokens[2]));
+	}
+	cout.println(token);
       }
 
       cout.close();
       try {
-        cfos.close();
+	cfos.close();
       }
       catch (IOException e1) {
-        e1.printStackTrace();
+	e1.printStackTrace();
       }
+
       return ports;
+    }
   }
 
   private void WriteSourceFile() {
