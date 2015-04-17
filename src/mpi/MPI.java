@@ -60,9 +60,8 @@ import org.apache.log4j.DailyRollingFileAppender;
 import org.apache.log4j.spi.LoggerRepository;
 
 public class MPI {
-
+ 
   public static final boolean DEBUG = true;
-  // public static final boolean DEBUG = false;
   static Logger logger = null;
 
   public static Intracomm COMM_WORLD;

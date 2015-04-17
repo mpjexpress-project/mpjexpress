@@ -2,7 +2,7 @@ package jgf_mpj_benchmarks.section1;
 
 import java.io.*;
 //import jgfutil.*; 
-import jgf_mpj_benchmarks.jgfutil.*; 
+import jgf_mpj_benchmarks.*; 
 
 class obj_double implements Serializable {
 

@@ -1,11 +1,11 @@
 /*
  The MIT License
 
- Copyright (c) 2013 - 2013
+ Copyright (c) 2013 - 2014
    1. High Performance Computing Group, 
    School of Electrical Engineering and Computer Science (SEECS), 
    National University of Sciences and Technology (NUST)
-   2. Khurram Shahzad, Mohsan Jameel, Aamir Shafi, Bryan Carpenter (2013 - 2013)
+   2. Khurram Shahzad, Mohsan Jameel, Aamir Shafi, Bryan Carpenter (2013 - 2014)
    
 
  Permission is hereby granted, free of charge, to any person obtaining
@@ -29,10 +29,11 @@
  */
 /*
  * File         : RTConstants.java 
- * Author       : Khurram Shahzad, Mohsan Jameel, Aamir Shafi, Bryan Carpenter
+ * Author(s)    : Khurram Shahzad, Mohsan Jameel, Aamir Shafi, 
+ *		  Bryan Carpenter, Farrukh Khan
  * Created      : Oct 28, 2013
  * Revision     : $
- * Updated      : Nov 05, 2013 
+ * Updated      : Aug 27, 2014 
  */
 
 package runtime.common;
@@ -41,6 +42,12 @@ public class RTConstants {
 
   public static String MPJ_PROCESS_INFO = "MPJProcessInfo";
   public static String CLASS_PATH = "ClassPath";
+
+  // For master node(MPJRun.java server) information
+  public static String MASTER_NODE = "MasterNode";
+  public static String MASTER_PORT = "MasterPort";
+  // ----------------------------------
+
   public static String PROCESS_COUNT = "ProcessCount";
   public static String STARTING_RANK = "StartingRank";
   public static String JVM_ARGS = "JvmArgs";
@@ -76,4 +83,11 @@ public class RTConstants {
   public static String MPJEXPRESS_CONF_FILE = "conf/mpjexpress.conf";
   public static String MPJDEV_CONF_FILE = "mpjdev.conf";
 
+  // Variables added for Hadoop YARN support
+  public static String HADOOP_YARN_HOME = System.getenv("HADOOP_HOME");
+  public static String HADOOP_YARN = "false";
+  // -------------------------------------------------
+ 
+  public static String MPJ_RUN_SERVER_PORT_KEY = "mpjexpress.mpjrun.port.1";
+  public static String MPJ_RUN_SERVER_PORT = "40003";
 }

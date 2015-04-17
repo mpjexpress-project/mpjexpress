@@ -1,11 +1,11 @@
 /*
  The MIT License
 
- Copyright (c) 2013 - 2013
+ Copyright (c) 2013 - 2014
    1. High Performance Computing Group, 
    School of Electrical Engineering and Computer Science (SEECS), 
    National University of Sciences and Technology (NUST)
-   2. Khurram Shahzad, Mohsan Jameel, Aamir Shafi, Bryan Carpenter (2013 - 2013)
+   2. Khurram Shahzad, Mohsan Jameel, Aamir Shafi, Bryan Carpenter (2013 - 2014)
    
 
  Permission is hereby granted, free of charge, to any person obtaining
@@ -29,10 +29,11 @@
  */
 /*
  * File         : MPJProcessTicket.java 
- * Author       : Khurram Shahzad, Mohsan Jameel, Aamir Shafi, Bryan Carpenter
+ * Author(s)    : Khurram Shahzad, Mohsan Jameel, Aamir Shafi, 
+ * 		  Bryan Carpenter, Farrukh Khan
  * Created      : Oct 10, 2013
  * Revision     : $
- * Updated      : Nov 05, 2013 
+ * Updated      : Aug 27, 2014 
  */
 
 package runtime.common;
@@ -54,9 +55,15 @@ public class MPJProcessTicket {
   private boolean zippedSource;
   private String sourceCode;
   private String deviceName;
-  private String confFileContents;
+  private String confFileContents; 
   private ArrayList<String> appArgs;
   private String userID;
+
+  // masterNode is the IP for MPJRun.java server
+  private String masterNode;
+  // masterNode is the port at which MPJRun.java server is listening
+  private String masterPort;
+
   /* Hybrid Device */
   private int networkProcessCount;
   private int totalProcessCount;
@@ -66,12 +73,27 @@ public class MPJProcessTicket {
   private boolean isProfiler;
   private int debugPort;
   private String mpjHomeDir;
-  
+
+  public String getMasterNode() {
+    return masterNode;
+  }
+
+  public void setMasterNode(String masterNode){
+    this.masterNode = masterNode;
+  }
+
+  public String getMasterPort() {
+    return masterPort;
+  }
+ 
+  public void setMasterPort(String masterPort){
+    this.masterPort = masterPort;
+  }
 
   public String getClassPath() {
     return classPath;
   }
-
+  
   public void setClassPath(String classPath) {
     this.classPath = classPath;
   }
@@ -238,6 +260,9 @@ public class MPJProcessTicket {
     this.deviceName = "";
     this.confFileContents = "";
     this.appArgs = new ArrayList<String>();
+ 
+    this.masterNode = "";
+    this.masterPort = "";
 
     zippedSource = false;
     ticketID = UUID.randomUUID();
@@ -258,7 +283,7 @@ public class MPJProcessTicket {
       String deviceName, String confFileContents, ArrayList<String> appArgs,
       int clientPort, String clientHostAddress, String userID,
       int nioProcessCount, int totalProcessCount, String networkDevice, String mpjHomeDir,
-      boolean isDebug, boolean isProfiler, int debugPort) {
+      boolean isDebug, boolean isProfiler, int debugPort, String masterNode, String masterPort) {
     super();
     this.ticketID = ticketID;
     this.classPath = classPath;
@@ -279,6 +304,8 @@ public class MPJProcessTicket {
     this.isProfiler = isProfiler;
     this.debugPort = debugPort;
     this.mpjHomeDir = mpjHomeDir;
+    this.masterNode = masterNode;
+    this.masterPort = masterPort;
   }
 
   public MPJXml ToXML() {
@@ -297,6 +324,16 @@ public class MPJProcessTicket {
     MPJXml classPathXML = new MPJXml(getTag(RTConstants.CLASS_PATH));
     classPathXML.setText(this.classPath);
     processInfoXML.appendChild(classPathXML);
+
+    // MasterNode information
+    MPJXml masterNodeXML = new MPJXml(getTag(RTConstants.MASTER_NODE));
+    masterNodeXML.setText(this.masterNode);
+    processInfoXML.appendChild(masterNodeXML);
+
+    MPJXml masterPortXML = new MPJXml(getTag(RTConstants.MASTER_PORT));
+    masterPortXML.setText(this.masterPort);
+    processInfoXML.appendChild(masterPortXML);
+    //-----------------------------------------
 
     MPJXml processCountXML = new MPJXml(getTag(RTConstants.PROCESS_COUNT));
     processCountXML.setText(Integer.toString(this.processCount));
@@ -396,6 +433,14 @@ public class MPJProcessTicket {
 
       MPJXml classPathXML = processInfoXml.getChild(RTConstants.CLASS_PATH);
       this.classPath = classPathXML.getText();
+
+      // Obtaining masterNode information from XML 
+      MPJXml masterNodeXML = processInfoXml.getChild(RTConstants.MASTER_NODE);
+      this.masterNode = masterNodeXML.getText();
+
+      MPJXml masterPortXML = processInfoXml.getChild(RTConstants.MASTER_PORT);
+      this.masterPort = masterPortXML.getText();
+      //---------------------------------------------
 
       MPJXml processCountXML = processInfoXml
 	  .getChild(RTConstants.PROCESS_COUNT);

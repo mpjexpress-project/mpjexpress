@@ -3,11 +3,11 @@ package runtime.daemonmanager;
 /*
  The MIT License
 
- Copyright (c) 2013 - 2013
+ Copyright (c) 2013 - 2014
  1. High Performance Computing Group, 
  School of Electrical Engineering and Computer Science (SEECS), 
  National University of Sciences and Technology (NUST)
- 2. Khurram Shahzad, Mohsan Jameel, Aamir Shafi, Bryan Carpenter (2013 - 2013)
+ 2. Khurram Shahzad, Mohsan Jameel, Aamir Shafi, Bryan Carpenter
 
 
  Permission is hereby granted, free of charge, to any person obtaining
@@ -32,15 +32,16 @@ package runtime.daemonmanager;
 /*
  * File         : MPJBoot.java 
  * Author       : Khurram Shahzad, Mohsan Jameel, Aamir Shafi, Bryan Carpenter
- * Created      : January 30, 2013 6:00:57 PM 2013
+ * Created      : Jan 30, 2013
  * Revision     : $
- * Updated      : $
+ * Updated      : Aug 27, 2014
  */
 
 import runtime.daemonmanager.MPJBoot;
 
 public class MPJBoot {
 
+  /* Main function used for test purposes only */
   /*
    * public static void main(String[] args) {
    * 

@@ -7,12 +7,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#undef xdev_mxdev_MXDevice_ANY_SOURCE
-#define xdev_mxdev_MXDevice_ANY_SOURCE -2L
-/* Inaccessible static: ANY_SRC */
-#undef xdev_mxdev_MXDevice_ANY_TAG
-#define xdev_mxdev_MXDevice_ANY_TAG -2L
-/* Inaccessible static: requestMap */
 /*
  * Class:     xdev_mxdev_MXDevice
  * Method:    nativeInit

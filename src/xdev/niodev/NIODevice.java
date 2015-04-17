@@ -1,10 +1,10 @@
 /*
  The MIT License
 
- Copyright (c) 2005 - 2008
-   1. Distributed Systems Group, University of Portsmouth (2005)
-   2. Aamir Shafi (2005 - 2008)
-   3. Bryan Carpenter (2005 - 2008)
+ Copyright (c) 2005 - 2014
+   1. Distributed Systems Group, University of Portsmouth (2014)
+   2. Aamir Shafi (2005 - 2014)
+   3. Bryan Carpenter (2005 - 2014)
    4. Mark Baker (2005 - 2008)
 
  Permission is hereby granted, free of charge, to any person obtaining
@@ -29,14 +29,16 @@
 
 /*
  * File         : NIODevice.java
- * Author       : Aamir Shafi, Bryan Carpenter
- * Created      : Thu Apr  9 12:22:15 BST 2004
- * Revision     : $Revision: 1.29 $
- * Updated      : $Date: 2013/12/17 17:24:47 $
+ * Author(s)    : Aamir Shafi, Bryan Carpenter, Farrukh Khan
+ * Created      : Apr 09, 2004
+ * Revision     : Revision: 1.30
+ * Updated      : Aug 27, 2014
  *
  */
 
 package xdev.niodev;
+
+import runtime.daemon.Wrapper;
 
 import java.nio.channels.*;
 import java.nio.*;
@@ -48,6 +50,8 @@ import java.util.concurrent.Semaphore;
 import xdev.*;
 import java.io.IOException;
 import java.io.File;
+import java.io.DataOutputStream;
+import java.io.DataInputStream;
 
 import org.apache.log4j.Logger;
 
@@ -628,7 +632,14 @@ public class NIODevice implements Device {
   SocketChannel msgReceivedFrom; // what is this doing here?
 
   boolean finished = false;
-
+  DataOutputStream out = null;
+  DataInputStream in = null;
+  Socket clientSock = null;
+  int wport;
+  int rport;
+  String WRAPPER_INFO;
+  String serverName;
+  int serverPort;
   public NIODevice() {
     // this.deviceName = "niodev";
   }
@@ -640,12 +651,47 @@ public class NIODevice implements Device {
    *          Arguments to NIODevice.
    * @return ProcessID[] An array of ProcessIDs.
    */
+
+  private int bindPort(ServerSocketChannel sock){
+    int minPort = 25000;
+    int maxPort = 40000;
+    int selectedPort;
+
+    Random rand = new Random();
+    /* The loop generates a random port number, opens a socket on
+     * the generated port
+     */
+
+    while(true){
+      selectedPort = (rand.nextInt((maxPort - minPort) + 1) + minPort);
+
+      try {
+        sock.socket().bind(new InetSocketAddress(selectedPort));
+      }
+      catch (IOException e) {
+        if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
+          logger.info("[NIODev.java]:"+localHostName+"-"+selectedPort+
+                       "]Port already in use. Checking for a new port..");
+        }
+        continue;
+      }
+      break;
+    }
+    return selectedPort;
+  }
+
+
   public ProcessID[] init(String args[]) throws XDevException {
+
+    List<String> nodes = new ArrayList<String>();
+    List<Integer> rPorts = new ArrayList<Integer>();
+    List<Integer> wPorts = new ArrayList<Integer>();
+    List<Integer> ranks = new ArrayList<Integer>();
 
     /*
      * 
-     * The init method reads names/ports/ranks from a config file. It finds its
-     * own entry in the config file (by comparing ranks), and creates a server
+     * The init method reads names/ports/ranks from an input string. It finds 
+     * its own entry in the arguments (by comparing ranks), and creates a server
      * socket at the port specified for that entry. Also, it creates another
      * server socket at (portspecified+1). It connects to server sockets (not
      * one, two server sockets) of processes with rank higher than its own.
@@ -667,11 +713,11 @@ public class NIODevice implements Device {
      * SocketChannels whereas, the ones (SocketChannels) in worldWritableTable
      * have nothing to do with selector thread as they are in blocking mode.
      */
-
+    //System.out.println("NIODEV SOCK:"+cl.getInetAddress());
     if (args.length < 3) {
 
       throw new XDevException("Usage: "
-	  + "java NIODevice <myrank> <conf_file> <device_name>"
+	  + "java NIODevice <myrank> <conf_file_arguments> <device_name>"
 	  + "conf_file can be, ../conf/xdev.conf <Local>"
 	  + "OR http://holly.dsg.port.ac.uk:15000/xdev.conf <Remote>");
 
@@ -679,9 +725,8 @@ public class NIODevice implements Device {
 
     rank = Integer.parseInt(args[0]);
     UUID myuuid = UUID.randomUUID();
-    id = new ProcessID(myuuid); // , rank);
+    id = new ProcessID(myuuid);
     Map<String, String> map = System.getenv();
-    //mpjHomeDir = map.get("MPJ_HOME");
 
     try {
 
@@ -700,6 +745,36 @@ public class NIODevice implements Device {
       throw new XDevException(unkhe);
     }
 
+    /*
+     * String arguments are being parsed here one by one to obtain
+     * the values of (1) number of processes, (2) protocol switch
+     * limit, (3) IPs of all nodes, (4) read and write ports for
+     * all nodes and (5) ranks for all nodes.
+     */
+    
+    StringTokenizer arguments = new StringTokenizer(args[1],";");
+
+    if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
+      logger.info("Orignal string: "+ args[1]);
+    }
+    while(arguments.hasMoreTokens()) {
+      String token = arguments.nextToken();
+      if(token.equals("#Number of Processes")) {
+        nprocs = new Integer(arguments.nextToken()).intValue();
+      }
+      else if(token.equals("#Protocol Switch Limit")) {
+        psl = new Integer(arguments.nextToken()).intValue();
+      }
+      else if(token.equals("#Server Name")) {
+        serverName = arguments.nextToken();
+      }
+      else if(token.equals("#Server Port")) {
+        serverPort = new Integer(arguments.nextToken()).intValue();
+      }
+    } 
+    
+    
+    /* Old code for reading information from mpjdev.conf commented out.
     ConfigReader reader = null;
 
     try {
@@ -714,22 +789,26 @@ public class NIODevice implements Device {
     catch (Exception config_error) {
       throw new XDevException(config_error);
     }
+    */
 
     pids = new ProcessID[nprocs];
+    int count = 0;
 
-    if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
-      logger.info("total processes:<" + nprocs);
-      logger.info("protocolSwitchLimit :<" + psl);
-    }
+    /* This segment of the code converts the dynamic lists into
+     * fixed sized arrays. This is done so because rest of the code
+     * was working with arrays, and lists were a modification added
+     * by me - Farrukh.
+     */
 
     String[] nodeList = new String[nprocs];
     int[] rPortList = new int[nprocs];
     int[] wPortList = new int[nprocs];
     int[] rankList = new int[nprocs];
-    int count = 0;
+    
 
+    /* Old code for reading information from mpjdev.conf commented out */
+    /*
     while (count < nprocs) {
-
       String line = null;
 
       try {
@@ -742,7 +821,6 @@ public class NIODevice implements Device {
       if (line == null || line.equals("") || line.equals("#")) {
 	continue;
       }
-
       line = line.trim();
       StringTokenizer tokenizer = new StringTokenizer(line, "@");
       nodeList[count] = tokenizer.nextToken();
@@ -750,10 +828,9 @@ public class NIODevice implements Device {
       rPortList[count] = (new Integer(tokenizer.nextToken())).intValue();
       rankList[count] = (new Integer(tokenizer.nextToken())).intValue();
       count++;
-
     }
-
     reader.close();
+    *********/
 
     /* Open the selector */
     try {
@@ -768,66 +845,127 @@ public class NIODevice implements Device {
     /* Create control server socket */
     SocketChannel[] wChannels = new SocketChannel[nodeList.length - 1];
 
-    /*
-     * Checking for the java.net.BindException. This Exception is thrown when
-     * the port on which we want to bind is already in use
-     */
-    boolean isOK = false;
-    boolean isError = false;
 
-    while (isOK != true) {
-
-      isOK = false;
-      isError = false;
-
+    
       try {
 	writableServerChannel = ServerSocketChannel.open();
 	writableServerChannel.configureBlocking(false);
-	writableServerChannel.socket().bind(
-	    new InetSocketAddress(wPortList[rank]));
+        wport=bindPort(writableServerChannel);
 
 	if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
 	  logger.debug("created writableServerChannel on port "
-	      + wPortList[rank]);
+	      + wport);
 	}
+      
 	writableServerChannel.register(selector, SelectionKey.OP_ACCEPT);
 
-	my_server_port = wPortList[rank];
+	my_server_port = wport;
 
 	readableServerChannel = ServerSocketChannel.open();
 	readableServerChannel.configureBlocking(false);
-	readableServerChannel.socket().bind(
-	    new InetSocketAddress(rPortList[rank]));
+        rport = bindPort(readableServerChannel);
+
 	readableServerChannel.register(selector, SelectionKey.OP_ACCEPT);
 
 	if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
 	  logger.debug("created readableServerChannel on port "
-	      + rPortList[rank]);
+	      + rport);
 	}
 
       }
-      catch (IOException ioe) {
-	isError = true;
-	if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
-	  logger.debug("NIODevice threw an exception "
-	      + "while starting the server on ports " + wPortList[rank]
-	      + " or " + (rPortList[rank])
-	      + ". We'll try starting servers on next two consecutive ports");
-	}
-	try {
-	  Thread.sleep(500);
-	}
-	catch (Exception e) {
-	}
+      catch (Exception ioe)  {
+        ioe.printStackTrace();
       }
-      finally {
-	if (isError == true)
-	  isOK = false;
-	else if (isError == false)
-	  isOK = true;
+	
+
+     try{
+       logger.debug("Connecting to :ServerName "+
+                     serverName+" ServerPort "+serverPort);
+       
+       clientSock = new Socket(serverName,serverPort);   
+       
+       logger.debug("Socket Connected "+clientSock.getInetAddress());
+       
+       out = new DataOutputStream(clientSock.getOutputStream());
+       in = new DataInputStream(clientSock.getInputStream());
+       
+       logger.debug("Sending Write Port "+wport);
+       logger.debug("Sending Read Port"+rport);
+       
+       out.writeUTF("Sending Info");
+       out.flush();
+       out.writeInt(wport);
+       out.flush();
+       out.writeInt(rport);
+       out.flush();
+       out.writeInt(rank);
+       out.flush();
+
+       WRAPPER_INFO = in.readUTF();
+       clientSock.close();
+     }
+     catch (IOException e){
+       e.printStackTrace();
+     } 
+
+    arguments = new StringTokenizer(WRAPPER_INFO,";");
+    
+    if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
+      logger.info("Peer Processes Info " + WRAPPER_INFO);
+    }
+    String token = arguments.nextToken();
+
+    if(token.equals("#Peer Information")) {
+        token = arguments.nextToken();
+        for(int i = 0; i<nprocs; i++) {
+          StringTokenizer peer= new StringTokenizer(token, "@");
+          String peerToken = peer.nextToken();
+
+          nodes.add(peerToken);
+
+          peerToken = peer.nextToken();
+          rPorts.add(Integer.parseInt(peerToken));
+
+          peerToken = peer.nextToken();
+          wPorts.add(Integer.parseInt(peerToken));
+
+          peerToken = peer.nextToken();
+          ranks.add(Integer.parseInt(peerToken));
+
+          if(arguments.hasMoreTokens())
+            token = arguments.nextToken();
+        }
+      }
+    
+    for(int i=0; i<nprocs; i++) {
+      nodeList[i] = nodes.get(i);
+      rPortList[i] = rPorts.get(i);
+      wPortList[i] = wPorts.get(i);
+      rankList[i] = ranks.get(i);
+    }
+    
+    if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
+
+      logger.debug("Nodes list");
+      for(int i=0;i< nprocs;i++){
+        logger.debug("node["+i+"] "+nodeList[i]);
+      }
+
+      logger.debug("Read Ports List");
+      for(int i=0;i< nprocs;i++){
+        logger.debug("rPortList["+i+"] "+rPortList[i]);
+      }
+
+      logger.debug("Write Ports List");
+      for(int i=0;i< nprocs;i++){
+        logger.debug("wPortList["+i+"] "+wPortList[i]);
+      }
+
+      logger.debug("Ranks List");
+      for(int i=0;i< nprocs;i++){
+        logger.debug("ranks["+i+"] "+rankList[i]);
       }
     }
-
     /* This is connection-code for data-channels. */
     boolean connected = false;
     int temp = 0, index = 0;
@@ -3971,7 +4109,6 @@ public class NIODevice implements Device {
 	if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
 	  logger.debug(" error in selector thread " + ioe1.getMessage());
 	}
-	// ioe1.printStackTrace() ;
       } // end catch(Exception e) ...
 
       if (mpi.MPI.DEBUG && logger.isDebugEnabled()) {
@@ -4087,5 +4224,4 @@ public class NIODevice implements Device {
       notify();
     }
   }
-
 }

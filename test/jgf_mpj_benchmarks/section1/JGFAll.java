@@ -19,7 +19,7 @@
 **************************************************************************/
 package jgf_mpj_benchmarks.section1;
 
-import jgf_mpj_benchmarks.jgfutil.*; 
+import jgf_mpj_benchmarks.*; 
 import mpi.*;
 
 public class JGFAll{ 

@@ -95,6 +95,10 @@ public class HybridStarter {
    *          URL does not point to a JAR file.
    */
   public void execute(String args[]) throws Exception {
+    
+    //FIX ME: HAMZA
+    //TAU was replacing spaces in conf file contents with newline char    
+    args[9]=args[9].replace('|',' ');
 
     InetAddress localaddr = InetAddress.getLocalHost();
     hostName = localaddr.getHostName();

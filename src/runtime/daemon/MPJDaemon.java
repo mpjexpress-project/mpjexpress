@@ -1,11 +1,11 @@
 /*
  The MIT License
 
- Copyright (c) 2005 - 2011
-   1. Distributed Systems Group, University of Portsmouth (2005)
-   2. Aamir Shafi (2005 - 2011)
-   3. Bryan Carpenter (2005 - 2011)
-   4. Mark Baker (2005 - 2011)
+ Copyright (c) 2005 - 2014
+   1. Distributed Systems Group, University of Portsmouth (2014)
+   2. Aamir Shafi (2005 - 2014)
+   3. Bryan Carpenter (2005 - 2014)
+   4. Mark Baker (2005 - 2014)
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -29,10 +29,11 @@
 
 /*
  * File         : MPJDaemon.java 
- * Author       : Aamir Shafi, Bryan Carpenter, Khurram Shahzad, Mohsan Jameel
- * Created      : Sun Dec 12 12:22:15 BST 2004
- * Revision     : $Revision: 1.28 $
- * Updated      : $Date: 2013/11/05 17:24:47 $
+ * Author(s)    : Aamir Shafi, Bryan Carpenter, Khurram Shahzad, 
+ *		  Mohsan Jameel, Farrukh Khan
+ * Created      : Dec 12, 2004
+ * Revision     : $Revision: 1.29 $
+ * Updated      : Aug 27, 2014
  */
 
 package runtime.daemon;
@@ -59,6 +60,7 @@ import org.apache.log4j.spi.LoggerRepository;
 import runtime.common.MPJRuntimeException;
 import runtime.common.MPJUtil;
 import runtime.common.RTConstants;
+
 import runtime.daemonmanager.DMConstants;
 import runtime.daemonmanager.MPJHalt;
 
@@ -71,15 +73,17 @@ public class MPJDaemon {
   static Logger logger = null;
   private static String mpjHomeDir = null;
   public volatile static ConcurrentHashMap<Socket, ProcessLauncher> servSockets;
+
   ConnectionManager connectionManager;
   PortManagerThread pManager;
 
   public MPJDaemon(String args[]) throws Exception {
- 
+
     InetAddress localaddr = InetAddress.getLocalHost();
     String hostName = localaddr.getHostName();
     servSockets = new ConcurrentHashMap<Socket, ProcessLauncher>();
     Map<String, String> map = System.getenv();
+
     try {
       mpjHomeDir = map.get("MPJ_HOME");
       RTConstants.MPJ_HOME_DIR = mpjHomeDir;
@@ -87,39 +91,45 @@ public class MPJDaemon {
 	throw new Exception("MPJ_HOME environment variable not set!!!");
       }
     }
+
     catch (Exception exc) {
       System.out.println("Error: " + exc.getMessage());
       exc.printStackTrace();
       return;
     }
 
+    // Reading values from conf/mpjexpress.conf
+
     readValuesFromMPJExpressConf();
     createLogger(mpjHomeDir, hostName);
+
     if (DEBUG && logger.isDebugEnabled()) {
       logger.debug("mpjHomeDir " + mpjHomeDir);
     }
-    if (args.length == 1) {
 
+    if (args.length == 1) {
       if (DEBUG && logger.isDebugEnabled()) {
 	logger.debug(" args[0] " + args[0]);
 	logger.debug("setting daemon port to" + args[0]);
       }
-
       D_SER_PORT = new Integer(args[0]).intValue();
+    } 
 
-    } else {
+    else {
       throw new MPJRuntimeException("Usage: java MPJDaemon daemonServerPort");
     }
 
     if (DEBUG && logger.isDebugEnabled())
         logger.debug("Starting PortManager thread .. ");
 
-    pManager = new PortManagerThread(portManagerPort);
-    pManager.start();
+    // Invoking port manager
+      pManager = new PortManagerThread(portManagerPort);
+      pManager.start();
 
     if (DEBUG && logger.isDebugEnabled())
         logger.debug("Starting ConnectionManager thread .. ");
 
+    // Invoking connection manager thread 
     connectionManager = new ConnectionManager();
     connectionManager.start();
 
@@ -127,14 +137,12 @@ public class MPJDaemon {
         logger.debug("serverSocketInit .. ");
 
     serverSocketInit();
-
   }
 
   private void createLogger(String homeDir, String hostName)
       throws MPJRuntimeException {
 
     if (logger == null) {
-
       DailyRollingFileAppender fileAppender = null;
 
       try {
@@ -155,7 +163,6 @@ public class MPJDaemon {
 	throw new MPJRuntimeException(e);
       }
     }
-
   }
 
   private void serverSocketInit() {
@@ -167,22 +174,18 @@ public class MPJDaemon {
     try {
       serverSocket = new ServerSocket(D_SER_PORT);
       do {
-
         if (DEBUG && logger.isDebugEnabled()) {
           logger.debug("Accepting connection ..");
         }
-
 	Socket servSock = null; 
-
         try {
            servSock = serverSocket.accept();
  	} catch(Exception eee) { 
 	   eee.printStackTrace(); 
 	} 
 
-	if (DEBUG && logger.isDebugEnabled()) {
-	  logger.debug("Accepted connection");
-	}
+	// Connection is accepted and the socket passed onto 
+        // ProcessLauncher.java which takes care of the rest
 	ProcessLauncher pLaunch = new ProcessLauncher(servSock);
 	servSockets.put(servSock, pLaunch);
 	pLaunch.start();
@@ -198,6 +201,7 @@ public class MPJDaemon {
     catch (Exception e) { 
       e.printStackTrace();
     }
+
     if (!serverSocket.isClosed())
       try {
 	serverSocket.close();
@@ -211,18 +215,15 @@ public class MPJDaemon {
     if (connectionManager != null) {
       connectionManager.isRun = false;
     }
-
   }
 
   private void readValuesFromMPJExpressConf() {
-
     FileInputStream in = null;
     DataInputStream din = null;
     BufferedReader reader = null;
     String line = "";
 
     try {
-
       String path = mpjHomeDir + File.separator
 	  + RTConstants.MPJEXPRESS_CONF_FILE;
       in = new FileInputStream(path);
@@ -236,19 +237,14 @@ public class MPJDaemon {
 	  logLevel = MPJUtil.confValue(line);
 	}
       }
-
       in.close();
-
     }
     catch (Exception e) {
       e.printStackTrace();
     }
-
   }
-
   public static void main(String args[]) {
     try {
-
       MPJDaemon dae = new MPJDaemon(args);
     }
     catch (Exception e) {

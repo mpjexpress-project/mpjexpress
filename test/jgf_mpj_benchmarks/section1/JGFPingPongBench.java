@@ -22,7 +22,7 @@ package jgf_mpj_benchmarks.section1;
 
 import java.io.*;
 //import jgfutil.*; 
-import jgf_mpj_benchmarks.jgfutil.*; 
+import jgf_mpj_benchmarks.*; 
 import mpi.*;
 
 public class JGFPingPongBench implements JGFSection1{

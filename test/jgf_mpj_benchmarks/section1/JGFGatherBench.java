@@ -21,7 +21,7 @@ package jgf_mpj_benchmarks.section1;
 
 
 import java.io.*;
-import jgf_mpj_benchmarks.jgfutil.*; 
+import jgf_mpj_benchmarks.*; 
 //import jgfutil.*; 
 import mpi.*;
 

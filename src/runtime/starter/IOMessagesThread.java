@@ -1,3 +1,4 @@
+
 /*
  The MIT License
 
@@ -55,9 +56,7 @@ public class IOMessagesThread extends Thread {
   public void run() {
     serverSocketInit();
   }
-
   private void serverSocketInit() {
-
     Scanner input = null;
     PrintWriter output = null;
     try {
@@ -65,24 +64,23 @@ public class IOMessagesThread extends Thread {
       output = new PrintWriter(clientSock.getOutputStream(), true);
       String message = input.nextLine();
       while (!(message.endsWith("EXIT"))) {
-	if (!message.startsWith("@Ping#"))
-	  System.out.println(message);
-	message = input.nextLine();
+        if(!message.startsWith("@Ping#"))
+          System.out.println(message);
+          message = input.nextLine();
       }
 
     }
     catch (Exception cce) {
-
-      System.exit(0);
+      cce.printStackTrace();
     }
     finally {
       try {
-	clientSock.close();
-	input.close();
-	output.close();
+        clientSock.close();
+        input.close();
+        output.close();
       }
       catch (IOException ioEx) {
-	System.exit(1);
+        ioEx.printStackTrace();
       }
     }
   }

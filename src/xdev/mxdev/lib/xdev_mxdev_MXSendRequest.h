@@ -7,7 +7,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* Inaccessible static: waitanyQue */
 /*
  * Class:     xdev_mxdev_MXSendRequest
  * Method:    nativeIwait

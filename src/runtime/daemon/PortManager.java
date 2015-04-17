@@ -1,11 +1,11 @@
 /*
  The MIT License
 
- Copyright (c) 2013 - 2013
+ Copyright (c) 2013
    1. High Performance Computing Group, 
    School of Electrical Engineering and Computer Science (SEECS), 
    National University of Sciences and Technology (NUST)
-   2. Khurram Shahzad, Mohsan Jameel, Aamir Shafi, Bryan Carpenter (2013 - 2013)
+   2. Khurram Shahzad, Mohsan Jameel, Aamir Shafi, Bryan Carpenter
    
 
  Permission is hereby granted, free of charge, to any person obtaining
@@ -32,7 +32,7 @@
  * Author       : Khurram Shahzad, Mohsan Jameel, Aamir Shafi, Bryan Carpenter
  * Created      : Oct 27, 2013
  * Revision     : $
- * Updated      : Nov 05, 2013 
+ * Updated      : Aug 26, 2014 
  */
 
 package runtime.daemon;
@@ -74,25 +74,22 @@ public class PortManager {
     try {
       sock = new ServerSocket(port);
       sock.setReuseAddress(true);
-      dataSock = new DatagramSocket(port);
-      dataSock.setReuseAddress(true);
-      return true;
     }
     catch (final IOException e) {
+      System.err.println("[PortManager.java]: Unable to open port..");
+      e.printStackTrace();
       return false;
     }
-    finally {
-      if (dataSock != null) {
-	dataSock.close();
-      }
-      if (sock != null) {
-	try {
-	  sock.close();
-	}
-	catch (final IOException e) {
-
-	}
-      }
+    
+    try {
+      sock.close();
     }
+    catch (final IOException e) {
+      System.err.println("[PortManager.java]: Unable to close port..");
+      e.printStackTrace();
+    }
+
+    return true;
   }
 }
+
