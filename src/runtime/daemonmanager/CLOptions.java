@@ -265,11 +265,4 @@ public class CLOptions {
     }
 
   }
-
-  /* Main only for testing purposes */
-  /*
-   * public static void main(String[] args) { CLOptions options = new
-   * CLOptions(); options.parseCommandLineArgs(args); options.PrintOptions(); }
-   */
-
 }

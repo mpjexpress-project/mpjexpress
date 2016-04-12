@@ -99,7 +99,6 @@ public class MPJDaemon {
     }
 
     // Reading values from conf/mpjexpress.conf
-
     readValuesFromMPJExpressConf();
     createLogger(mpjHomeDir, hostName);
 
@@ -123,8 +122,8 @@ public class MPJDaemon {
         logger.debug("Starting PortManager thread .. ");
 
     // Invoking port manager
-      pManager = new PortManagerThread(portManagerPort);
-      pManager.start();
+    pManager = new PortManagerThread(portManagerPort);
+    pManager.start();
 
     if (DEBUG && logger.isDebugEnabled())
         logger.debug("Starting ConnectionManager thread .. ");

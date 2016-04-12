@@ -77,13 +77,6 @@ public class ProcessLauncher extends Thread {
 
     MPJProcessTicket pTicket = new MPJProcessTicket();
 
-    /* The numbered comments followed by my name throughout this code 
-     * have been added for better understanding only. They can be 
-     * removed. (~ Farrukh)
-     */
-
-    // #1 Takes socket as an input and reads the ticket on the socket
-    // being sent by the pack function on the other end (Farrukh)
     try {
       String ticketString = getStringFromInputStream(sockserver
 	  .getInputStream());
