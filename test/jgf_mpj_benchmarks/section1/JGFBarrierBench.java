@@ -20,7 +20,7 @@
 package jgf_mpj_benchmarks.section1;
 
 
-import jgf_mpj_benchmarks.*; 
+import jgf_mpj_benchmarks.jgfutil.*; 
 //import jgfutil.*; 
 import mpi.*;
 

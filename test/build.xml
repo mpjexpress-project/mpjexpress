@@ -2,96 +2,96 @@
 <project name="test" default="all" basedir=".">
   <property name="lib.dir" value="../lib/"/>  
     <target name="compile" description="compiles mpj code">    
-       <javac srcdir="jgf_mpj_benchmarks/jgfutil" 
-         classpath="${lib.dir}/mpj.jar"
+       <javac includeantruntime="false" srcdir="jgf_mpj_benchmarks/jgfutil" 
+         classpath=".:${lib.dir}/mpj.jar"
 	 debug="true"/>          
-       <javac srcdir="jgf_mpj_benchmarks/section1" 
-         classpath="${lib.dir}/mpj.jar"
+       <javac includeantruntime="false" srcdir="jgf_mpj_benchmarks/section1" 
+         classpath=".:${lib.dir}/mpj.jar"
 	 debug="true"/>   
-       <javac srcdir="jgf_mpj_benchmarks/section1" 
-         classpath="${lib.dir}/mpj.jar"
+       <javac includeantruntime="false" srcdir="jgf_mpj_benchmarks/section1" 
+         classpath=".:${lib.dir}/mpj.jar"
 	 debug="true"/>   
-       <javac srcdir="jgf_mpj_benchmarks/section2" 
-         classpath="${lib.dir}/mpj.jar"
+       <javac includeantruntime="false" srcdir="jgf_mpj_benchmarks/section2" 
+         classpath=".:${lib.dir}/mpj.jar"
 	 debug="true"/>   
-       <javac srcdir="jgf_mpj_benchmarks/section2/crypt" 
-         classpath="${lib.dir}/mpj.jar"
+       <javac includeantruntime="false" srcdir="jgf_mpj_benchmarks/section2/crypt" 
+         classpath=".:${lib.dir}/mpj.jar"
 	 debug="true"/>   
-       <javac srcdir="jgf_mpj_benchmarks/section2/lufact" 
-         classpath="${lib.dir}/mpj.jar" 
+       <javac includeantruntime="false" srcdir="jgf_mpj_benchmarks/section2/lufact" 
+         classpath=".:${lib.dir}/mpj.jar" 
 	 debug="true"/>   
-       <javac srcdir="jgf_mpj_benchmarks/section2/series" 
-         classpath="${lib.dir}/mpj.jar" 
+       <javac includeantruntime="false" srcdir="jgf_mpj_benchmarks/section2/series" 
+         classpath=".:${lib.dir}/mpj.jar" 
 	 debug="true"/>   
-       <javac srcdir="jgf_mpj_benchmarks/section2/sor" 
-         classpath="${lib.dir}/mpj.jar"
+       <javac includeantruntime="false" srcdir="jgf_mpj_benchmarks/section2/sor" 
+         classpath=".:${lib.dir}/mpj.jar"
 	 debug="true"/>   
-       <javac srcdir="jgf_mpj_benchmarks/section2/sparsematmult" 
-         classpath="${lib.dir}/mpj.jar" 
+       <javac includeantruntime="false" srcdir="jgf_mpj_benchmarks/section2/sparsematmult" 
+         classpath=".:${lib.dir}/mpj.jar" 
 	 debug="true"/>   
-       <javac srcdir="jgf_mpj_benchmarks/section3" 
-         classpath="${lib.dir}/mpj.jar"
+       <javac includeantruntime="false" srcdir="jgf_mpj_benchmarks/section3" 
+         classpath=".:${lib.dir}/mpj.jar"
 	 debug="true"/>   
-       <javac srcdir="jgf_mpj_benchmarks/section3/moldyn" 
-         classpath="${lib.dir}/mpj.jar" 
+       <javac includeantruntime="false" srcdir="jgf_mpj_benchmarks/section3/moldyn" 
+         classpath=".:${lib.dir}/mpj.jar" 
 	 debug="true"/>   	       
-       <javac srcdir="jgf_mpj_benchmarks/section3/montecarlo" 
-         classpath="${lib.dir}/mpj.jar" 
+       <javac includeantruntime="false" srcdir="jgf_mpj_benchmarks/section3/montecarlo" 
+         classpath=".:${lib.dir}/mpj.jar" 
 	 debug="true"/>   	       
-       <javac srcdir="jgf_mpj_benchmarks/section3/raytracer" 
-         classpath="${lib.dir}/mpj.jar" 
+       <javac includeantruntime="false" srcdir="jgf_mpj_benchmarks/section3/raytracer" 
+         classpath=".:${lib.dir}/mpj.jar" 
 	 debug="true"/>
-       <javac srcdir="microbenchmarkmpiJava" 
+       <javac includeantruntime="false" srcdir="microbenchmarkmpiJava" 
          classpath="${lib.dir}/mpj.jar" 
 	 debug="true"/>   	       
-       <javac srcdir="mpjdev/buffertest" 
+       <javac includeantruntime="false" srcdir="mpjdev/buffertest" 
          classpath="${lib.dir}/mpj.jar"
 	 debug="true"/>   
-       <javac srcdir="mpjdev/perftest" 
+       <javac includeantruntime="false" srcdir="mpjdev/perftest" 
          classpath="${lib.dir}/mpj.jar"
 	 debug="true"/>   
-       <javac srcdir="mpi/pt2pt" 
+       <javac includeantruntime="false" srcdir="mpi/pt2pt" 
          classpath="${lib.dir}/mpj.jar" 
 	 debug="true"/>   
-       <javac srcdir="mpi/pt2pt_ObjSer" 
+       <javac includeantruntime="false" srcdir="mpi/pt2pt_ObjSer" 
          classpath="${lib.dir}/mpj.jar" 
 	 debug="true"/>   
-       <javac srcdir="mpi/dtyp" 
+       <javac includeantruntime="false" srcdir="mpi/dtyp" 
          classpath="${lib.dir}/mpj.jar" 
 	 debug="true"/>   
-       <javac srcdir="." includes="TestSuite.java" 
+       <javac includeantruntime="false" srcdir="." includes="TestSuite.java" 
          classpath=".:${lib.dir}/mpj.jar" debug="true"/>   
-       <javac srcdir="mpi/dtyp_ObjSer" classpath="${lib.dir}/mpj.jar" 
+       <javac includeantruntime="false" srcdir="mpi/dtyp_ObjSer" classpath="${lib.dir}/mpj.jar" 
 	 debug="true"/>   
-       <javac srcdir="mpi/group" classpath="${lib.dir}/mpj.jar" 
+       <javac includeantruntime="false" srcdir="mpi/group" classpath="${lib.dir}/mpj.jar" 
          debug="true"/>   
-       <javac srcdir="mpi/ccl" classpath="${lib.dir}/mpj.jar" 
+       <javac includeantruntime="false" srcdir="mpi/ccl" classpath="${lib.dir}/mpj.jar" 
          debug="true"/>   
-       <javac srcdir="mpi/ccl_ObjSer" classpath="${lib.dir}/mpj.jar" 
+       <javac includeantruntime="false" srcdir="mpi/ccl_ObjSer" classpath="${lib.dir}/mpj.jar" 
          debug="true"/>   
-       <javac srcdir="mpi/ccl_ObjSer/reduceO" 
+       <javac includeantruntime="false" srcdir="mpi/ccl_ObjSer/reduceO" 
          classpath="${lib.dir}/mpj.jar" debug="true"/>   
-       <javac srcdir="mpi/ccl_ObjSer/allreduceO" 
+       <javac includeantruntime="false" srcdir="mpi/ccl_ObjSer/allreduceO" 
          classpath="${lib.dir}/mpj.jar" 
 	 debug="true"/>  
-       <javac srcdir="mpi/ccl_ObjSer/reduce_scatterO" 
+       <javac includeantruntime="false" srcdir="mpi/ccl_ObjSer/reduce_scatterO" 
          classpath="${lib.dir}/mpj.jar" 
 	 debug="true"/>   
-       <javac srcdir="mpi/ccl_ObjSer/scanO" 
+       <javac includeantruntime="false" srcdir="mpi/ccl_ObjSer/scanO" 
          classpath="${lib.dir}/mpj.jar" debug="true"/>   
-       <javac srcdir="mpi/topo" classpath="${lib.dir}/mpj.jar" 
+       <javac includeantruntime="false" srcdir="mpi/topo" classpath="${lib.dir}/mpj.jar" 
          debug="true"/>   
-       <javac srcdir="mpi/env" classpath="${lib.dir}/mpj.jar"
+       <javac includeantruntime="false" srcdir="mpi/env" classpath="${lib.dir}/mpj.jar"
          debug="true"/>   
-       <javac srcdir="mpi/signals" 
+       <javac includeantruntime="false" srcdir="mpi/signals" 
          classpath="${lib.dir}/mpj.jar" debug="true"/>   
-       <javac srcdir="mpi/comm" classpath="${lib.dir}/mpj.jar" 
+       <javac includeantruntime="false" srcdir="mpi/comm" classpath="${lib.dir}/mpj.jar" 
          debug="true"/>   
-       <javac srcdir="mpi/perf" classpath="${lib.dir}/mpj.jar" 
+       <javac includeantruntime="false" srcdir="mpi/perf" classpath="${lib.dir}/mpj.jar" 
          debug="true"/>   
-       <javac srcdir="mpi/threads" classpath="${lib.dir}/mpj.jar" 
+       <javac includeantruntime="false" srcdir="mpi/threads" classpath="${lib.dir}/mpj.jar" 
          debug="true"/>   
-       <javac srcdir="xdev" classpath="${lib.dir}/mpj.jar" 
+       <javac includeantruntime="false" srcdir="xdev" classpath="${lib.dir}/mpj.jar" 
          debug="true"/>   
     </target> 
 
