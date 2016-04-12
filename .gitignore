@@ -54,3 +54,11 @@ install_manifest.txt
 *.exe
 *.out
 *.app
+
+# MPJ Express JAR dependency exceptions
+!lib/commons-cli-1.2.jar
+!lib/commons-codec-1.8.jar
+!lib/commons-io-2.4.jar
+!lib/javax.servlet.jar
+!lib/log4j-1.2.11.jar
+!lib/tools.jar
