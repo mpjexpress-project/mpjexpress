@@ -1074,4 +1074,23 @@ public class Intracomm extends Comm {
     return new Graphcomm(index, edges, reorder, ncomm, ngroup.mpjdevGroup);
   }
 
+
+  public Comm Spawn(String command, String[] argv, int maxprocs, int root) {
+    return intracommImpl.Spawn(command, argv, maxprocs, root);
+
+  }
+
+  public Comm Spawn_multiple(String[] commands, String[][] argv, int[] maxprocs, int root) {
+return intracommImpl.Spawn_multiple(commands, argv, maxprocs, root);
+  }
+
+  public Comm Accept(String port_name, int root) {
+return intracommImpl.Accept(port_name, root);
+  }
+
+  public Comm Connect(String port_name, int root) {
+    return intracommImpl.Connect(port_name, root);
+
+  }
+
 }

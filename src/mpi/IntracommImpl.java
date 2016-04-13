@@ -501,6 +501,14 @@ public abstract class IntracommImpl
   public abstract void Scan(Object sendbuf, int sendoffset,
                    Object recvbuf, int recvoffset, int count,
                    Datatype datatype, Op op) ;
+
+  public abstract Comm Spawn(String command, String[] argv, int maxprocs, int root);
+
+  public abstract Comm Spawn_multiple(String[] commands, String[][] argv, int[] maxprocs, int root);
+
+  public abstract Comm Accept(String port_name, int root);
+
+  public abstract Comm Connect(String port_name, int root);
                              
 }
 

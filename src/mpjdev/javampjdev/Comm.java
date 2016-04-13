@@ -70,6 +70,7 @@ public class Comm extends mpjdev.Comm {
      * constructor used for MPJDev.WORLD intracomm.
      * how will coll. operations use different contexts ?
      */
+    Comm() {}
     Comm(xdev.Device device, mpjdev.Group group) throws MPJDevException {
         this.device = device;
         this.group = group;
@@ -1234,5 +1235,35 @@ public class Comm extends mpjdev.Comm {
         BufferFactory.destroy(rbuf.getStaticBuffer()) ;
         return create(nids);
     }
+
+     public Comm Get_parent()
+  {
+    return new Comm();
+  }
+
+  public String Open_port(String port_name)
+  {
+    return new String();
+  }
+
+  public void Close_port(String port_name) 
+  {
+    //....
+  }
+
+  public void Publish_name(String service_name, String port_name)
+  {
+    //....
+  }
+
+  public void Unpublish_name(String service_name, String port_name)
+  {
+    //....
+  }
+
+  public String Lookup_name(String service_name)
+  {
+    return new String();
+  }
     
 }

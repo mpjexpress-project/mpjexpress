@@ -648,3 +648,161 @@ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeReduce_1scatter
 
 }
 
+/*
+ * Class:     mpjdev_natmpjdev_Intracomm
+ * Method:    nativeSpawn
+ * Signature: (Ljava/lang/String;[Ljava/lang/String;IILmpjdev/natmpjdev/Comm;)Lmpjdev/natmpjdev/Comm;
+ */
+ 	JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeSpawn
+ 	(JNIEnv *env, jobject jobj, jstring command, jobjectArray argv, jint maxprocs, jint root, jlong comm) {
+ 		const char *ccommand = (*env)->GetStringUTFChars(env, command, NULL);
+    printf("Command: %s\n", ccommand);
+    int cmaxprocs = maxprocs;
+    printf("Maxprocs: %d\n", maxprocs);
+    int croot = root;
+    printf("Root : %d\n", root);
+    MPI_Comm ccomm = (MPI_Comm) (intptr_t) comm;
+    printf("ccom: %ld\n", (long)ccomm);
+
+
+    int stringCount = (*env)->GetArrayLength(env, argv);
+    char **cargv = malloc (sizeof(char*) * (stringCount + 1));
+    printf("stringCount : %d\n", stringCount);
+
+    int i;
+    for (i=0; i<stringCount; i++) {
+      jstring string = (jstring) (*env)->GetObjectArrayElement(env, argv, i);
+      char *nativeString = (*env)->GetStringUTFChars(env, string, 0);
+      cargv[i] = nativeString;
+      printf("cargv[%d] = %s\n", i, cargv[i]);
+
+      //(*env)->ReleaseStringUTFChars(env, string, nativeString);
+    }
+    cargv[i] = NULL;
+
+    MPI_Comm intercom;
+    int *array_of_codes = malloc(sizeof(int)*cmaxprocs);
+    //MPI_Comm_spawn(ccommand, cargv, cmaxprocs, MPI_INFO_NULL, croot, ccomm, &intercom, array_of_codes);
+    MPI_Comm_spawn(ccommand, cargv, cmaxprocs, MPI_INFO_NULL, croot, ccomm, &intercom, array_of_codes);
+    printf("intercom: %ld\n", (long)intercom);
+    for(i=0; i<stringCount; i++) {
+      (*env)->ReleaseStringUTFChars(env, (*env)->GetObjectArrayElement(env, argv, i), cargv[i]);
+    }
+    free(cargv);
+    return (jlong) intercom;
+
+  }
+
+/*
+ * Class:     mpjdev_natmpjdev_Intracomm
+ * Method:    nativeSpawn_multiple
+ * Signature: (I[Ljava/lang/String;[[Ljava/lang/String;IILmpjdev/natmpjdev/Comm;)Lmpjdev/natmpjdev/Comm;
+ */
+ 	JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeSpawn_1multiple
+ 	(JNIEnv *env, jobject jobj, jobjectArray command, jobjectArray argv, jintArray maxprocs, jint root, jlong comm) {
+
+ 		
+    int commandCount = (*env)->GetArrayLength(env, command);
+    char **ccommand = malloc (sizeof(char*) * (commandCount));
+    int i;
+    for (i=0; i<commandCount; i++) {
+      jstring string = (jstring) (*env)->GetObjectArrayElement(env, command, i);
+      char *nativeString = (*env)->GetStringUTFChars(env, string, 0);
+      ccommand[i] = nativeString;
+      printf("ccommand[%d] = %s\n", i, ccommand[i]);
+
+    }
+
+    jsize len = (*env)->GetArrayLength(env, maxprocs);
+    int *cmaxprocs = malloc (sizeof(int) * (len + 1));;
+
+    jint *body = (*env)->GetIntArrayElements(env, maxprocs, 0);
+    for (i=0; i<len; i++) {
+      cmaxprocs[i] = body[i];
+    }
+    cmaxprocs[i] = NULL;
+    printf("Maxprocs: %d\n", maxprocs);
+    int croot = root;
+    printf("Root : %d\n", root);
+    MPI_Comm ccomm = (MPI_Comm) (intptr_t) comm;
+    printf("ccom: %ld\n", (long)ccomm);
+
+
+    MPI_Comm intercom;
+    int **array_of_codes = malloc(sizeof(int*)*len);
+    for (i=0; i<len; i++) {
+      array_of_codes[i] = malloc(sizeof(int)*cmaxprocs[i]);
+    }
+
+    MPI_Info *info = malloc(sizeof(MPI_Info)*commandCount);
+    for (i=0; i<commandCount; i++) {
+      info[i] = MPI_INFO_NULL;
+    }
+
+    int j, count;
+    char ***cargv = malloc(sizeof(char**)*commandCount);
+    for (i=0; i<commandCount; i++) {
+      jobjectArray temp = (jobjectArray) (*env)->GetObjectArrayElement(env, argv, i);
+      count = (*env)->GetArrayLength(env, temp);
+      cargv[i] = malloc (sizeof(char*) * (count+1));
+      for (j=0; j<count; j++) {
+        jstring string = (jstring) (*env)->GetObjectArrayElement(env, temp, j);
+        char *nativeString = (*env)->GetStringUTFChars(env, string, 0);
+        cargv[i][j] = nativeString;
+        printf("cargv[%d][%d] = %s\n", i,j, cargv[i][j]);
+      }
+
+
+      cargv[i][j] = NULL;
+    }
+
+    MPI_Comm_spawn_multiple(commandCount, ccommand, cargv, cmaxprocs, info, croot, ccomm, &intercom, array_of_codes);
+    printf("intercom: %ld\n", (long)intercom);
+
+    for (i=0; i<commandCount; i++) {
+
+      jobjectArray temp = (jobjectArray) (*env)->GetObjectArrayElement(env, argv, i);
+      count = (*env)->GetArrayLength(env, temp);
+      for (j=0; j<count; j++) {
+        jstring string = (jstring) (*env)->GetObjectArrayElement(env, temp, j);
+        (*env)->ReleaseStringUTFChars(env, string, cargv[i][j]);
+
+      }
+      free(cargv[i]);
+    }
+
+    free(cargv);
+    return (jlong) intercom;
+  }
+
+  /*
+ * Class:     mpjdev_natmpjdev_Intracomm
+ * Method:    nativeAccept
+ * Signature: (Ljava/lang/String;ILmpjdev/natmpjdev/Comm;)Lmpjdev/natmpjdev/Comm;
+ */
+JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeAccept
+  (JNIEnv *env, jobject jobj, jstring port_name, jint root, jlong comm) {
+    MPI_Comm ccomm = (MPI_Comm) (intptr_t) comm;
+    MPI_Comm intercom;
+    const char *cport = (*env)->GetStringUTFChars(env, port_name, NULL);
+    int croot = root;
+    MPI_Comm_accept(cport, MPI_INFO_NULL, croot, ccomm, &intercom);
+    return (jlong) intercom;
+
+  }
+
+/*
+ * Class:     mpjdev_natmpjdev_Intracomm
+ * Method:    nativeConnect
+ * Signature: (Ljava/lang/String;ILmpjdev/natmpjdev/Comm;)Lmpjdev/natmpjdev/Comm;
+ */
+JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeConnect
+  (JNIEnv *env, jobject jobj, jstring port_name, jint root, jlong comm) {
+    MPI_Comm ccomm = (MPI_Comm) (intptr_t) comm;
+    MPI_Comm intercom;
+    const char *cport = (*env)->GetStringUTFChars(env, port_name, NULL);
+    int croot = root;
+    MPI_Comm_connect(cport, MPI_INFO_NULL, croot, ccomm, &intercom);
+    return (jlong) intercom;
+
+  }

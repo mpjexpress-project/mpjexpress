@@ -59,6 +59,10 @@ public class Comm {
     this.code = code;
   }
 
+  Comm(long handle) {
+  
+  }
+
   /**
    * Size of group of this communicator.
    * <p>
@@ -2464,6 +2468,37 @@ public class Comm {
   public Object clone() throws MPIException {
     return this;
     // this method is over-written in both Intracomm/Intercomm
+  }
+
+
+  public Comm Get_parent()
+  {
+    return new Comm();
+  }
+
+  public String Open_port(String port_name)
+  {
+    return new String();
+  }
+
+  public void Close_port(String port_name) 
+  {
+    //....
+  }
+
+  public void Publish_name(String service_name, String port_name)
+  {
+    //....
+  }
+
+  public void Unpublish_name(String service_name, String port_name)
+  {
+    //....
+  }
+
+  public String Lookup_name(String service_name)
+  {
+    return new String();
   }
 
 }

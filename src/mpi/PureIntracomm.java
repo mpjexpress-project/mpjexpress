@@ -2544,4 +2544,23 @@ public class PureIntracomm extends IntracommImpl {
 
   }
 
+  public Comm Spawn(String command, String[] argv, int maxprocs, int root) {
+    return new Comm();
+
+  }
+
+  public Comm Spawn_multiple(String[] commands, String[][] argv, int[] maxprocs, int root) {
+    return new Comm();
+  }
+
+  public Comm Accept(String port_name, int root) {
+    return new Comm();
+
+  }
+
+  public Comm Connect(String port_name, int root) {
+    return new Comm();
+
+  }
+
 }

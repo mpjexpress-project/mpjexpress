@@ -921,5 +921,42 @@ public class Intracomm {
 	.println("mpjdev.natmpjdev.Intracomm: Create_graph yet to be implemented but don't know how -_-");
     return null;
   }
+  private native long nativeSpawn(String command, String[] argv, int maxprocs, int root, long comm);
+
+  private native long nativeSpawn_multiple(String[] commands, String[][] argv, int[] maxprocs, int root, long comm);
+
+  private native long nativeAccept(String port_name, int root, long comm);
+
+  private native long nativeConnect(String port_name, int root, long comm);
+
+
+  public long Spawn(String command, String[] argv, int maxprocs, int root) {
+    System.out.println("INSIDE NATIVE SPAWN");
+    long intercom = nativeSpawn(command, argv, maxprocs, root, mpjdevNativeComm.handle);
+   // return new Comm(intercom);
+    return intercom;
+
+  }
+
+  public long Spawn_multiple(String[] commands, String[][] argv, int[] maxprocs, int root) {
+    System.out.println("INSIDE NATIVE Spawn_multiple");
+    long intercom = nativeSpawn_multiple(commands, argv, maxprocs, root, mpjdevNativeComm.handle);
+    return intercom;
+  }
+
+  public Comm Accept(String port_name, int root) {
+    //return new Comm();
+    return new Comm( (long)nativeAccept (port_name, root, mpjdevNativeComm.handle));
+  }
+
+  public Comm Connect(String port_name, int root) {
+   // return new Comm();
+    return new Comm( (long)nativeConnect(port_name, root, mpjdevNativeComm.handle));
+
+
+  }
+
+
+
 
 } // ends class mpjdev.natmpjdev.Intracomm.java

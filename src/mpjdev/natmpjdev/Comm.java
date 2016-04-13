@@ -497,6 +497,47 @@ public class Comm extends mpjdev.Comm {
   // of implementing at the native level lets just pass the src and tag in the
   // arguments
   private native void nativeProbe(long handle, int src, int tag,
-      mpjdev.Status status) throws MPJException;
+    mpjdev.Status status) throws MPJException;
+
+  private native long nativeGetParent();
+
+  private native String nativeOpenPort(String port_name);
+
+  private native void nativeClosePort(String port_name) ;
+
+  private native void nativePublishName(String service_name, String port_name);
+
+  private native void nativeUnpublishName(String service_name, String port_name);
+
+  private native String nativeLookupName(String service_name);
+
+  public String Open_port(String port_name) {
+    return nativeOpenPort(port_name);
+
+  }
+
+  public void Close_port(String portname){
+    nativeClosePort(portname) ;
+
+  }
+
+  public void Publish_name(String service_name, String port_name){
+    nativePublishName(service_name, port_name);
+  }
+
+  public void Unpublish_name(String service_name, String port_name){
+    nativeUnpublishName(service_name, port_name);
+  }
+
+  public String Lookup_name(String service_name){
+    return nativeLookupName(service_name);
+  }
+
+  public Comm Get_parent() {
+    long parentIntercomm = nativeGetParent();
+    return new Comm(parentIntercomm);
+  }
+
+
 } // ends Comm class
 

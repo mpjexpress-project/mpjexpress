@@ -115,4 +115,17 @@ public abstract class Comm {
 
   public abstract Comm split(int color, int key) throws MPJDevException;
 
+  public abstract String Open_port(String port_name);
+
+  public abstract void Close_port(String port_name);
+
+  public abstract void Publish_name(String service_name, String port_name);
+
+  public abstract void Unpublish_name(String service_name, String port_name);
+
+  public abstract String Lookup_name(String service_name);
+
+  public abstract Comm Get_parent();
+
+
 }

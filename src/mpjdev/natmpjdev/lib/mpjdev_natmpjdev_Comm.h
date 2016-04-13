@@ -14,7 +14,7 @@ extern "C" {
  */
 JNIEXPORT jboolean JNICALL Java_mpjdev_natmpjdev_Comm_loadGlobalLibraries
   (JNIEnv *, jclass);
-  
+
 /*
  * Class:     mpjdev_natmpjdev_Comm
  * Method:    getTagUB
@@ -182,6 +182,54 @@ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Comm_nativeIrecv
  */
 JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Comm_nativeProbe
   (JNIEnv *, jobject, jlong, jint, jint, jobject);
+
+/*
+ * Class:     mpjdev_natmpjdev_Comm
+ * Method:    nativeGetParent
+ * Signature: ()J
+ */
+JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Comm_nativeGetParent
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     mpjdev_natmpjdev_Comm
+ * Method:    nativeOpenPort
+ * Signature: (Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_mpjdev_natmpjdev_Comm_nativeOpenPort
+  (JNIEnv *, jobject, jstring);
+
+/*
+ * Class:     mpjdev_natmpjdev_Comm
+ * Method:    nativeClosePort
+ * Signature: (Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Comm_nativeClosePort
+  (JNIEnv *, jobject, jstring);
+
+/*
+ * Class:     mpjdev_natmpjdev_Comm
+ * Method:    nativePublishName
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Comm_nativePublishName
+  (JNIEnv *, jobject, jstring, jstring);
+
+/*
+ * Class:     mpjdev_natmpjdev_Comm
+ * Method:    nativeUnpublishName
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Comm_nativeUnpublishName
+  (JNIEnv *, jobject, jstring, jstring);
+
+/*
+ * Class:     mpjdev_natmpjdev_Comm
+ * Method:    nativeLookupName
+ * Signature: (Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_mpjdev_natmpjdev_Comm_nativeLookupName
+  (JNIEnv *, jobject, jstring);
 
 #ifdef __cplusplus
 }

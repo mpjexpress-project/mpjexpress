@@ -23,7 +23,6 @@ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Intracomm_init
 JNIEXPORT jint JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeCompare
   (JNIEnv *, jclass, jlong, jlong);
 
-
 /*
  * Class:     mpjdev_natmpjdev_Intracomm
  * Method:    nativeBarrier
@@ -127,6 +126,38 @@ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeAllreduce
  */
 JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeReduce_1scatter
   (JNIEnv *, jobject, jlong, jobject, jobject, jintArray, jobject);
+
+/*
+ * Class:     mpjdev_natmpjdev_Intracomm
+ * Method:    nativeSpawn
+ * Signature: (Ljava/lang/String;[Ljava/lang/String;IIJ)J
+ */
+JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeSpawn
+  (JNIEnv *, jobject, jstring, jobjectArray, jint, jint, jlong);
+
+/*
+ * Class:     mpjdev_natmpjdev_Intracomm
+ * Method:    nativeSpawn_multiple
+ * Signature: ([Ljava/lang/String;[[Ljava/lang/String;[IIJ)J
+ */
+JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeSpawn_1multiple
+  (JNIEnv *, jobject, jobjectArray, jobjectArray, jintArray, jint, jlong);
+
+/*
+ * Class:     mpjdev_natmpjdev_Intracomm
+ * Method:    nativeAccept
+ * Signature: (Ljava/lang/String;IJ)J
+ */
+JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeAccept
+  (JNIEnv *, jobject, jstring, jint, jlong);
+
+/*
+ * Class:     mpjdev_natmpjdev_Intracomm
+ * Method:    nativeConnect
+ * Signature: (Ljava/lang/String;IJ)J
+ */
+JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeConnect
+  (JNIEnv *, jobject, jstring, jint, jlong);
 
 #ifdef __cplusplus
 }

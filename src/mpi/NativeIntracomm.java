@@ -1364,6 +1364,22 @@ public class NativeIntracomm extends PureIntracomm {
       DoubleBuffer.get((double[]) dest, offset, count);
     }
 
-  }
+}
+
+public Comm Spawn(String command, String[] argv, int maxprocs, int root) {
+  return new Comm( (long) nativeIntracomm.Spawn(command, argv, maxprocs, root) );
+}
+
+public Comm Spawn_multiple(String[] commands, String[][] argv, int[] maxprocs, int root) {
+  return new Comm( (long) nativeIntracomm.Spawn_multiple(commands, argv, maxprocs, root) );
+}
+
+public Comm Accept(String port_name, int root) {
+  return new Comm();
+}
+
+public Comm Connect(String port_name, int root) {
+  return new Comm();
+}
 
 }

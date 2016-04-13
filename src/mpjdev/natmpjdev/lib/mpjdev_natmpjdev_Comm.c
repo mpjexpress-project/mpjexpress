@@ -974,3 +974,79 @@ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Comm_nativeProbe
 
 }
 
+/*
+ * Class:     mpjdev_natmpjdev_Comm
+ * Method:    nativeGetParent
+ * Signature: ()J
+ */
+ JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Comm_nativeGetParent
+ (JNIEnv *env, jobject jobj) {
+   MPI_Comm parentComm;
+   MPI_Comm_get_parent(&parentComm);
+   return (jlong) parentComm;
+ }
+
+  /*
+ * Class:     mpjdev_natmpjdev_Comm
+ * Method:    nativeOpenPort
+ * Signature: ()Ljava/lang/String;
+ */
+ JNIEXPORT jstring JNICALL Java_mpjdev_natmpjdev_Comm_nativeOpenPort
+ (JNIEnv *env, jobject jobj, jstring port_name) {
+   // const char *cport = (*env)->GetStringUTFChars(env, port_name, NULL);
+   char *cport = malloc(sizeof(char)*50);
+   MPI_Open_port(MPI_INFO_NULL, cport);
+   return (jstring) cport;
+
+ }
+
+/*
+ * Class:     mpjdev_natmpjdev_Comm
+ * Method:    nativeClosePort
+ * Signature: (Ljava/lang/String;)V
+ */
+ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Comm_nativeClosePort
+ (JNIEnv *env, jobject jobj, jstring port_name) {
+  const char *cport = (*env)->GetStringUTFChars(env, port_name, NULL);
+  MPI_Close_port(cport);
+}
+
+/*
+ * Class:     mpjdev_natmpjdev_Comm
+ * Method:    nativePublishName
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)V
+ */
+ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Comm_nativePublishName
+ (JNIEnv *env, jobject jobj, jstring service_name, jstring port_name) {
+  const char *cport = (*env)->GetStringUTFChars(env, port_name, NULL);
+  const char *cservice = (*env)->GetStringUTFChars(env, service_name, NULL);
+  MPI_Publish_name(cservice, MPI_INFO_NULL, cport);
+
+}
+
+/*
+ * Class:     mpjdev_natmpjdev_Comm
+ * Method:    nativeUnpublishName
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)V
+ */
+ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Comm_nativeUnpublishName
+ (JNIEnv *env, jobject jobj, jstring service_name, jstring port_name) {
+  const char *cport = (*env)->GetStringUTFChars(env, port_name, NULL);
+  const char *cservice = (*env)->GetStringUTFChars(env, service_name, NULL);
+  MPI_Unpublish_name(cservice, MPI_INFO_NULL, cport);
+}
+
+/*
+ * Class:     mpjdev_natmpjdev_Comm
+ * Method:    nativeLookupName
+ * Signature: (Ljava/lang/String;)Ljava/lang/String;
+ */
+ JNIEXPORT jstring JNICALL Java_mpjdev_natmpjdev_Comm_nativeLookupName
+ (JNIEnv *env, jobject jobj, jstring service_name) {
+  const char *cservice = (*env)->GetStringUTFChars(env, service_name, NULL);
+  char *cport;
+  cport = malloc(sizeof(char)*50);
+  MPI_Lookup_name(cservice, MPI_INFO_NULL, cport);
+  return (jstring) cport;
+
+}
