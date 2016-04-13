@@ -7,6 +7,7 @@ SET(	SOURCE_FILES
 			mpjdev_natmpjdev_Group.c
 			mpjdev_natmpjdev_NativeRecvRequest.c
 			mpjdev_natmpjdev_NativeSendRequest.c
+			mpjdev_natmpjdev_NativeCollRequest.c
 			mpjdev_natmpjdev_Intracomm.c
 			mpjdev_natmpjdev_Intercomm.c
 )

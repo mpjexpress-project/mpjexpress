@@ -216,6 +216,13 @@ public class Intracomm extends Comm {
     intracommImpl.Barrier();
   }
 
+  public Request Ibarrier() throws MPIException {
+
+    Request req = null;
+    req = intracommImpl.Ibarrier();
+    return req;
+  }
+
   /**
    * Broadcast a message from the process with rank <tt>root</tt> to all
    * processes of the group.
@@ -250,6 +257,52 @@ public class Intracomm extends Comm {
       throws MPIException {
 
     intracommImpl.Bcast(buf, offset, count, type, root);
+
+
+  }
+
+  /**
+   * Broadcast a message from the process with rank <tt>root</tt> to all
+   * processes of the group in a non-blocking way.
+   * <p>
+   * <table>
+   * <tr>
+   * <td><tt> buf      </tt></td>
+   * <td>buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> offset   </tt></td>
+   * <td>initial offset in buffer
+   * </tr>
+   * <tr>
+   * <td><tt> count    </tt></td>
+   * <td>number of items in buffer
+   * </tr>
+   * <tr>
+   * <td><tt> datatype </tt></td>
+   * <td>datatype of each item in buffer
+   * </tr>
+   * <tr>
+   * <td><tt> root     </tt></td>
+   * <td>rank of broadcast root
+   * </tr>
+   *<tr>
+   * <td><em> returns: </em></td>
+   * <td>communication request
+   * </tr>
+   * </table>
+   * <p>
+   * Java binding of the MPI operation <tt>MPI_IBCST</tt>.
+   */
+
+    public Request Ibcast(Object buf, int offset, int count, Datatype type,
+                   int root) throws MPIException {
+      Request req = null;
+
+    
+    req = intracommImpl.Ibcast(buf,offset,count, type, root);
+
+    return req;
 
   }
 
@@ -305,6 +358,70 @@ public class Intracomm extends Comm {
 	recvoffset, recvcount, recvtype, root);
 
   }
+
+  /**
+   * Each process sends the contents of its send buffer to the root process in non-blocking way.
+   * <p>
+   * <table>
+   * <tr>
+   * <td><tt> sendbuf    </tt></td>
+   * <td>send buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> sendoffset </tt></td>
+   * <td>initial offset in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> sendcount  </tt></td>
+   * <td>number of items to send
+   * </tr>
+   * <tr>
+   * <td><tt> sendtype   </tt></td>
+   * <td>datatype of each item in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> recvbuf    </tt></td>
+   * <td>receive buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> recvoffset </tt></td>
+   * <td>initial offset in receive buffer
+   * </tr>
+   * <tr>
+   * <td><tt> recvcount  </tt></td>
+   * <td>number of items to receive
+   * </tr>
+   * <tr>
+   * <td><tt> recvtype   </tt></td>
+   * <td>datatype of each item in receive buffer
+   * </tr>
+   * <tr>
+   * <td><tt> root       </tt></td>
+   * <td>rank of receiving process
+   * </tr>
+   * <tr>
+   * <td><em> returns: </em></td>
+   * <td>communication request
+   * </tr>
+   * </table>
+   * <p>
+   * Java binding of the MPI operation <tt>MPI_IGATHER</tt>.
+   */
+  public Request Igather(Object sendbuf, int sendoffset, int sendcount,
+      Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
+      Datatype recvtype, int root) throws MPIException {
+
+    Request req = null;
+
+   req =  intracommImpl.Igather(sendbuf, sendoffset, sendcount, sendtype, recvbuf,
+  recvoffset, recvcount, recvtype, root);
+
+   return req;
+
+  }
+
+
+
 
   /**
    * Extends functionality of <tt>Gather</tt> by allowing varying counts of data
@@ -368,6 +485,18 @@ public class Intracomm extends Comm {
 	recvoffset, recvcount, displs, recvtype, root);
   }
 
+  public Request Igatherv(Object sendbuf, int sendoffset, int sendcount,
+      Datatype sendtype, Object recvbuf, int recvoffset, int[] recvcount,
+      int[] displs, Datatype recvtype, int root) throws MPIException {
+
+    Request req = null;
+
+    req = intracommImpl.Igatherv(sendbuf, sendoffset, sendcount, sendtype, recvbuf,
+  recvoffset, recvcount, displs, recvtype, root);
+
+    return req;
+  }
+
   /**
    * Inverse of the operation <tt>Gather</tt>.
    * <p>
@@ -419,6 +548,70 @@ public class Intracomm extends Comm {
 
     intracommImpl.Scatter(sendbuf, sendoffset, sendcount, sendtype, recvbuf,
 	recvoffset, recvcount, recvtype, root);
+
+  }
+
+
+  /**
+   * Inverse of the operation <tt>IGather</tt>.
+   * <p>
+   * <table>
+   * <tr>
+   * <td><tt> sendbuf    </tt></td>
+   * <td>send buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> sendoffset </tt></td>
+   * <td>initial offset in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> sendcount  </tt></td>
+   * <td>number of items to send
+   * </tr>
+   * <tr>
+   * <td><tt> sendtype   </tt></td>
+   * <td>datatype of each item in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> recvbuf    </tt></td>
+   * <td>receive buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> recvoffset </tt></td>
+   * <td>initial offset in receive buffer
+   * </tr>
+   * <tr>
+   * <td><tt> recvcount  </tt></td>
+   * <td>number of items to receive
+   * </tr>
+   * <tr>
+   * <td><tt> recvtype   </tt></td>
+   * <td>datatype of each item in receive buffer
+   * </tr>
+   * <tr>
+   * <td><tt> root       </tt></td>
+   * <td>rank of sending process
+   * </tr>
+   *<tr>
+   * <td><em> returns: </em></td>
+   * <td>communication request
+   * </tr>
+   * </table>
+   * <p>
+   * Java binding of the MPI operation <tt>MPI_ISCATTER</tt>.
+   */
+
+   public Request Iscatter(Object sendbuf, int sendoffset, int sendcount,
+      Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
+      Datatype recvtype, int root) throws MPIException {
+
+    Request req = null;
+
+
+    req = intracommImpl.Iscatter(sendbuf, sendoffset, sendcount, sendtype, recvbuf,
+  recvoffset, recvcount, recvtype, root);
+
+    return req;
 
   }
 
@@ -479,6 +672,17 @@ public class Intracomm extends Comm {
 
   }
 
+    public Request Iscatterv(Object sendbuf, int sendoffset, int[] sendcount,
+      int[] displs, Datatype sendtype, Object recvbuf, int recvoffset,
+      int recvcount, Datatype recvtype, int root) throws MPIException {
+      Request req = null;
+
+    req = intracommImpl.Iscatterv(sendbuf, sendoffset, sendcount, displs, sendtype,
+  recvbuf, recvoffset, recvcount, recvtype, root);
+    return req;
+
+  }
+
   /**
    * Similar to <tt>Gather</tt>, but all processes receive the result.
    * <p>
@@ -526,6 +730,19 @@ public class Intracomm extends Comm {
 
     intracommImpl.Allgather(sendbuf, sendoffset, sendcount, sendtype, recvbuf,
 	recvoffset, recvcount, recvtype);
+
+  }
+
+    public Request Iallgather(Object sendbuf, int sendoffset, int sendcount,
+      Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
+      Datatype recvtype) throws MPIException {
+
+      Request req = null;
+
+    req = intracommImpl.Iallgather(sendbuf, sendoffset, sendcount, sendtype, recvbuf,
+  recvoffset, recvcount, recvtype);
+
+    return req;
 
   }
 
@@ -581,6 +798,18 @@ public class Intracomm extends Comm {
 	recvoffset, recvcount, displs, recvtype);
   }
 
+
+   public Request Iallgatherv(Object sendbuf, int sendoffset, int sendcount,
+      Datatype sendtype, Object recvbuf, int recvoffset, int[] recvcount,
+      int[] displs, Datatype recvtype) throws MPIException {
+
+    Request req = null;
+
+    req = intracommImpl.Iallgatherv(sendbuf, sendoffset, sendcount, sendtype, recvbuf,
+  recvoffset, recvcount, displs, recvtype);
+    return req;
+  }
+
   /**
    * Extension of <tt>Allgather</tt> to the case where each process sends
    * distinct data to each of the receivers.
@@ -628,6 +857,61 @@ public class Intracomm extends Comm {
 
     intracommImpl.Alltoall(sendbuf, sendoffset, sendcount, sendtype, recvbuf,
 	recvoffset, recvcount, recvtype);
+  }
+
+    /**
+   * Extension of <tt>Allgather</tt> to the case where each process sends
+   * distinct data to each of the receivers, in a non-blocking way.
+   * <p>
+   * <table>
+   * <tr>
+   * <td><tt> sendbuf    </tt></td>
+   * <td>send buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> sendoffset </tt></td>
+   * <td>initial offset in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> sendcount  </tt></td>
+   * <td>number of items sent to each process
+   * </tr>
+   * <tr>
+   * <td><tt> sendtype   </tt></td>
+   * <td>datatype send buffer items
+   * </tr>
+   * <tr>
+   * <td><tt> recvbuf    </tt></td>
+   * <td>receive buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> recvoffset </tt></td>
+   * <td>initial offset in receive buffer
+   * </tr>
+   * <tr>
+   * <td><tt> recvcount  </tt></td>
+   * <td>number of items received from any process
+   * <tr>
+   * <td><tt> recvtype   </tt></td>
+   * <td>datatype of receive buffer items
+   * </tr>
+    *<tr>
+   * <td><em> returns: </em></td>
+   * <td>communication request
+   * </tr>
+   * </table>
+   * <p>
+   * Java binding of the MPI operation <tt>MPI_IALLTOALL</tt>.
+   */
+
+  public Request Ialltoall(Object sendbuf, int sendoffset, int sendcount,
+      Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
+      Datatype recvtype) throws MPIException {
+    Request req = null;
+
+    req = intracommImpl.Ialltoall(sendbuf, sendoffset, sendcount, sendtype, recvbuf,
+  recvoffset, recvcount, recvtype);
+    return req;
   }
 
   /**
@@ -689,6 +973,19 @@ public class Intracomm extends Comm {
 
   }
 
+
+  public Request Ialltoallv(Object sendbuf, int sendoffset, int[] sendcount,
+      int[] sdispls, Datatype sendtype, Object recvbuf, int recvoffset,
+      int[] recvcount, int[] rdispls, Datatype recvtype) throws MPIException {
+
+    Request req = null;
+
+    req = intracommImpl.Ialltoallv(sendbuf, sendoffset, sendcount, sdispls, sendtype,
+  recvbuf, recvoffset, recvcount, rdispls, recvtype);
+    return req;
+
+  }
+
   /**
    * Combine elements in input buffer of each process using the reduce
    * operation, and return the combined value in the output buffer of the root
@@ -743,6 +1040,74 @@ public class Intracomm extends Comm {
 
     intracommImpl.Reduce(sendbuf, sendoffset, recvbuf, recvoffset, count,
 	datatype, op, root);
+
+  }
+
+    /**
+   * Combine elements in input buffer of each process using the reduce
+   * operation, and return the combined value in the output buffer of the root
+   * process, in a non-blocking way.
+   * <p>
+   * <table>
+   * <tr>
+   * <td><tt> sendbuf    </tt></td>
+   * <td>send buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> sendoffset </tt></td>
+   * <td>initial offset in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> recvbuf    </tt></td>
+   * <td>receive buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> recvoffset </tt></td>
+   * <td>initial offset in receive buffer
+   * </tr>
+   * <tr>
+   * <td><tt> count      </tt></td>
+   * <td>number of items in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> datatype   </tt></td>
+   * <td>data type of each item in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> op         </tt></td>
+   * <td>reduce operation
+   * </tr>
+   * <tr>
+   * <td><tt> root       </tt></td>
+   * <td>rank of root process
+   * </tr>
+   *<tr>
+   * <td><em> returns: </em></td>
+   * <td>communication request
+   * </tr>
+   *<tr>
+   * <td><em> returns: </em></td>
+   * <td>communication request
+   * </tr>
+   * </table>
+   * <p>
+   * Java binding of the MPI operation <tt>MPI_IREDUCE</tt>.
+   * <p>
+   * The predefined operations are available in Java as <tt>MPI.MAX</tt>,
+   * <tt>MPI.MIN</tt>, <tt>MPI.SUM</tt>, <tt>MPI.PROD</tt>, <tt>MPI.LAND</tt>,
+   * <tt>MPI.BAND</tt>, <tt>MPI.LOR</tt>, <tt>MPI.BOR</tt>, <tt>MPI.LXOR</tt>,
+   * <tt>MPI.BXOR</tt>, <tt>MPI.MINLOC</tt> and <tt>MPI.MAXLOC</tt>.
+   */
+
+  public Request Ireduce(Object sendbuf, int sendoffset, Object recvbuf,
+      int recvoffset, int count, Datatype datatype, Op op, int root)
+      throws MPIException {
+        Request req = null;
+
+    req = intracommImpl.Ireduce(sendbuf, sendoffset, recvbuf, recvoffset, count,
+    datatype, op, root);
+
+    return req;
 
   }
 

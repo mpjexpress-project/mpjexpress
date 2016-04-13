@@ -560,6 +560,15 @@ public class PureIntracomm extends IntracommImpl {
      */
   }
 
+
+  public Request Ibarrier() throws MPIException {
+
+    Request req = null;
+    return req;
+
+
+  }
+
   /**
    * Broadcast a message from the process with rank <tt>root</tt> to all
    * processes of the group.
@@ -735,6 +744,64 @@ public class PureIntracomm extends IntracommImpl {
       MST_Broadcast(buf, offset, count, type, root, mid + 1, right);
   }
 
+  public Request Ibcast(Object buf, int offset, int count, Datatype type,
+      int root) throws MPIException {
+
+
+    int index = Rank();
+  Request req = null;
+
+  if (root != 0) {
+    if (root == index)
+      req = isend(buf, offset, count, type, 0, bcast_tag, false);
+
+    if (index == 0)
+      req = irecv(buf, offset, count, type, root, bcast_tag - Rank(), false);
+  }
+
+  root = 0;
+
+
+  if (procTree.isRoot) {
+   
+    for (int i = 0; i < procTree.child.length; i++) {
+
+      if (procTree.child[i] != -1)
+       req = isend(buf, offset, count, type, procTree.child[i], bcast_tag
+             - procTree.child[i], false);
+    }
+  } else {
+    if (procTree.parent == -1) {
+      System.out.println("non root's node parent doesn't exist");
+    }
+    req = irecv(buf, offset, count, type, procTree.parent, bcast_tag - Rank(), false);
+    }
+
+    if (procTree.isRoot) {
+
+          for (int i = 0; i < procTree.child.length; i++) {
+
+            if (procTree.child[i] != -1)
+              req.Wait();
+          }
+      
+
+
+
+    }
+
+
+  if (bcast_tag == 65535) {
+    bcast_tag = 35 * 1000;
+  }
+  bcast_tag++;
+
+  return req;
+
+}
+  
+
+
   /**
    * Each process sends the contents of its send buffer to the root process.
    * <p>
@@ -907,6 +974,15 @@ public class PureIntracomm extends IntracommImpl {
       MPI.logger.debug("--Gather ends--");
   }
 
+  public Request Igather(Object sendbuf, int sendoffset, int sendcount,
+                     Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
+                     Datatype recvtype, int root) throws MPIException {
+
+    Request req = null;
+    return req;
+
+  }
+
   /**
    * Extends functionality of <tt>Gather</tt> by allowing varying counts of data
    * from each process.
@@ -1007,8 +1083,18 @@ public class PureIntracomm extends IntracommImpl {
       MPI.logger.debug("--Gatherv ends--");
   }
 
+    public Request Igatherv(Object sendbuf, int sendoffset, int sendcount,
+                      Datatype sendtype, Object recvbuf, int recvoffset, int[] recvcount,
+                      int[] displs, Datatype recvtype, int root) throws MPIException {
+
+    Request req = null;
+    return req;
+
+
+  }
+
   /**
-   * Inverse of the operation <tt>Gather</tt>.
+   * Inverse of the operation <tt>Scatter</tt>.
    * <p>
    * <table>
    * <tr>
@@ -1170,6 +1256,20 @@ public class PureIntracomm extends IntracommImpl {
     // MPI.logger.debug("--Scatter ends--");
   }
 
+
+  public Request Iscatter(Object sendbuf, int sendoffset, int sendcount,
+                      Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
+                      Datatype recvtype, int root) throws MPIException {
+
+    Request req = null;
+
+
+    return req;
+
+
+
+  }
+
   /**
    * Inverse of the operation <tt>Gatherv</tt>.
    * <p>
@@ -1254,6 +1354,15 @@ public class PureIntracomm extends IntracommImpl {
 	  reqs[i].Wait();
       }
     }
+  }
+
+  public Request Iscatterv(Object sendbuf, int sendoffset, int[] sendcount,
+                       int[] displs, Datatype sendtype, Object recvbuf, int recvoffset,
+                       int recvcount, Datatype recvtype, int root) throws MPIException {
+
+    Request req = null;
+    return req;
+
   }
 
   /**
@@ -1469,6 +1578,15 @@ public class PureIntracomm extends IntracommImpl {
     // MPI.logger.debug("--Allgather Ends--");
   }
 
+    public Request Iallgather(Object sendbuf, int sendoffset, int sendcount,
+                        Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
+                        Datatype recvtype) throws MPIException {
+
+    Request req = null;
+    return req;
+
+  }
+
   static boolean EXOTIC_ALLGATHER = false;
   static boolean EXOTIC_ALLGATHERV = false;
   static boolean EXOTIC_BARRIER = false;
@@ -1657,6 +1775,16 @@ public class PureIntracomm extends IntracommImpl {
     }
   }
 
+
+    public Request Iallgatherv(Object sendbuf, int sendoffset, int sendcount,
+                         Datatype sendtype, Object recvbuf, int recvoffset, int[] recvcount,
+                         int[] displs, Datatype recvtype) throws MPIException {
+
+      Request req = null;
+    return req;
+
+    }
+
   /**
    * Extension of <tt>Allgather</tt> to the case where each process sends
    * distinct data to each of the receivers.
@@ -1768,6 +1896,16 @@ public class PureIntracomm extends IntracommImpl {
     }
   }
 
+  public Request Ialltoall(Object sendbuf, int sendoffset, int sendcount,
+                       Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
+                       Datatype recvtype) throws MPIException {
+
+    Request req = null;
+    return req;
+
+
+  }
+
   /**
    * Adds flexibility to <tt>Alltoall</tt>: location of data for send is
    * specified by <tt>sdispls</tt> and location to place data on receive side is
@@ -1870,6 +2008,15 @@ public class PureIntracomm extends IntracommImpl {
 
       req[i].Wait();
     }
+  }
+
+  public Request Ialltoallv(Object sendbuf, int sendoffset, int[] sendcount,
+                        int[] sdispls, Datatype sendtype, Object recvbuf, int recvoffset,
+                        int[] recvcount, int[] rdispls, Datatype recvtype) throws MPIException {
+
+    Request req = null;
+    return req;
+
   }
 
   /**
@@ -2057,6 +2204,15 @@ public class PureIntracomm extends IntracommImpl {
   }
 
   static boolean EXOTIC_ALLREDUCE = false;
+
+  public Request Ireduce(Object sendbuf, int sendoffset, Object recvbuf,
+                     int recvoffset, int count, Datatype datatype, Op op, int root)
+  throws MPIException {
+
+    Request req = null;
+    return req;
+
+  }
 
   /**
    * Same as <tt>reduce</tt> except that the result appears in receive buffer of

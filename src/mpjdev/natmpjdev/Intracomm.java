@@ -134,6 +134,20 @@ public class Intracomm {
    */
   private native void nativeBarrier(long commHandle);
 
+
+   public NativeRequest Ibarrier() {
+
+    NativeCollRequest req = new NativeCollRequest();
+    nativeiBarrier(mpjdevNativeComm.handle,req);
+    return req;
+  }
+
+  /*
+   * int MPI_Ibarrier(MPI_Comm comm, MPI_Request *request)
+   */
+  private native long nativeiBarrier(long commHandle, NativeCollRequest req);
+
+
   /**
    * Broadcast a message from the process with rank <tt>root</tt> to all
    * processes of the group.
@@ -176,6 +190,58 @@ public class Intracomm {
    */
   private native void nativeBcast(long commHandle, ByteBuffer buffer,
       int count, int root);
+
+
+   /**
+   * Broadcast a message from the process with rank <tt>root</tt> to all
+   * processes of the group in a non-blocking way.
+   * <p>
+   * <table>
+   * <tr>
+   * <td><tt> buf      </tt></td>
+   * <td>buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> offset   </tt></td>
+   * <td>initial offset in buffer
+   * </tr>
+   * <tr>
+   * <td><tt> count    </tt></td>
+   * <td>number of items in buffer
+   * </tr>
+   * <tr>
+   * <td><tt> datatype </tt></td>
+   * <td>datatype of each item in buffer
+   * </tr>
+   * <tr>
+   * <td><tt> root     </tt></td>
+   * <td>rank of broadcast root
+   * </tr>
+   *<tr>
+    * <td><tt> NativeRequest      </tt></td>
+   * <td>  Return type on which wait and test will be called
+   * </tr>
+   * </table>
+   * <p>
+   * Java binding of the MPI operation <tt>MPI_IBCST</tt>.
+   */
+
+   public NativeRequest Ibcast(Object buf, int size, int root) {
+
+    NativeCollRequest req = new NativeCollRequest();
+
+     NativeiBcast(mpjdevNativeComm.handle, (ByteBuffer) buf, size, root, req);
+    
+    return req;
+}
+
+private native long NativeiBcast(
+        long commHandle, ByteBuffer buffer, int count, int root, NativeCollRequest req);
+
+   	
+
+
+    
 
   /**
    * Each process sends the contents of its send buffer to the root process.
@@ -235,6 +301,76 @@ public class Intracomm {
    */
   private native void nativeGather(long commHandle, ByteBuffer sendbuf,
       int sendcount, ByteBuffer recvbuf, int recvcount, int root, boolean isRoot);
+
+
+
+  /**
+   * Each process sends the contents of its send buffer to the root process in a non blocking way.
+   * <p>
+   * <table>
+   * <tr>
+   * <td><tt> sendbuf    </tt></td>
+   * <td>send buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> sendoffset </tt></td>
+   * <td>initial offset in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> sendcount  </tt></td>
+   * <td>number of items to send
+   * </tr>
+   * <tr>
+   * <td><tt> sendtype   </tt></td>
+   * <td>datatype of each item in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> recvbuf    </tt></td>
+   * <td>receive buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> recvoffset </tt></td>
+   * <td>initial offset in receive buffer
+   * </tr>
+   * <tr>
+   * <td><tt> recvcount  </tt></td>
+   * <td>number of items to receive
+   * </tr>
+   * <tr>
+   * <td><tt> recvtype   </tt></td>
+   * <td>datatype of each item in receive buffer
+   * </tr>
+   * <tr>
+   * <td><tt> root       </tt></td>
+   * <td>rank of receiving process
+   * </tr>
+   * <tr>
+   * <td><tt> NativeRequest      </tt></td>
+   * <td>  Return type on which wait and test will be called
+   * </tr>
+   * </table>
+   * <p>
+   * Java binding of the MPI operation <tt>MPI_IGATHER</tt>.
+   */
+  public NativeRequest Igather(Object sendbuf, int sendSize, Object recvbuf,
+      int recvSize, int root, boolean isRoot) {
+
+    NativeCollRequest req = new NativeCollRequest();
+
+    nativeiGather(mpjdevNativeComm.handle, (ByteBuffer) sendbuf, sendSize,
+  (ByteBuffer) recvbuf, recvSize, root, isRoot, req);
+
+    return req;
+  }
+
+  /*
+   int MPI_Igather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+   void *recvbuf, int recvcount, MPI_Datatype recvtype,
+    int root, MPI_Comm comm, MPI_Request *request)
+   */
+  private native  long nativeiGather(long commHandle, ByteBuffer sendbuf,
+      int sendcount, ByteBuffer recvbuf, int recvcount, int root, boolean isRoot, NativeCollRequest req);
+
 
   /**
    * Extends functionality of <tt>Gather</tt> by allowing varying counts of data
@@ -309,6 +445,31 @@ public class Intracomm {
       int sendcount, mpjbuf.Buffer recvbuf, int[] recvcount, int[] displs,
       int root);
 
+
+   public NativeRequest Igatherv(Object sendbuf, int sendcount,
+      Object recvbuf, int[] recvcount,
+      int[] displs,  int root , boolean isRoot ) {
+
+    NativeCollRequest req = new NativeCollRequest();
+
+    nativeiGatherv(mpjdevNativeComm.handle, (ByteBuffer)sendbuf, sendcount, (ByteBuffer)recvbuf, recvcount,displs, root,isRoot, req);
+
+    return req;
+
+    
+
+  }
+
+  /*
+   * 
+   * int MPI_Gatherv(void *sendbuf, int sendcnt, MPI_Datatype sendtype, void
+   * *recvbuf, int *recvcnts, int *displs, MPI_Datatype recvtype, int root,
+   * MPI_Comm comm)
+   */
+  private native long nativeiGatherv(long commHandle, ByteBuffer sendbuf,
+      int sendcount, ByteBuffer recvbuf, int[] recvcount, int[] displs,
+      int root,boolean isRoot, NativeCollRequest req);
+
   /**
    * Inverse of the operation <tt>Gather</tt>.
    * <p>
@@ -368,6 +529,74 @@ public class Intracomm {
    */
   private native void nativeScatter(long commHandle, ByteBuffer sendbuf,
       int sendcount, ByteBuffer recvbuf, int recvcount, int root);
+
+
+  /**
+   * Inverse of the operation <tt>Igather</tt>.
+   * <p>
+   * <table>
+   * <tr>
+   * <td><tt> sendbuf    </tt></td>
+   * <td>send buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> sendoffset </tt></td>
+   * <td>initial offset in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> sendcount  </tt></td>
+   * <td>number of items to send
+   * </tr>
+   * <tr>
+   * <td><tt> sendtype   </tt></td>
+   * <td>datatype of each item in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> recvbuf    </tt></td>
+   * <td>receive buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> recvoffset </tt></td>
+   * <td>initial offset in receive buffer
+   * </tr>
+   * <tr>
+   * <td><tt> recvcount  </tt></td>
+   * <td>number of items to receive
+   * </tr>
+   * <tr>
+   * <td><tt> recvtype   </tt></td>
+   * <td>datatype of each item in receive buffer
+   * </tr>
+   * <tr>
+   * <td><tt> root       </tt></td>
+   * <td>rank of sending process
+   * </tr>
+   *<tr>
+   * <td><tt> NativeRequest      </tt></td>
+   * <td>  Return type on which wait and test will be called
+   * </tr>
+   * </table>
+   * <p>
+   * Java binding of the MPI operation <tt>MPI_ISCATTER</tt>.
+   */
+
+
+  public NativeRequest Iscatter(Object sendbuf, int sendSize, Object recvbuf,
+      int recvSize, int root) {
+
+        NativeCollRequest req = new NativeCollRequest();
+        nativeiScatter(mpjdevNativeComm.handle, (ByteBuffer) sendbuf, sendSize,(ByteBuffer) recvbuf, recvSize, root, req);
+
+        return req;
+  }
+
+  /* int MPI_Iscatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                 void *recvbuf, int recvcount, MPI_Datatype recvtype, int root,
+                 MPI_Comm comm, MPI_Request *request)
+  */
+  private native long nativeiScatter(long commHandle, ByteBuffer sendbuf,
+      int sendcount, ByteBuffer recvbuf, int recvcount, int root, NativeCollRequest req);
+
 
   /**
    * Inverse of the operation <tt>Gatherv</tt>.
@@ -431,8 +660,31 @@ public class Intracomm {
    * sendtype, void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root,
    * MPI_Comm comm)
    */
-  private native void nativeScatterv(long commHandle, ByteBuffer sendbuf,
-      int[] sendcount, int[] displs, ByteBuffer recvbuf, int recvcount, int root);
+  private native void nativeScatterv(long commHandle, Object sendbuf,
+      int[] sendcount, int[] displs, Object recvbuf, int recvcount, int root);
+
+
+  public NativeRequest Iscatterv(Object sendbuf,  int[] sendcount,
+      int[] displs,  Object recvbuf,int recvcount, int root) {
+
+    
+    NativeCollRequest req = new NativeCollRequest();
+
+    nativeiScatterv(mpjdevNativeComm.handle, (ByteBuffer) sendbuf,
+     sendcount,displs, (ByteBuffer) recvbuf, recvcount,  root, req);
+
+    return req;
+
+  
+  }
+
+  /*
+   int MPI_Iscatterv(const void *sendbuf, const int sendcounts[], const int displs[],
+                  MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                  int root, MPI_Comm comm, MPI_Request *request)
+   */
+  private native long nativeiScatterv(long commHandle, ByteBuffer sendbuf,
+      int[] sendcount, int[] displs, ByteBuffer recvbuf, int recvcount, int root, NativeCollRequest req);
 
   /**
    * Similar to <tt>Gather</tt>, but all processes receive the result.
@@ -489,6 +741,72 @@ public class Intracomm {
    */
   private native void nativeAllgather(long commHandle, ByteBuffer sendbuf,
       int sendcount, ByteBuffer recvbuf, int recvcount);
+
+
+  /**
+   * Similar to <tt>IGather</tt>, but all processes receive the result.
+   * <p>
+   * <table>
+   * <tr>
+   * <td><tt> sendbuf    </tt></td>
+   * <td>send buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> sendoffset </tt></td>
+   * <td>initial offset in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> sendcount  </tt></td>
+   * <td>number of items to send
+   * </tr>
+   * <tr>
+   * <td><tt> sendtype   </tt></td>
+   * <td>datatype of each item in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> recvbuf    </tt></td>
+   * <td>receive buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> recvoffset </tt></td>
+   * <td>initial offset in receive buffer
+   * </tr>
+   * <tr>
+   * <td><tt> recvcount  </tt></td>
+   * <td>number of items to receive
+   * </tr>
+   * <tr>
+   * <td><tt> recvtype   </tt></td>
+   * <td>datatype of each item in receive buffer
+   * </tr>
+    *<tr>
+   * <td><tt> NativeRequest      </tt></td>
+   * <td>  Return type on which wait and test will be called
+   * </tr>
+   * </table>
+   * <p>
+   * Java binding of the MPI operation <tt>MPI_IALLGATHER</tt>.
+   */
+
+  public NativeRequest Iallgather(Object sendbuf, int sendSize, Object recvbuf,
+      int recvSize) {
+
+    NativeCollRequest req = new NativeCollRequest();
+
+    nativeiAllgather(mpjdevNativeComm.handle, (ByteBuffer) sendbuf, sendSize,
+  (ByteBuffer) recvbuf, recvSize,req);
+
+    return req;
+  }
+
+  /*
+   * 
+  int MPI_Iallgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                   void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                   MPI_Comm comm, MPI_Request *request)
+   */
+  private native long nativeiAllgather(long commHandle, ByteBuffer sendbuf,
+      int sendcount, ByteBuffer recvbuf, int recvcount, NativeCollRequest req);
 
   /**
    * Similar to <tt>Gatherv</tt>, but all processes receive the result.
@@ -551,6 +869,26 @@ public class Intracomm {
   private native void nativeAllgatherv(long commHandle, ByteBuffer sendbuf,
       int sendcount, ByteBuffer recvbuf, int[] recvcount, int[] displs);
 
+
+    public NativeRequest Iallgatherv(Object sendbuf, int sendcount,
+       Object recvbuf,int[] recvcount,
+      int[] displs) {
+
+
+    NativeCollRequest req = new NativeCollRequest();
+
+    nativeiAllgatherv(mpjdevNativeComm.handle, (ByteBuffer) sendbuf, sendcount,
+  (ByteBuffer) recvbuf, recvcount,displs,req);
+
+    return req;
+
+  
+  }
+
+
+  private native long nativeiAllgatherv(long commHandle, ByteBuffer sendbuf,
+      int sendcount, ByteBuffer recvbuf, int[] recvcount, int[] displs, NativeCollRequest req);
+
   /**
    * Extension of <tt>Allgather</tt> to the case where each process sends
    * distinct data to each of the receivers.
@@ -606,6 +944,70 @@ public class Intracomm {
    */
   private native void nativeAlltoall(long commHandle, ByteBuffer sendbuf,
       int sendcount, ByteBuffer recvbuf, int recvcount);
+
+   /**
+   * Extension of <tt>iAllgather</tt> to the case where each process sends
+   * distinct data to each of the receivers.
+   * <p>
+   * <table>
+   * <tr>
+   * <td><tt> sendbuf    </tt></td>
+   * <td>send buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> sendoffset </tt></td>
+   * <td>initial offset in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> sendcount  </tt></td>
+   * <td>number of items sent to each process
+   * </tr>
+   * <tr>
+   * <td><tt> sendtype   </tt></td>
+   * <td>datatype send buffer items
+   * </tr>
+   * <tr>
+   * <td><tt> recvbuf    </tt></td>
+   * <td>receive buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> recvoffset </tt></td>
+   * <td>initial offset in receive buffer
+   * </tr>
+   * <tr>
+   * <td><tt> recvcount  </tt></td>
+   * <td>number of items received from any process
+   * <tr>
+   * <td><tt> recvtype   </tt></td>
+   * <td>datatype of receive buffer items
+   * </tr>
+   * <td><tt> NativeRequest      </tt></td>
+   * <td>  Return type on which wait and test will be called
+   * </tr>
+   * </table>
+   * <p>
+   * Java binding of the MPI operation <tt>MPI_IALLTOALL</tt>.
+   */
+
+  public NativeRequest Ialltoall(Object sendbuf, int sendSize, Object recvbuf,
+      int recvSize) {
+
+    NativeCollRequest req = new NativeCollRequest();
+
+    nativeiAlltoall(mpjdevNativeComm.handle, (ByteBuffer) sendbuf, sendSize,
+  (ByteBuffer) recvbuf, recvSize,req);
+    return req;
+
+  }
+
+  /*
+   int MPI_Ialltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                  void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                  MPI_Comm comm, MPI_Request *request)
+   */
+  private native long nativeiAlltoall(long commHandle, ByteBuffer sendbuf,
+      int sendcount, ByteBuffer recvbuf, int recvcount, NativeCollRequest req);
+
 
   /**
    * Adds flexibility to <tt>Alltoall</tt>: location of data for send is
@@ -672,6 +1074,26 @@ public class Intracomm {
       int[] sendcount, int[] sdispls, ByteBuffer recvbuf, int[] recvcount,
       int[] rdispls);
 
+
+  public NativeRequest Ialltoallv(Object sendbuf, int[] sendcount, int[] sdispls,
+      Object recvbuf, int[] recvcount, int[] rdispls) {
+
+    NativeCollRequest req = new NativeCollRequest();
+    nativeiAlltoallv(mpjdevNativeComm.handle, (ByteBuffer) sendbuf, sendcount,
+  sdispls, (ByteBuffer) recvbuf, recvcount, rdispls, req);
+    return req;
+
+  }
+
+  /*
+   int MPI_Ialltoallv(const void *sendbuf, const int sendcounts[], const int sdispls[],
+                MPI_Datatype sendtype, void *recvbuf, const int recvcounts[],
+                   const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
+   */
+  private native long nativeiAlltoallv(long commHandle, ByteBuffer sendbuf,
+      int[] sendcount, int[] sdispls, ByteBuffer recvbuf, int[] recvcount,
+      int[] rdispls, NativeCollRequest req);
+
   /**
    * Combine elements in input buffer of each process using the reduce
    * operation, and return the combined value in the output buffer of the root
@@ -735,6 +1157,77 @@ public class Intracomm {
 
   private native void nativeReduce(long commHandle, Object sendbuf,
       ByteBuffer recvbuf, int count, int datatype, int op, int root);
+
+   /**
+   * Combine elements in input buffer of each process using the reduce
+   * operation, and return the combined value in the output buffer of the root
+   * process, in a non-blocking way.
+   * <p>
+   * <table>
+   * <tr>
+   * <td><tt> sendbuf    </tt></td>
+   * <td>send buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> sendoffset </tt></td>
+   * <td>initial offset in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> recvbuf    </tt></td>
+   * <td>receive buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> recvoffset </tt></td>
+   * <td>initial offset in receive buffer
+   * </tr>
+   * <tr>
+   * <td><tt> count      </tt></td>
+   * <td>number of items in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> datatype   </tt></td>
+   * <td>data type of each item in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> op         </tt></td>
+   * <td>reduce operation
+   * </tr>
+   * <tr>
+   * <td><tt> root       </tt></td>
+   * <td>rank of root process
+   * </tr>
+   * <td><tt> NativeRequest      </tt></td>
+   * <td>  Return type on which wait and test will be called
+   * </tr>
+   * </table>
+   * <p>
+   * Java binding of the MPI operation <tt>MPI_IREDUCE</tt>.
+   * <p>
+   * The predefined operations are available in Java as <tt>MPI.MAX</tt>,
+   * <tt>MPI.MIN</tt>, <tt>MPI.SUM</tt>, <tt>MPI.PROD</tt>, <tt>MPI.LAND</tt>,
+   * <tt>MPI.BAND</tt>, <tt>MPI.LOR</tt>, <tt>MPI.BOR</tt>, <tt>MPI.LXOR</tt>,
+   * <tt>MPI.BXOR</tt>, <tt>MPI.MINLOC</tt> and <tt>MPI.MAXLOC</tt>.
+   */
+
+  public NativeRequest Ireduce(Object sendbuf, Object recvbuf, int count, Datatype type,
+      Op op, int root) {
+
+    NativeCollRequest req = new NativeCollRequest();
+
+   nativeiReduce(mpjdevNativeComm.handle, sendbuf, (ByteBuffer) recvbuf, count,
+   type.baseType, op.opCode, root, req);
+
+    return req;
+
+  }
+
+  /*
+   int MPI_Ireduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+                MPI_Op op, int root, MPI_Comm comm, MPI_Request *request)
+   */
+
+  private native long nativeiReduce(long commHandle, Object sendbuf,
+      ByteBuffer recvbuf, int count, int datatype, int op, int root, NativeCollRequest req);
 
   /**
    * Same as <tt>reduce</tt> except that the result appears in receive buffer of

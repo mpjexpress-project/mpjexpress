@@ -243,6 +243,16 @@ public class NativeIntracomm extends PureIntracomm {
 
   }
 
+    public Request Ibarrier() {
+
+      mpjdev.Request request = null;
+
+      request  = nativeIntracomm.Ibarrier();
+
+       return new mpi.Request(request);
+
+  }
+
   /**
    * Broadcast a message from the process with rank <tt>root</tt> to all
    * processes of the group.
@@ -301,12 +311,62 @@ public class NativeIntracomm extends PureIntracomm {
       // FIXME: Optimization tip root shouldn't do this
       byteBufferGetData(wBuffer, buf, 0, offset, count, type.getType());
       wBuffer.clear();
+      //wBuffer.free();
 
     }
     catch (Exception e) {
       e.printStackTrace();
     }
     return;
+
+  }
+
+
+  public Request Ibcast(Object buf, int offset, int count, Datatype type, int root) {
+
+    
+
+    int index = this.mpjdevComm.id();// Get the rank of the current process
+    int size = this.mpjdevComm.size();
+
+      mpjdev.Request request = null;
+
+    int numBytes = count * type.getByteSize();
+    ByteBuffer wBuffer = ByteBuffer.allocateDirect(numBytes);
+
+    try {
+      if (index == root) {
+  byteBufferSetData(buf, wBuffer, 0, offset, count, type.getType());
+  wBuffer.flip();
+  // wBuffer.limit(numBytes);
+      }
+      wBuffer.limit(numBytes);
+
+      request = nativeIntracomm.Ibcast(wBuffer, numBytes, root);
+
+      // FIXME: Optimization tip root shouldn't do this
+      // byteBufferGetData(wBuffer, buf, 0, offset, count, type.getType());
+
+  request.addCompletionHandler(new mpjdev.CompletionHandler() {
+   public void handleCompletion(mpjdev.Status status) {
+    try {
+      byteBufferGetData(wBuffer, buf, 0, offset, count, type.getType());
+      
+    }
+    catch (Exception e) {
+     throw new MPIException(e);
+    }
+  }
+    });
+      
+
+    }
+
+
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+     return new mpi.Request(request);
 
   }
 
@@ -405,6 +465,67 @@ public class NativeIntracomm extends PureIntracomm {
     return;
   }
 
+  public Request Igather(Object sendbuf, int sendoffset, int sendcount,
+      Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
+      Datatype recvtype, int root) {
+
+
+    int index = this.mpjdevComm.id();// Get the rank of the current process
+    int size = this.mpjdevComm.size();
+    mpjdev.Request request = null;
+
+    int numSendBytes = sendcount * sendtype.getByteSize();
+   ByteBuffer wBuffer = ByteBuffer.allocateDirect(numSendBytes);
+
+   ByteBuffer rBuffer = null;
+    int numRecvBytes = -1;
+
+    if (index == root) {
+      numRecvBytes = recvcount * recvtype.getByteSize() * size;
+      rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+    }
+
+    try {
+      byteBufferSetData(sendbuf, wBuffer, 0, sendoffset, sendcount,
+    sendtype.getType());
+      wBuffer.flip();
+      wBuffer.limit(numSendBytes);
+
+      request = nativeIntracomm.Igather(wBuffer, numSendBytes, rBuffer, numSendBytes,
+    root, index == root ? true : false);
+
+
+     //Optimization: Fixme: Should not copy buffers
+      ByteBuffer tempBuffer= rBuffer;
+
+      if (index == root) { // root is the source point of gather
+
+          tempBuffer.limit(numRecvBytes);
+
+        request.addCompletionHandler(new mpjdev.CompletionHandler() {
+        public void handleCompletion(mpjdev.Status status) {
+        try {
+         
+            byteBufferGetData(tempBuffer, recvbuf, 0, recvoffset, recvcount * size,
+            recvtype.getType());
+            tempBuffer.clear();
+          
+            }
+        catch (Exception e) {
+             throw new MPIException(e);
+            }
+        }
+     });
+   } // ends if root
+
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+    return new mpi.Request(request);
+  }
+
+
   /**
    * Extends functionality of <tt>Gather</tt> by allowing varying counts of data
    * from each process.
@@ -473,6 +594,96 @@ public class NativeIntracomm extends PureIntracomm {
     }
     super.Gatherv(sendbuf, sendoffset, sendcount, sendtype, recvbuf,
 	recvoffset, recvcount, displs, recvtype, root);
+  }
+
+  public Request Igatherv(Object sendbuf, int sendoffset, int sendcount,
+      Datatype sendtype, Object recvbuf, int recvoffset, int[] recvcount,
+      int[] rdispls, Datatype recvtype, int root) {
+
+
+    int index = this.mpjdevComm.id();// Get the rank of the current process
+    int size = this.mpjdevComm.size();
+
+    int totalRecvCount = 0;
+    mpjdev.Request request = null;
+    ByteBuffer rBuffer = null;
+    
+    int recvcountBytes[] = new int[recvcount.length];// or size?
+    int rdisplsBytes[] = new int[rdispls.length];// or size?
+
+    //ByteBuffer rBuffer = null;
+    int numRecvBytes = -1;
+
+    for (int i = 0; i < size; i++) {
+      totalRecvCount += recvcount[i];
+    }
+
+    if(index == root )
+    {
+    numRecvBytes = totalRecvCount * recvtype.getByteSize();
+    rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+
+
+
+
+
+    for (int i = 0; i < recvcountBytes.length; i++) {
+      recvcountBytes[i] = recvcount[i] * recvtype.getByteSize();
+    }
+    rdisplsBytes[0] = 0;
+    for (int i = 1; i < rdisplsBytes.length; i++) {
+      rdisplsBytes[i] = recvcountBytes[i - 1] + rdisplsBytes[i - 1];
+    }
+  }
+
+  
+
+    int numSendBytes = sendcount * sendtype.getByteSize();
+   ByteBuffer wBuffer = ByteBuffer.allocateDirect(numSendBytes);
+
+
+
+    try {
+      byteBufferSetData(sendbuf, wBuffer, 0, sendoffset, sendcount,
+    sendtype.getType());
+      wBuffer.flip();
+      wBuffer.limit(numSendBytes);
+
+      request = nativeIntracomm.Igatherv(wBuffer, numSendBytes, rBuffer, recvcountBytes, rdisplsBytes,
+    root, index == root ? true : false);
+
+
+     //Optimization: Fixme: Should not copy buffers
+      ByteBuffer tempBuffer= rBuffer;
+
+      if (index == root) { // root is the source point of gather
+
+          tempBuffer.limit(numRecvBytes);
+
+        request.addCompletionHandler(new mpjdev.CompletionHandler() {
+        public void handleCompletion(mpjdev.Status status) {
+        try {
+
+
+            for (int i = 0; i < size; i++)
+             byteBufferGetData(tempBuffer, recvbuf, 0, rdispls[i], recvcount[i],recvtype.getType());
+
+            tempBuffer.clear();
+          
+            }
+        catch (Exception e) {
+             throw new MPIException(e);
+            }
+        }
+     });
+   } // ends if root
+
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+    return new mpi.Request(request);
+
   }
 
   /**
@@ -579,6 +790,69 @@ public class NativeIntracomm extends PureIntracomm {
 
   }
 
+  public Request Iscatter(Object sendbuf, int sendoffset, int sendcount,
+      Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
+      Datatype recvtype, int root) {
+
+  
+
+    int index = this.mpjdevComm.id();// Get the rank of the current process
+    int size = this.mpjdevComm.size();
+
+    ByteBuffer wBuffer = null;
+    int numSendBytes = -1;
+      mpjdev.Request request = null;
+
+    if (index == root) {
+      numSendBytes = sendcount * sendtype.getByteSize() * size;
+      wBuffer = ByteBuffer.allocateDirect(numSendBytes);
+    }
+
+   // ByteBuffer rBuffer = null;
+    int numRecvBytes = -1;
+
+    numRecvBytes = recvcount * recvtype.getByteSize();
+    ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+
+    try {
+      if (index == root) {
+  byteBufferSetData(sendbuf, wBuffer, 0, sendoffset, sendcount * size,
+      sendtype.getType());
+  wBuffer.flip();
+  wBuffer.limit(numSendBytes);
+      }
+
+     request = nativeIntracomm.Iscatter(wBuffer, numRecvBytes, rBuffer, numRecvBytes,
+    root);
+
+
+
+      rBuffer.limit(numRecvBytes);
+
+      request.addCompletionHandler(new mpjdev.CompletionHandler() {
+   public void handleCompletion(mpjdev.Status status) {
+    try {
+        byteBufferGetData(rBuffer, recvbuf, 0, recvoffset, recvcount,
+        recvtype.getType());
+        rBuffer.clear();
+      
+    }
+    catch (Exception e) {
+     throw new MPIException(e);
+    }
+  }
+    });
+    
+
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+    return new mpi.Request(request);
+
+  }
+
+
   /**
    * Inverse of the operation <tt>Gatherv</tt>.
    * <p>
@@ -642,6 +916,97 @@ public class NativeIntracomm extends PureIntracomm {
 	recvoffset, recvcount, recvtype, root);
 
   }
+
+    public Request Iscatterv(Object sendbuf, int sendoffset, int[] sendcount,
+      int[] sdispls, Datatype sendtype, Object recvbuf, int recvoffset,
+      int recvcount, Datatype recvtype, int root) {
+
+        int index = this.mpjdevComm.id();// Get the rank of the current process
+    int size = this.mpjdevComm.size();
+
+     ByteBuffer wBuffer = null;
+    int numSendBytes = -1;
+    int totalSendCount = 0;
+
+    int sendcountBytes[] = new int[sendcount.length];// or size?
+    int sdisplsBytes[] = new int[sdispls.length];// or size?
+ 
+ 
+    mpjdev.Request request = null;
+
+
+    for (int i = 0; i < size; i++) {
+      totalSendCount += sendcount[i];
+    }
+
+    if(index == root)
+    {
+      numSendBytes = totalSendCount * sendtype.getByteSize();
+      wBuffer = ByteBuffer.allocateDirect(numSendBytes);
+    
+
+
+
+      // convert into bytes
+      for (int i = 0; i < sendcountBytes.length; i++) {
+        sendcountBytes[i] = sendcount[i] * sendtype.getByteSize();
+      }
+      sdisplsBytes[0] = 0;
+      for (int i = 1; i < sdisplsBytes.length; i++) {
+        sdisplsBytes[i] = sendcountBytes[i - 1] + sdisplsBytes[i - 1];
+      }
+  }
+    
+
+   // ByteBuffer rBuffer = null;
+    int numRecvBytes = -1;
+
+    numRecvBytes = recvcount * recvtype.getByteSize();
+    ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+
+    try {
+      if (index == root) {
+            for (int i = 0; i < size; i++)
+            {
+               byteBufferSetData(sendbuf, wBuffer, 0, sdispls[i], sendcount[i],sendtype.getType());
+            }
+
+      wBuffer.flip();
+      wBuffer.limit(numSendBytes);
+ 
+      }
+
+     request = nativeIntracomm.Iscatterv(wBuffer,sendcountBytes, sdisplsBytes, rBuffer, numRecvBytes,
+    root);
+
+
+       
+      rBuffer.limit(numRecvBytes);
+
+      request.addCompletionHandler(new mpjdev.CompletionHandler() {
+   public void handleCompletion(mpjdev.Status status) {
+    try {
+
+
+        byteBufferGetData(rBuffer, recvbuf, 0, recvoffset, recvcount,recvtype.getType());
+        rBuffer.clear();
+      
+    }
+    catch (Exception e) {
+     throw new MPIException(e);
+    }
+  }
+    });
+    
+
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+    return new mpi.Request(request);
+
+
+    }
 
   /**
    * Similar to <tt>Gather</tt>, but all processes receive the result.
@@ -733,6 +1098,61 @@ public class NativeIntracomm extends PureIntracomm {
 
   }
 
+   public Request Iallgather(Object sendbuf, int sendoffset, int sendcount,
+      Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
+      Datatype recvtype) {
+
+  
+    int index = this.mpjdevComm.id();// Get the rank of the current process
+    int size = this.mpjdevComm.size();
+
+    ByteBuffer wBuffer = null;
+    int numSendBytes = -1;
+     mpjdev.Request request = null;
+
+    numSendBytes = sendcount * sendtype.getByteSize();
+    wBuffer = ByteBuffer.allocateDirect(numSendBytes);
+
+    //ByteBuffer rBuffer = null;
+    int numRecvBytes = -1;
+
+    numRecvBytes = recvcount * recvtype.getByteSize() * size;
+    ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+
+    try {
+
+      byteBufferSetData(sendbuf, wBuffer, 0, sendoffset, sendcount,
+    sendtype.getType());
+      wBuffer.flip();
+      wBuffer.limit(numSendBytes);
+
+      request = nativeIntracomm.Iallgather(wBuffer, numSendBytes, rBuffer, numSendBytes);
+
+      rBuffer.limit(numRecvBytes);
+
+      request.addCompletionHandler(new mpjdev.CompletionHandler() {
+        public void handleCompletion(mpjdev.Status status) {
+        try {
+         
+             byteBufferGetData(rBuffer, recvbuf, 0, recvoffset, recvcount * size,recvtype.getType());
+             rBuffer.clear();
+          
+            }
+        catch (Exception e) {
+             throw new MPIException(e);
+            }
+        }
+     });
+     
+
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+   return new mpi.Request(request);
+
+  }
+
   /**
    * Similar to <tt>Gatherv</tt>, but all processes receive the result.
    * <p>
@@ -790,6 +1210,89 @@ public class NativeIntracomm extends PureIntracomm {
     }
     super.Allgatherv(sendbuf, sendoffset, sendcount, sendtype, recvbuf,
 	recvoffset, recvcount, displs, recvtype);
+
+  }
+
+  public Request Iallgatherv(Object sendbuf, int sendoffset, int sendcount,
+      Datatype sendtype, Object recvbuf, int recvoffset, int[] recvcount,
+      int[] rdispls, Datatype recvtype) {
+
+    int index = this.mpjdevComm.id();// Get the rank of the current process
+    int size = this.mpjdevComm.size();
+
+    int totalRecvCount = 0;
+    mpjdev.Request request = null;
+    //ByteBuffer rBuffer = null;
+    
+    int recvcountBytes[] = new int[recvcount.length];// or size?
+    int rdisplsBytes[] = new int[rdispls.length];// or size?
+
+    //ByteBuffer rBuffer = null;
+    int numRecvBytes = -1;
+
+    for (int i = 0; i < size; i++) {
+      totalRecvCount += recvcount[i];
+    }
+
+  
+    numRecvBytes = totalRecvCount * recvtype.getByteSize();
+    ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+
+
+
+
+
+    for (int i = 0; i < recvcountBytes.length; i++) {
+      recvcountBytes[i] = recvcount[i] * recvtype.getByteSize();
+    }
+    rdisplsBytes[0] = 0;
+    for (int i = 1; i < rdisplsBytes.length; i++) {
+      rdisplsBytes[i] = recvcountBytes[i - 1] + rdisplsBytes[i - 1];
+    }
+
+
+
+    ByteBuffer wBuffer = null;
+    int numSendBytes = -1;
+
+    numSendBytes = sendcount * sendtype.getByteSize();
+    wBuffer = ByteBuffer.allocateDirect(numSendBytes);
+
+ 
+
+    try {
+
+      byteBufferSetData(sendbuf, wBuffer, 0, sendoffset, sendcount,
+    sendtype.getType());
+      wBuffer.flip();
+      wBuffer.limit(numSendBytes);
+
+      request = nativeIntracomm.Iallgatherv(wBuffer, numSendBytes, rBuffer, recvcountBytes, rdisplsBytes);
+
+      rBuffer.limit(numRecvBytes);
+
+      request.addCompletionHandler(new mpjdev.CompletionHandler() {
+        public void handleCompletion(mpjdev.Status status) {
+        try {
+         
+             for (int i = 0; i < size; i++)
+                  byteBufferGetData(rBuffer, recvbuf, 0, rdispls[i], recvcount[i],recvtype.getType());
+             rBuffer.clear();
+          
+            }
+        catch (Exception e) {
+             throw new MPIException(e);
+            }
+        }
+     });
+     
+
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+   return new mpi.Request(request);
+
 
   }
 
@@ -884,6 +1387,60 @@ public class NativeIntracomm extends PureIntracomm {
       e.printStackTrace();
     }
     return;
+
+  }
+
+  public Request Ialltoall(Object sendbuf, int sendoffset, int sendcount,
+      Datatype sendtype, Object recvbuf, int recvoffset, int recvcount,
+      Datatype recvtype) {
+
+
+    int size = this.mpjdevComm.size();
+
+    ByteBuffer wBuffer = null;
+    int numSendBytes = -1;
+     mpjdev.Request request = null;
+
+    numSendBytes = sendcount * sendtype.getByteSize() * size;
+    wBuffer = ByteBuffer.allocateDirect(numSendBytes);
+;
+    int numRecvBytes = -1;
+
+    numRecvBytes = recvcount * recvtype.getByteSize() * size;
+    ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+
+    try {
+
+      byteBufferSetData(sendbuf, wBuffer, 0, sendoffset, sendcount * size,
+    sendtype.getType());
+      wBuffer.flip();
+      wBuffer.limit(numSendBytes);
+
+      numSendBytes = sendcount * sendtype.getByteSize();
+
+      request = nativeIntracomm.Ialltoall(wBuffer, numSendBytes, rBuffer, numSendBytes);
+
+      rBuffer.limit(numRecvBytes);
+
+      request.addCompletionHandler(new mpjdev.CompletionHandler() {
+   public void handleCompletion(mpjdev.Status status) {
+    try {
+       byteBufferGetData(rBuffer, recvbuf, 0, recvoffset, recvcount * size, recvtype.getType());
+       rBuffer.clear();
+      
+    }
+    catch (Exception e) {
+     throw new MPIException(e);
+    }
+  }
+    });
+     
+
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+    return new mpi.Request(request);
 
   }
 
@@ -1021,6 +1578,95 @@ public class NativeIntracomm extends PureIntracomm {
 
   }
 
+
+   public Request Ialltoallv(Object sendbuf, int sendoffset, int[] sendcount,
+      int[] sdispls, Datatype sendtype, Object recvbuf, int recvoffset,
+      int[] recvcount, int[] rdispls, Datatype recvtype) {
+   
+    int index = this.mpjdevComm.id();// Get the rank of the current process
+
+    int size = this.mpjdevComm.size();
+
+    ByteBuffer wBuffer = null;
+    int numSendBytes = -1;
+    int totalSendCount = 0;
+    int totalRecvCount = 0;
+    mpjdev.Request request = null;
+
+    for (int i = 0; i < size; i++) {
+      totalSendCount += sendcount[i];
+    }
+    numSendBytes = totalSendCount * sendtype.getByteSize();
+    wBuffer = ByteBuffer.allocateDirect(numSendBytes);
+
+    //ByteBuffer rBuffer = null;
+    int numRecvBytes = -1;
+
+    for (int i = 0; i < size; i++) {
+      totalRecvCount += recvcount[i];
+    }
+    numRecvBytes = totalRecvCount * recvtype.getByteSize();
+    ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+
+    int sendcountBytes[] = new int[sendcount.length];// or size?
+    int sdisplsBytes[] = new int[sdispls.length];// or size?
+    int recvcountBytes[] = new int[recvcount.length];// or size?
+    int rdisplsBytes[] = new int[rdispls.length];// or size?
+
+    // convert into bytes
+    for (int i = 0; i < sendcountBytes.length; i++) {
+      sendcountBytes[i] = sendcount[i] * sendtype.getByteSize();
+    }
+    sdisplsBytes[0] = 0;
+    for (int i = 1; i < sdisplsBytes.length; i++) {
+      sdisplsBytes[i] = sendcountBytes[i - 1] + sdisplsBytes[i - 1];
+    }
+
+    for (int i = 0; i < recvcountBytes.length; i++) {
+      recvcountBytes[i] = recvcount[i] * recvtype.getByteSize();
+    }
+    rdisplsBytes[0] = 0;
+    for (int i = 1; i < rdisplsBytes.length; i++) {
+      rdisplsBytes[i] = recvcountBytes[i - 1] + rdisplsBytes[i - 1];
+    }
+
+    try {
+
+      for (int i = 0; i < size; i++)
+          byteBufferSetData(sendbuf, wBuffer, 0, sdispls[i], sendcount[i],sendtype.getType());
+
+      wBuffer.flip();
+      wBuffer.limit(numSendBytes);
+
+     request = nativeIntracomm.Ialltoallv(wBuffer, sendcountBytes, sdisplsBytes, rBuffer,
+    recvcountBytes, rdisplsBytes);
+
+      rBuffer.limit(numRecvBytes);
+
+      request.addCompletionHandler(new mpjdev.CompletionHandler() {
+      public void handleCompletion(mpjdev.Status status) {
+      try {
+           for (int i = 0; i < size; i++)
+             byteBufferGetData(rBuffer, recvbuf, 0, rdispls[i], recvcount[i],recvtype.getType());
+
+           rBuffer.clear();
+        
+      }
+      catch (Exception e) {
+       throw new MPIException(e);
+      }
+     }
+    });  
+
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+    return new mpi.Request(request);
+
+  }
+
+
   /**
    * Combine elements in input buffer of each process using the reduce
    * operation, and return the combined value in the output buffer of the root
@@ -1113,6 +1759,108 @@ public class NativeIntracomm extends PureIntracomm {
     return;
 
   }
+
+
+  /**
+   * Combine elements in input buffer of each process using the reduce
+   * operation, and return the combined value in the output buffer of the root
+   * process, in a non-blocking way.
+   * <p>
+   * <table>
+   * <tr>
+   * <td><tt> sendbuf    </tt></td>
+   * <td>send buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> sendoffset </tt></td>
+   * <td>initial offset in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> recvbuf    </tt></td>
+   * <td>receive buffer array
+   * </tr>
+   * <tr>
+   * <td><tt> recvoffset </tt></td>
+   * <td>initial offset in receive buffer
+   * </tr>
+   * <tr>
+   * <td><tt> count      </tt></td>
+   * <td>number of items in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> datatype   </tt></td>
+   * <td>data type of each item in send buffer
+   * </tr>
+   * <tr>
+   * <td><tt> op         </tt></td>
+   * <td>reduce operation
+   * </tr>
+   * <tr>
+   * <td><tt> root       </tt></td>
+   * <td>rank of root process
+   * </tr>
+    *<tr>
+   * <td><em> returns: </em></td>
+   * <td>communication request
+   * </tr>
+   * </table>
+   * <p>
+   * Java binding of the MPI operation <tt>MPI_IREDUCE</tt>.
+   * <p>
+   * The predefined operations are available in Java as <tt>MPI.MAX</tt>,
+   * <tt>MPI.MIN</tt>, <tt>MPI.SUM</tt>, <tt>MPI.PROD</tt>, <tt>MPI.LAND</tt>,
+   * <tt>MPI.BAND</tt>, <tt>MPI.LOR</tt>, <tt>MPI.BOR</tt>, <tt>MPI.LXOR</tt>,
+   * <tt>MPI.BXOR</tt>, <tt>MPI.MINLOC</tt> and <tt>MPI.MAXLOC</tt>.
+   */
+
+  public Request Ireduce(Object sendbuf, int sendoffset, Object recvbuf,
+      int recvoffset, int count, Datatype type, Op op, int root) {
+
+
+    int index = this.mpjdevComm.id();// Get the rank of the current process
+
+    //int size = this.mpjdevComm.size();
+     mpjdev.Request request = null;
+
+    
+    
+    
+    int numRecvBytes = -1;
+    int recvcount = count; // naive case, TODO: fix this for MAXLOC etc?
+    numRecvBytes = recvcount * type.getByteSize();
+    ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+    try {
+
+      request  = nativeIntracomm.Ireduce(sendbuf, rBuffer, count, type, op, root);
+      //System.out.println("Errorj0");
+
+      if (index == root) { // root is the source point of gather
+
+         rBuffer.limit(numRecvBytes);
+
+
+        request.addCompletionHandler(new mpjdev.CompletionHandler() {
+        public void handleCompletion(mpjdev.Status status) {
+        try {
+
+           // this should copy the values compatably
+            byteBufferGetData(rBuffer, recvbuf, 0, recvoffset, recvcount,type.getType());
+            rBuffer.clear();
+        }
+        catch (Exception e) {
+         throw new MPIException(e);
+        }
+      }
+    });
+   } // ends if root
+ }
+catch (Exception e) {
+    e.printStackTrace();
+  }
+  return new mpi.Request(request);
+
+}
+
 
   /**
    * Same as <tt>reduce</tt> except that the result appears in receive buffer of

@@ -23,7 +23,6 @@ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Intracomm_init
 JNIEXPORT jint JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeCompare
   (JNIEnv *, jclass, jlong, jlong);
 
-
 /*
  * Class:     mpjdev_natmpjdev_Intracomm
  * Method:    nativeBarrier
@@ -31,6 +30,14 @@ JNIEXPORT jint JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeCompare
  */
 JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeBarrier
   (JNIEnv *, jobject, jlong);
+
+/*
+ * Class:     mpjdev_natmpjdev_Intracomm
+ * Method:    nativeiBarrier
+ * Signature: (JLmpjdev/natmpjdev/NativeCollRequest;)J
+ */
+JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeiBarrier
+  (JNIEnv *, jobject, jlong, jobject);
 
 /*
  * Class:     mpjdev_natmpjdev_Intracomm
@@ -42,11 +49,27 @@ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeBcast
 
 /*
  * Class:     mpjdev_natmpjdev_Intracomm
+ * Method:    NativeiBcast
+ * Signature: (JLjava/nio/ByteBuffer;IILmpjdev/natmpjdev/NativeCollRequest;)J
+ */
+JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Intracomm_NativeiBcast
+  (JNIEnv *, jobject, jlong, jobject, jint, jint, jobject);
+
+/*
+ * Class:     mpjdev_natmpjdev_Intracomm
  * Method:    nativeGather
  * Signature: (JLjava/nio/ByteBuffer;ILjava/nio/ByteBuffer;IIZ)V
  */
 JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeGather
   (JNIEnv *, jobject, jlong, jobject, jint, jobject, jint, jint, jboolean);
+
+/*
+ * Class:     mpjdev_natmpjdev_Intracomm
+ * Method:    nativeiGather
+ * Signature: (JLjava/nio/ByteBuffer;ILjava/nio/ByteBuffer;IIZLmpjdev/natmpjdev/NativeCollRequest;)J
+ */
+JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeiGather
+  (JNIEnv *, jobject, jlong, jobject, jint, jobject, jint, jint, jboolean, jobject);
 
 /*
  * Class:     mpjdev_natmpjdev_Intracomm
@@ -58,6 +81,14 @@ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeGatherv
 
 /*
  * Class:     mpjdev_natmpjdev_Intracomm
+ * Method:    nativeiGatherv
+ * Signature: (JLjava/nio/ByteBuffer;ILjava/nio/ByteBuffer;[I[IIZLmpjdev/natmpjdev/NativeCollRequest;)J
+ */
+JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeiGatherv
+  (JNIEnv *, jobject, jlong, jobject, jint, jobject, jintArray, jintArray, jint, jboolean, jobject);
+
+/*
+ * Class:     mpjdev_natmpjdev_Intracomm
  * Method:    nativeScatter
  * Signature: (JLjava/nio/ByteBuffer;ILjava/nio/ByteBuffer;II)V
  */
@@ -66,11 +97,27 @@ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeScatter
 
 /*
  * Class:     mpjdev_natmpjdev_Intracomm
+ * Method:    nativeiScatter
+ * Signature: (JLjava/nio/ByteBuffer;ILjava/nio/ByteBuffer;IILmpjdev/natmpjdev/NativeCollRequest;)J
+ */
+JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeiScatter
+  (JNIEnv *, jobject, jlong, jobject, jint, jobject, jint, jint, jobject);
+
+/*
+ * Class:     mpjdev_natmpjdev_Intracomm
  * Method:    nativeScatterv
- * Signature: (JLjava/nio/ByteBuffer;[I[ILjava/nio/ByteBuffer;II)V
+ * Signature: (JLjava/lang/Object;[I[ILjava/lang/Object;II)V
  */
 JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeScatterv
   (JNIEnv *, jobject, jlong, jobject, jintArray, jintArray, jobject, jint, jint);
+
+/*
+ * Class:     mpjdev_natmpjdev_Intracomm
+ * Method:    nativeiScatterv
+ * Signature: (JLjava/nio/ByteBuffer;[I[ILjava/nio/ByteBuffer;IILmpjdev/natmpjdev/NativeCollRequest;)J
+ */
+JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeiScatterv
+  (JNIEnv *, jobject, jlong, jobject, jintArray, jintArray, jobject, jint, jint, jobject);
 
 /*
  * Class:     mpjdev_natmpjdev_Intracomm
@@ -82,11 +129,27 @@ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeAllgather
 
 /*
  * Class:     mpjdev_natmpjdev_Intracomm
+ * Method:    nativeiAllgather
+ * Signature: (JLjava/nio/ByteBuffer;ILjava/nio/ByteBuffer;ILmpjdev/natmpjdev/NativeCollRequest;)J
+ */
+JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeiAllgather
+  (JNIEnv *, jobject, jlong, jobject, jint, jobject, jint, jobject);
+
+/*
+ * Class:     mpjdev_natmpjdev_Intracomm
  * Method:    nativeAllgatherv
  * Signature: (JLjava/nio/ByteBuffer;ILjava/nio/ByteBuffer;[I[I)V
  */
 JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeAllgatherv
   (JNIEnv *, jobject, jlong, jobject, jint, jobject, jintArray, jintArray);
+
+/*
+ * Class:     mpjdev_natmpjdev_Intracomm
+ * Method:    nativeiAllgatherv
+ * Signature: (JLjava/nio/ByteBuffer;ILjava/nio/ByteBuffer;[I[ILmpjdev/natmpjdev/NativeCollRequest;)J
+ */
+JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeiAllgatherv
+  (JNIEnv *, jobject, jlong, jobject, jint, jobject, jintArray, jintArray, jobject);
 
 /*
  * Class:     mpjdev_natmpjdev_Intracomm
@@ -98,6 +161,14 @@ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeAlltoall
 
 /*
  * Class:     mpjdev_natmpjdev_Intracomm
+ * Method:    nativeiAlltoall
+ * Signature: (JLjava/nio/ByteBuffer;ILjava/nio/ByteBuffer;ILmpjdev/natmpjdev/NativeCollRequest;)J
+ */
+JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeiAlltoall
+  (JNIEnv *, jobject, jlong, jobject, jint, jobject, jint, jobject);
+
+/*
+ * Class:     mpjdev_natmpjdev_Intracomm
  * Method:    nativeAlltoallv
  * Signature: (JLjava/nio/ByteBuffer;[I[ILjava/nio/ByteBuffer;[I[I)V
  */
@@ -106,11 +177,27 @@ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeAlltoallv
 
 /*
  * Class:     mpjdev_natmpjdev_Intracomm
+ * Method:    nativeiAlltoallv
+ * Signature: (JLjava/nio/ByteBuffer;[I[ILjava/nio/ByteBuffer;[I[ILmpjdev/natmpjdev/NativeCollRequest;)J
+ */
+JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeiAlltoallv
+  (JNIEnv *, jobject, jlong, jobject, jintArray, jintArray, jobject, jintArray, jintArray, jobject);
+
+/*
+ * Class:     mpjdev_natmpjdev_Intracomm
  * Method:    nativeReduce
  * Signature: (JLjava/lang/Object;Ljava/nio/ByteBuffer;IIII)V
  */
 JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeReduce
   (JNIEnv *, jobject, jlong, jobject, jobject, jint, jint, jint, jint);
+
+/*
+ * Class:     mpjdev_natmpjdev_Intracomm
+ * Method:    nativeiReduce
+ * Signature: (JLjava/lang/Object;Ljava/nio/ByteBuffer;IIIILmpjdev/natmpjdev/NativeCollRequest;)J
+ */
+JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeiReduce
+  (JNIEnv *, jobject, jlong, jobject, jobject, jint, jint, jint, jint, jobject);
 
 /*
  * Class:     mpjdev_natmpjdev_Intracomm

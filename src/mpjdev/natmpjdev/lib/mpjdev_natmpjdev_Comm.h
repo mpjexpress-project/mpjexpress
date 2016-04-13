@@ -14,7 +14,7 @@ extern "C" {
  */
 JNIEXPORT jboolean JNICALL Java_mpjdev_natmpjdev_Comm_loadGlobalLibraries
   (JNIEnv *, jclass);
-  
+
 /*
  * Class:     mpjdev_natmpjdev_Comm
  * Method:    getTagUB
