@@ -36,6 +36,9 @@
 
 /* mpjdev_natmpjdev_shared */
 
+#include "mpi.h"
+#include "jni.h"
+
 #ifndef _Included_mpjdev_natmpjdev_shared
 #define _Included_mpjdev_natmpjdev_shared
 #ifdef __cplusplus
@@ -106,6 +109,34 @@ extern jclass CL_mpjbuf_Buffer;
 #define MPJ_BXOR_CODE	10
 #define MPJ_MAXLOC_CODE	11
 #define MPJ_MINLOC_CODE	12
+
+// RMA Lock Consts
+#define MPJ_LOCK_EXCLUSIVE 1
+#define MPJ_LOCK_SHARED    2
+
+// RMA Assertion Consts
+#define MPJ_MODE_NOCHECK   1
+#define MPJ_MODE_NOSTORE   2
+#define MPJ_MODE_NOPUT     4
+#define MPJ_MODE_NOPRECEDE 8
+#define MPJ_MODE_NOSUCCEED 16
+
+// RMA Window flavor constants
+#define MPJ_WIN_FLAVOR_CREATE 	0
+#define MPJ_WIN_FLAVOR_ALLOCATE 1
+#define MPJ_WIN_FLAVOR_DYNAMIC 	2
+#define MPJ_WIN_FLAVOR_SHARED 	3
+
+// RMA Window memory model constants
+#define MPJ_WIN_SEPARATE 0
+#define MPJ_WIN_UNIFIED  1
+
+// Utility functions
+MPI_Datatype convertToMPIDataType(int MPJDatatype);
+MPI_Op convertToMPIOp(int MPJOpCode);
+int convertToMPIAssert(int MPJAssertion);
+int convertToMPJWinFlavor(int MPIWinFlavor);
+int convertToMPJWinModel(int MPIWinModel);
 
 #ifdef __cplusplus
 }

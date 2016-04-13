@@ -23,7 +23,6 @@ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Intracomm_init
 JNIEXPORT jint JNICALL Java_mpjdev_natmpjdev_Intracomm_nativeCompare
   (JNIEnv *, jclass, jlong, jlong);
 
-
 /*
  * Class:     mpjdev_natmpjdev_Intracomm
  * Method:    nativeBarrier

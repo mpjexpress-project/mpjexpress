@@ -136,6 +136,25 @@ public class MPI {
   public static int PROC_NULL = -3;
 
   /**
+   * One-sided communication constants
+   */
+  
+  // Locks
+  public static int LOCK_EXCLUSIVE = 1;
+  public static int LOCK_SHARED    = 2;
+
+  // Assertions
+  public static int MODE_NOCHECK   = 1;
+  public static int MODE_NOSTORE   = 2;
+  public static int MODE_NOPUT     = 4;
+  public static int MODE_NOPRECEDE = 8;
+  public static int MODE_NOSUCCEED = 16;
+
+  /**
+   * End of One-sided communication constants
+   */
+
+  /**
    * Overhead incurred by buffered send. This variable should be accessed after
    * calling #Init(String[] args) method.
    */

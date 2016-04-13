@@ -3,12 +3,14 @@ cmake_minimum_required(VERSION 2.6)
 project(nativempjdev C)
 
 SET(	SOURCE_FILES
+			mpjdev_natmpjdev_shared.c
 			mpjdev_natmpjdev_Comm.c
 			mpjdev_natmpjdev_Group.c
 			mpjdev_natmpjdev_NativeRecvRequest.c
 			mpjdev_natmpjdev_NativeSendRequest.c
 			mpjdev_natmpjdev_Intracomm.c
 			mpjdev_natmpjdev_Intercomm.c
+			mpjdev_natmpjdev_Win.c
 )
 #SET(	CMAKE_LIBRARY_OUTPUT_DIRECTORY $ENV{MPJ_HOME}/lib)
 ADD_LIBRARY(nativempjdev SHARED ${SOURCE_FILES})
