@@ -146,6 +146,7 @@
                     mpjdev/javampjdev/*.class 
                     xdev/*.class
                     mpjdev/natmpjdev/*.class
+                    mpjdev/natmpjdev/util/*.class
 	  	    xdev/niodev/*.class 
                     xdev/mxdev/*.class 
                     xdev/hybdev/*.class">
@@ -183,7 +184,8 @@
      <jar destfile="${lib.dir}/mpjdev.jar" basedir="src"
           includes="mpjdev/*.class 
                     mpjdev/javampjdev/*.class 
-                    mpjdev/natmpjdev/*.class" 
+                    mpjdev/natmpjdev/*.class
+                    mpjdev/natmpjdev/util/*.class" 
           excludes="mpjdev/MPJDevException.class,
                     mpjdev/Request.class,
                     mpjdev/Request$WaitanyQue.class,
