@@ -194,7 +194,9 @@ public class JGFBcastBench implements JGFSection1{
   }
 
 
-  public static void main(String[] argv) throws MPIException{
+  public static void main(String[] argv) throws Exception{
+
+    JGFBcastBench p150 = new JGFBcastBench(argv);
   }
 
   public JGFBcastBench(String[] argv) throws Exception {

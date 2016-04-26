@@ -324,9 +324,7 @@ public class NativeIntracomm extends PureIntracomm {
 
   public Request Ibcast(Object buf, int offset, int count, Datatype type, int root) {
 
-    
-
-    int index = this.mpjdevComm.id();// Get the rank of the current process
+       int index = this.mpjdevComm.id();// Get the rank of the current process
     int size = this.mpjdevComm.size();
 
       mpjdev.Request request = null;
@@ -368,6 +366,7 @@ public class NativeIntracomm extends PureIntracomm {
     }
      return new mpi.Request(request);
 
+    
   }
 
   /**
@@ -624,9 +623,6 @@ public class NativeIntracomm extends PureIntracomm {
     rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
 
 
-
-
-
     for (int i = 0; i < recvcountBytes.length; i++) {
       recvcountBytes[i] = recvcount[i] * recvtype.getByteSize();
     }
@@ -635,8 +631,6 @@ public class NativeIntracomm extends PureIntracomm {
       rdisplsBytes[i] = recvcountBytes[i - 1] + rdisplsBytes[i - 1];
     }
   }
-
-  
 
     int numSendBytes = sendcount * sendtype.getByteSize();
    ByteBuffer wBuffer = ByteBuffer.allocateDirect(numSendBytes);

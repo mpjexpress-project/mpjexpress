@@ -199,7 +199,9 @@ public class JGFScatterBench implements JGFSection1{
   }
 
 
-  public static void main(String[] argv) throws MPIException{
+  public static void main(String[] argv) throws Exception{
+
+    JGFScatterBench p150 = new JGFScatterBench(argv);
   }
 
   public JGFScatterBench(String[] argv) throws Exception {

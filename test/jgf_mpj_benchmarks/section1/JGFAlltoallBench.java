@@ -206,7 +206,9 @@ public class JGFAlltoallBench implements JGFSection1{
   }
 
 
-  public static void main(String[] argv) throws MPIException{
+  public static void main(String[] argv) throws Exception{
+    JGFAlltoallBench p150 = new JGFAlltoallBench(argv);
+
   }
 
   public JGFAlltoallBench(String[] argv) throws Exception {

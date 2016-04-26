@@ -229,6 +229,8 @@ public class Intracomm {
    public NativeRequest Ibcast(Object buf, int size, int root) {
 
     NativeCollRequest req = new NativeCollRequest();
+    
+      //ByteBuffer tmpBuffer = ((NIOBuffer) buf).getBuffer();
 
      NativeiBcast(mpjdevNativeComm.handle, (ByteBuffer) buf, size, root, req);
     
