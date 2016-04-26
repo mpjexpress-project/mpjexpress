@@ -2,6 +2,8 @@ package mpjdev.natmpjdev;
 
 import java.nio.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import mpjdev.natmpjdev.util.Allocators;
+import mpjdev.natmpjdev.util.Allocator;
 
 public class Win extends mpjdev.Win {
 
@@ -33,6 +35,8 @@ public class Win extends mpjdev.Win {
 	final static int LONG2 = 6;
 	final static int FLOAT2 = 7;
 	final static int DOUBLE2 = 8;
+
+	private static final Allocator bufferAllocator = Allocators.getNewAllocator();
 
 
 	public static mpjdev.Win create(java.nio.ByteBuffer base, int disp_unit, mpjdev.Comm comm) {
@@ -150,7 +154,7 @@ public class Win extends mpjdev.Win {
 		// }
 
 		int numBytes = origin_count * origin_datatype.getByteSize();
-		ByteBuffer wBuffer = ByteBuffer.allocateDirect(numBytes);
+		ByteBuffer wBuffer = bufferAllocator.allocate(numBytes);
 
 		try {
 			byteBufferSetData(origin_buffer, wBuffer, 0, 0, origin_count, origin_datatype.getType());
@@ -185,7 +189,7 @@ public class Win extends mpjdev.Win {
 		// }
 
 		int numBytes = origin_count * origin_datatype.getByteSize();
-		ByteBuffer wBuffer = ByteBuffer.allocateDirect(numBytes);
+		ByteBuffer wBuffer = bufferAllocator.allocate(numBytes);
 
 		try {
 			// byteBufferSetData(origin_buffer, wBuffer, 0, 0, origin_count, origin_datatype.getType());
@@ -222,7 +226,7 @@ public class Win extends mpjdev.Win {
 		// }
 
 		int numBytes = origin_count * origin_datatype.getByteSize();
-		ByteBuffer wBuffer = ByteBuffer.allocateDirect(numBytes);
+		ByteBuffer wBuffer = bufferAllocator.allocate(numBytes);
 
 		try {
 			byteBufferSetData(origin_buffer, wBuffer, 0, 0, origin_count, origin_datatype.getType());
@@ -257,8 +261,8 @@ public class Win extends mpjdev.Win {
 		// }
 
 		int numBytes = origin_count * origin_datatype.getByteSize();
-		ByteBuffer wBuffer = ByteBuffer.allocateDirect(numBytes);
-		ByteBuffer wResult = ByteBuffer.allocateDirect(target_count * target_datatype.getByteSize());
+		ByteBuffer wBuffer = bufferAllocator.allocate(numBytes);
+		ByteBuffer wResult = bufferAllocator.allocate(target_count * target_datatype.getByteSize());
 
 		try {
 			byteBufferSetData(origin_buffer, wBuffer, 0, 0, origin_count, origin_datatype.getType());
@@ -290,8 +294,8 @@ public class Win extends mpjdev.Win {
 		// }
 
 		int numBytes = datatype.getByteSize();
-		ByteBuffer wBuffer = ByteBuffer.allocateDirect(numBytes);
-		ByteBuffer wResult = ByteBuffer.allocateDirect(numBytes);
+		ByteBuffer wBuffer = bufferAllocator.allocate(numBytes);
+		ByteBuffer wResult = bufferAllocator.allocate(numBytes);
 
 		try {
 			byteBufferSetData(origin_buffer, wBuffer, 0, 0, 1, datatype.getType());
@@ -322,9 +326,9 @@ public class Win extends mpjdev.Win {
 		// }
 
 		int numBytes = datatype.getByteSize();
-		ByteBuffer wBuffer = ByteBuffer.allocateDirect(numBytes);
-		ByteBuffer wCompare = ByteBuffer.allocateDirect(numBytes);
-		ByteBuffer wResult = ByteBuffer.allocateDirect(numBytes);
+		ByteBuffer wBuffer = bufferAllocator.allocate(numBytes);
+		ByteBuffer wCompare = bufferAllocator.allocate(numBytes);
+		ByteBuffer wResult = bufferAllocator.allocate(numBytes);
 
 		try {
 			byteBufferSetData(origin_buffer, wBuffer, 0, 0, 1, datatype.getType());
@@ -354,7 +358,7 @@ public class Win extends mpjdev.Win {
 		// }
 
 		int numBytes = origin_count * origin_datatype.getByteSize();
-		ByteBuffer wBuffer = ByteBuffer.allocateDirect(numBytes);
+		ByteBuffer wBuffer = bufferAllocator.allocate(numBytes);
 
 		try {
 			byteBufferSetData(origin_buffer, wBuffer, 0, 0, origin_count, origin_datatype.getType());
@@ -381,7 +385,7 @@ public class Win extends mpjdev.Win {
 		// }
 
 		int numBytes = origin_count * origin_datatype.getByteSize();
-		ByteBuffer wBuffer = ByteBuffer.allocateDirect(numBytes);
+		ByteBuffer wBuffer = bufferAllocator.allocate(numBytes);
 
 		try {
 			// byteBufferSetData(origin_buffer, wBuffer, 0, 0, origin_count, origin_datatype.getType());
@@ -420,7 +424,7 @@ public class Win extends mpjdev.Win {
 		// }
 
 		int numBytes = origin_count * origin_datatype.getByteSize();
-		ByteBuffer wBuffer = ByteBuffer.allocateDirect(numBytes);
+		ByteBuffer wBuffer = bufferAllocator.allocate(numBytes);
 
 		try {
 			byteBufferSetData(origin_buffer, wBuffer, 0, 0, origin_count, origin_datatype.getType());
@@ -455,8 +459,8 @@ public class Win extends mpjdev.Win {
 		// }
 
 		int numBytes = origin_count * origin_datatype.getByteSize();
-		ByteBuffer wBuffer = ByteBuffer.allocateDirect(numBytes);
-		ByteBuffer wResult = ByteBuffer.allocateDirect(target_count * target_datatype.getByteSize());
+		ByteBuffer wBuffer = bufferAllocator.allocate(numBytes);
+		ByteBuffer wResult = bufferAllocator.allocate(target_count * target_datatype.getByteSize());
 
 		try {
 			byteBufferSetData(origin_buffer, wBuffer, 0, 0, origin_count, origin_datatype.getType());
@@ -613,9 +617,11 @@ public class Win extends mpjdev.Win {
 				this.rank = rank;
 			}
 
-			void Sync() {
+			void Sync(boolean freeBuffer) {
 				byteBufferGetData(src, dest, srcOffset, offset, count, typeCode);
-				src.clear();
+				// src.clear();
+				if(freeBuffer)
+					bufferAllocator.free(src);
 				src = null;
 				dest = null;
 			}
@@ -633,16 +639,17 @@ public class Win extends mpjdev.Win {
 
 		void DoSync() {
 			for (SyncItem item : syncQueue) {
-				item.Sync();
+				item.Sync(false);
 			}
 			syncQueue.clear();
+			bufferAllocator.freeAll();
 		}
 
 		void DoSync(int rank) {
 			for (java.util.Iterator<SyncItem> it = syncQueue.iterator(); it.hasNext();) {
 				SyncItem item = it.next();
 				if (item.rank == rank) {
-					item.Sync();
+					item.Sync(true);
 					// System.out.println("Item synced");
 					it.remove();
 				}
