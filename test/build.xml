@@ -90,6 +90,8 @@
        <javac includeantruntime="false" srcdir="mpi/perf" classpath="${lib.dir}/mpj.jar" 
          debug="true"/>   
        <javac includeantruntime="false" srcdir="mpi/threads" classpath="${lib.dir}/mpj.jar" 
+         debug="true"/>  
+       <javac includeantruntime="false" srcdir="mpi/onesided" classpath="${lib.dir}/mpj.jar" 
          debug="true"/>   
        <javac includeantruntime="false" srcdir="xdev" classpath="${lib.dir}/mpj.jar" 
          debug="true"/>   
@@ -97,7 +99,7 @@
 
     <target name="jars" description="builds jar files ..">
       <jar destfile="${lib.dir}/test.jar" basedir="."
-includes="mpjdev/buffertest/*.class mpi/pt2pt/*.class mpi/pt2pt_ObjSer/*.class TestSuite.class mpi/dtyp/*.class mpi/dtyp_ObjSer/*.class mpi/comm/*.class mpi/group/*.class mpi/ccl/*.class mpi/ccl_ObjSer/*.class mpi/ccl_ObjSer/reduceO/*.class mpi/ccl_ObjSer/allreduceO/*.class mpi/ccl_ObjSer/reduce_scatterO/*.class mpi/ccl_ObjSer/scanO/*.class mpi/topo/*.class mpi/env/*.class mpi/signals/*.class mpi/perf/*.class jgf_mpj_benchmarks/jgfutil/*.class jgf_mpj_benchmarks/section1/*.class jgf_mpj_benchmarks/section2/*.class jgf_mpj_benchmarks/section2/crypt/*.class jgf_mpj_benchmarks/section2/lufact/*.class jgf_mpj_benchmarks/section2/series/*.class jgf_mpj_benchmarks/section2/sor/*.class jgf_mpj_benchmarks/section2/sparsematmult/*.class jgf_mpj_benchmarks/section3/*.class jgf_mpj_benchmarks/section3/moldyn/*.class jgf_mpj_benchmarks/section3/montecarlo/*.class jgf_mpj_benchmarks/section3/raytracer/*.class microbenchmarkmpiJava/**/*.class microbenchmarkmpiJava/**/**/*.class mpjdev/perftest/*.class xdev/*.class mpi/threads/*.class">
+includes="mpjdev/buffertest/*.class mpi/pt2pt/*.class mpi/pt2pt_ObjSer/*.class TestSuite.class mpi/dtyp/*.class mpi/dtyp_ObjSer/*.class mpi/comm/*.class mpi/group/*.class mpi/ccl/*.class mpi/ccl_ObjSer/*.class mpi/ccl_ObjSer/reduceO/*.class mpi/ccl_ObjSer/allreduceO/*.class mpi/onesided/*.class mpi/ccl_ObjSer/reduce_scatterO/*.class mpi/ccl_ObjSer/scanO/*.class mpi/topo/*.class mpi/env/*.class mpi/signals/*.class mpi/perf/*.class jgf_mpj_benchmarks/jgfutil/*.class jgf_mpj_benchmarks/section1/*.class jgf_mpj_benchmarks/section2/*.class jgf_mpj_benchmarks/section2/crypt/*.class jgf_mpj_benchmarks/section2/lufact/*.class jgf_mpj_benchmarks/section2/series/*.class jgf_mpj_benchmarks/section2/sor/*.class jgf_mpj_benchmarks/section2/sparsematmult/*.class jgf_mpj_benchmarks/section3/*.class jgf_mpj_benchmarks/section3/moldyn/*.class jgf_mpj_benchmarks/section3/montecarlo/*.class jgf_mpj_benchmarks/section3/raytracer/*.class microbenchmarkmpiJava/**/*.class microbenchmarkmpiJava/**/**/*.class mpjdev/perftest/*.class xdev/*.class mpi/threads/*.class">
         <manifest>
           <attribute name="Main-class" value="TestSuite" /> 
           <attribute name="Class-path" value="mpj.jar"/> 
@@ -126,7 +128,8 @@ includes="mpjdev/buffertest/*.class mpi/pt2pt/*.class mpi/pt2pt_ObjSer/*.class T
 	 <fileset dir="mpi/topo" includes="*.class"/>
 	 <fileset dir="mpi/env" includes="*.class"/>
 	 <fileset dir="mpi/signals" includes="*.class"/>
-	 <fileset dir="mpi/perf" includes="*.class"/>
+   <fileset dir="mpi/perf" includes="*.class"/>
+	 <fileset dir="mpi/onesided" includes="*.class"/>
 	 <fileset dir="xdev" includes="*.class"/>
 	 <fileset dir="jgf_mpj_benchmarks/jgfutil" includes="*.class"/>
 	 <fileset dir="jgf_mpj_benchmarks/section1" includes="*.class"/>
