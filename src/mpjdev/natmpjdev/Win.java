@@ -36,7 +36,7 @@ public class Win extends mpjdev.Win {
 	final static int FLOAT2 = 7;
 	final static int DOUBLE2 = 8;
 
-	private static final Allocator bufferAllocator = Allocators.getNewAllocator();
+	private final Allocator bufferAllocator = Allocators.getNewAllocator();
 
 
 	public static mpjdev.Win create(java.nio.ByteBuffer base, int disp_unit, mpjdev.Comm comm) {
@@ -633,11 +633,11 @@ public class Win extends mpjdev.Win {
 			syncQueue = new ConcurrentLinkedQueue<>();
 		}
 
-		void AddSync(ByteBuffer src, Object dest, int srcOffset, int offset, int count, int typeCode, int rank) {
+		synchronized void AddSync(ByteBuffer src, Object dest, int srcOffset, int offset, int count, int typeCode, int rank) {
 			syncQueue.add(new SyncItem(src, dest, srcOffset, offset, count, typeCode, rank));
 		}
 
-		void DoSync() {
+		synchronized void DoSync() {
 			for (SyncItem item : syncQueue) {
 				item.Sync(false);
 			}
@@ -645,7 +645,7 @@ public class Win extends mpjdev.Win {
 			bufferAllocator.freeAll();
 		}
 
-		void DoSync(int rank) {
+		synchronized void DoSync(int rank) {
 			for (java.util.Iterator<SyncItem> it = syncQueue.iterator(); it.hasNext();) {
 				SyncItem item = it.next();
 				if (item.rank == rank) {
