@@ -33,7 +33,7 @@ public class JGFiScatterBench implements JGFSection1{
   private static final int INITSIZE = 1;
   private static final int MAXSIZE =  1000000;
   private static final double TARGETTIME = 10.0;
-  private static final int MLOOPSIZE = 2;
+  private static final int MLOOPSIZE = 25;
   private static final int SMAX = 5000000;
   private static final int SMIN = 4;
 

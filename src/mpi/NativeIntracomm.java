@@ -35,6 +35,8 @@
 
 package mpi;
 
+import mpjdev.natmpjdev.util.Allocators;
+import mpjdev.natmpjdev.util.Allocator;
 import mpjdev.*;
 import mpjbuf.*;
 import java.nio.*;
@@ -72,6 +74,8 @@ public class NativeIntracomm extends PureIntracomm {
   final static int LONG2 = 6;
   final static int FLOAT2 = 7;
   final static int DOUBLE2 = 8;
+  private Allocator bufferAllocator = Allocators.getNewAllocator();
+
 
   NativeIntracomm() {
   }
@@ -219,7 +223,7 @@ public class NativeIntracomm extends PureIntracomm {
    * <tr>
    * <td><tt> buf      </tt></td>
    * <td>buffer array
-   * </tr>
+   * </tr>rier
    * <tr>
    * <td><tt> offset   </tt></td>
    * <td>initial offset in buffer
@@ -330,7 +334,8 @@ public class NativeIntracomm extends PureIntracomm {
       mpjdev.Request request = null;
 
     int numBytes = count * type.getByteSize();
-    ByteBuffer wBuffer = ByteBuffer.allocateDirect(numBytes);
+    ByteBuffer wBuffer = bufferAllocator.allocate(numBytes);
+    //ByteBuffer wBuffer = ByteBuffer.allocateDirect(numBytes);
 
     try {
       if (index == root) {
@@ -349,6 +354,7 @@ public class NativeIntracomm extends PureIntracomm {
    public void handleCompletion(mpjdev.Status status) {
     try {
       byteBufferGetData(wBuffer, buf, 0, offset, count, type.getType());
+      bufferAllocator.free(wBuffer);
       
     }
     catch (Exception e) {
@@ -474,14 +480,23 @@ public class NativeIntracomm extends PureIntracomm {
     mpjdev.Request request = null;
 
     int numSendBytes = sendcount * sendtype.getByteSize();
-   ByteBuffer wBuffer = ByteBuffer.allocateDirect(numSendBytes);
+   //ByteBuffer wBuffer = ByteBuffer.allocateDirect(numSendBytes);
+    ByteBuffer wBuffer = bufferAllocator.allocate(numSendBytes);
 
-   ByteBuffer rBuffer = null;
+
+   final ByteBuffer rBuffer;
     int numRecvBytes = -1;
 
     if (index == root) {
       numRecvBytes = recvcount * recvtype.getByteSize() * size;
-      rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+      //rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+      rBuffer = bufferAllocator.allocate(numRecvBytes);
+
+    }
+    else
+    {
+        rBuffer = null;
+
     }
 
     try {
@@ -495,19 +510,38 @@ public class NativeIntracomm extends PureIntracomm {
 
 
      //Optimization: Fixme: Should not copy buffers
-      ByteBuffer tempBuffer= rBuffer;
+     // ByteBuffer tempBuffer= rBuffer;
+     
 
-      if (index == root) { // root is the source point of gather
 
-          tempBuffer.limit(numRecvBytes);
+      //if (index == root) { // root is the source point of gather
+
+          //tempBuffer.limit(numRecvBytes);
+         // bufferAllocator.free(rBuffer);
+
+        final int final_root = root;
+        final int final_index = index;
+
 
         request.addCompletionHandler(new mpjdev.CompletionHandler() {
         public void handleCompletion(mpjdev.Status status) {
         try {
+
+          if(final_index == final_root)
+        {
          
-            byteBufferGetData(tempBuffer, recvbuf, 0, recvoffset, recvcount * size,
+            byteBufferGetData(rBuffer, recvbuf, 0, recvoffset, recvcount * size,
             recvtype.getType());
-            tempBuffer.clear();
+            bufferAllocator.free(rBuffer);
+
+        }
+
+        bufferAllocator.free(wBuffer);
+
+          
+
+
+            //tempBuffer.clear();
           
             }
         catch (Exception e) {
@@ -515,7 +549,7 @@ public class NativeIntracomm extends PureIntracomm {
             }
         }
      });
-   } // ends if root
+   //} // ends if root
 
     }
     catch (Exception e) {
@@ -605,7 +639,7 @@ public class NativeIntracomm extends PureIntracomm {
 
     int totalRecvCount = 0;
     mpjdev.Request request = null;
-    ByteBuffer rBuffer = null;
+    final ByteBuffer rBuffer;
     
     int recvcountBytes[] = new int[recvcount.length];// or size?
     int rdisplsBytes[] = new int[rdispls.length];// or size?
@@ -620,7 +654,9 @@ public class NativeIntracomm extends PureIntracomm {
     if(index == root )
     {
     numRecvBytes = totalRecvCount * recvtype.getByteSize();
-    rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+    rBuffer = bufferAllocator.allocate(numRecvBytes);
+
+    //rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
 
 
     for (int i = 0; i < recvcountBytes.length; i++) {
@@ -631,9 +667,19 @@ public class NativeIntracomm extends PureIntracomm {
       rdisplsBytes[i] = recvcountBytes[i - 1] + rdisplsBytes[i - 1];
     }
   }
+  else
+  {
+
+    rBuffer = null;
+
+  }
+
+
 
     int numSendBytes = sendcount * sendtype.getByteSize();
-   ByteBuffer wBuffer = ByteBuffer.allocateDirect(numSendBytes);
+    ByteBuffer wBuffer = bufferAllocator.allocate(numSendBytes);
+
+   //ByteBuffer wBuffer = ByteBuffer.allocateDirect(numSendBytes);
 
 
 
@@ -648,11 +694,11 @@ public class NativeIntracomm extends PureIntracomm {
 
 
      //Optimization: Fixme: Should not copy buffers
-      ByteBuffer tempBuffer= rBuffer;
+      //ByteBuffer tempBuffer= rBuffer;
 
       if (index == root) { // root is the source point of gather
 
-          tempBuffer.limit(numRecvBytes);
+          rBuffer.limit(numRecvBytes);
 
         request.addCompletionHandler(new mpjdev.CompletionHandler() {
         public void handleCompletion(mpjdev.Status status) {
@@ -660,9 +706,11 @@ public class NativeIntracomm extends PureIntracomm {
 
 
             for (int i = 0; i < size; i++)
-             byteBufferGetData(tempBuffer, recvbuf, 0, rdispls[i], recvcount[i],recvtype.getType());
+             byteBufferGetData(rBuffer, recvbuf, 0, rdispls[i], recvcount[i],recvtype.getType());
+           bufferAllocator.free(wBuffer);
+           bufferAllocator.free(rBuffer);
 
-            tempBuffer.clear();
+            //tempBuffer.clear();
           
             }
         catch (Exception e) {
@@ -793,20 +841,29 @@ public class NativeIntracomm extends PureIntracomm {
     int index = this.mpjdevComm.id();// Get the rank of the current process
     int size = this.mpjdevComm.size();
 
-    ByteBuffer wBuffer = null;
+    final ByteBuffer wBuffer;
     int numSendBytes = -1;
       mpjdev.Request request = null;
 
     if (index == root) {
       numSendBytes = sendcount * sendtype.getByteSize() * size;
-      wBuffer = ByteBuffer.allocateDirect(numSendBytes);
+      //wBuffer = ByteBuffer.allocateDirect(numSendBytes);
+     wBuffer = bufferAllocator.allocate(numSendBytes);
+
+    }
+
+    else
+    {
+      wBuffer = null;
     }
 
    // ByteBuffer rBuffer = null;
     int numRecvBytes = -1;
 
     numRecvBytes = recvcount * recvtype.getByteSize();
-    ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+    ByteBuffer rBuffer = bufferAllocator.allocate(numRecvBytes);
+
+    //ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
 
     try {
       if (index == root) {
@@ -822,13 +879,20 @@ public class NativeIntracomm extends PureIntracomm {
 
 
       rBuffer.limit(numRecvBytes);
+      final int final_root = root;
+      final int final_index = index;
 
       request.addCompletionHandler(new mpjdev.CompletionHandler() {
    public void handleCompletion(mpjdev.Status status) {
     try {
         byteBufferGetData(rBuffer, recvbuf, 0, recvoffset, recvcount,
         recvtype.getType());
-        rBuffer.clear();
+        bufferAllocator.free(rBuffer);
+        if(final_root == final_index)
+        {
+          bufferAllocator.free(wBuffer);
+        }
+        //rBuffer.clear();
       
     }
     catch (Exception e) {
@@ -911,6 +975,8 @@ public class NativeIntracomm extends PureIntracomm {
 
   }
 
+   //IScatterv not working properly, need fixes
+
     public Request Iscatterv(Object sendbuf, int sendoffset, int[] sendcount,
       int[] sdispls, Datatype sendtype, Object recvbuf, int recvoffset,
       int recvcount, Datatype recvtype, int root) {
@@ -918,7 +984,7 @@ public class NativeIntracomm extends PureIntracomm {
         int index = this.mpjdevComm.id();// Get the rank of the current process
     int size = this.mpjdevComm.size();
 
-     ByteBuffer wBuffer = null;
+    final ByteBuffer wBuffer;
     int numSendBytes = -1;
     int totalSendCount = 0;
 
@@ -936,7 +1002,8 @@ public class NativeIntracomm extends PureIntracomm {
     if(index == root)
     {
       numSendBytes = totalSendCount * sendtype.getByteSize();
-      wBuffer = ByteBuffer.allocateDirect(numSendBytes);
+      wBuffer = bufferAllocator.allocate(numSendBytes);
+      //wBuffer = ByteBuffer.allocateDirect(numSendBytes);
     
 
 
@@ -950,13 +1017,20 @@ public class NativeIntracomm extends PureIntracomm {
         sdisplsBytes[i] = sendcountBytes[i - 1] + sdisplsBytes[i - 1];
       }
   }
+
+  else
+  {
+
+     wBuffer = null;
+  }
     
 
    // ByteBuffer rBuffer = null;
     int numRecvBytes = -1;
 
     numRecvBytes = recvcount * recvtype.getByteSize();
-    ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+    //ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+    ByteBuffer rBuffer = bufferAllocator.allocate(numRecvBytes);
 
     try {
       if (index == root) {
@@ -976,6 +1050,8 @@ public class NativeIntracomm extends PureIntracomm {
 
        
       rBuffer.limit(numRecvBytes);
+        final int final_root = root;
+      final int final_index = index;
 
       request.addCompletionHandler(new mpjdev.CompletionHandler() {
    public void handleCompletion(mpjdev.Status status) {
@@ -983,7 +1059,14 @@ public class NativeIntracomm extends PureIntracomm {
 
 
         byteBufferGetData(rBuffer, recvbuf, 0, recvoffset, recvcount,recvtype.getType());
-        rBuffer.clear();
+       
+        bufferAllocator.free(rBuffer);
+        //rBuffer.clear();
+        if(final_root == final_index)
+        {
+
+         bufferAllocator.free(wBuffer);
+       }
       
     }
     catch (Exception e) {
@@ -1100,18 +1183,22 @@ public class NativeIntracomm extends PureIntracomm {
     int index = this.mpjdevComm.id();// Get the rank of the current process
     int size = this.mpjdevComm.size();
 
-    ByteBuffer wBuffer = null;
+   // ByteBuffer wBuffer = null;
     int numSendBytes = -1;
      mpjdev.Request request = null;
 
     numSendBytes = sendcount * sendtype.getByteSize();
-    wBuffer = ByteBuffer.allocateDirect(numSendBytes);
+    ByteBuffer wBuffer = bufferAllocator.allocate(numSendBytes);
+
+   // wBuffer = ByteBuffer.allocateDirect(numSendBytes);
 
     //ByteBuffer rBuffer = null;
     int numRecvBytes = -1;
 
     numRecvBytes = recvcount * recvtype.getByteSize() * size;
-    ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+    ByteBuffer rBuffer = bufferAllocator.allocate(numRecvBytes);
+
+    //ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
 
     try {
 
@@ -1129,7 +1216,9 @@ public class NativeIntracomm extends PureIntracomm {
         try {
          
              byteBufferGetData(rBuffer, recvbuf, 0, recvoffset, recvcount * size,recvtype.getType());
-             rBuffer.clear();
+             bufferAllocator.free(wBuffer);
+             bufferAllocator.free(rBuffer);
+             //rBuffer.clear();
           
             }
         catch (Exception e) {
@@ -1230,7 +1319,10 @@ public class NativeIntracomm extends PureIntracomm {
 
   
     numRecvBytes = totalRecvCount * recvtype.getByteSize();
-    ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+
+    ByteBuffer rBuffer = bufferAllocator.allocate(numRecvBytes);
+
+    //ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
 
 
 
@@ -1246,11 +1338,12 @@ public class NativeIntracomm extends PureIntracomm {
 
 
 
-    ByteBuffer wBuffer = null;
+    //ByteBuffer wBuffer = null;
     int numSendBytes = -1;
 
     numSendBytes = sendcount * sendtype.getByteSize();
-    wBuffer = ByteBuffer.allocateDirect(numSendBytes);
+    //ByteBuffer wBuffer = ByteBuffer.allocateDirect(numSendBytes);
+    ByteBuffer wBuffer = bufferAllocator.allocate(numSendBytes);
 
  
 
@@ -1271,7 +1364,11 @@ public class NativeIntracomm extends PureIntracomm {
          
              for (int i = 0; i < size; i++)
                   byteBufferGetData(rBuffer, recvbuf, 0, rdispls[i], recvcount[i],recvtype.getType());
-             rBuffer.clear();
+                  bufferAllocator.free(wBuffer);
+                  bufferAllocator.free(rBuffer);
+
+
+             //rBuffer.clear();
           
             }
         catch (Exception e) {
@@ -1391,17 +1488,20 @@ public class NativeIntracomm extends PureIntracomm {
 
     int size = this.mpjdevComm.size();
 
-    ByteBuffer wBuffer = null;
+    //ByteBuffer wBuffer = null;
     int numSendBytes = -1;
      mpjdev.Request request = null;
 
     numSendBytes = sendcount * sendtype.getByteSize() * size;
-    wBuffer = ByteBuffer.allocateDirect(numSendBytes);
-;
+
+   // wBuffer = ByteBuffer.allocateDirect(numSendBytes);
+    ByteBuffer wBuffer = bufferAllocator.allocate(numSendBytes);
     int numRecvBytes = -1;
 
     numRecvBytes = recvcount * recvtype.getByteSize() * size;
-    ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+    //ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+    ByteBuffer rBuffer = bufferAllocator.allocate(numRecvBytes);
+
 
     try {
 
@@ -1420,7 +1520,9 @@ public class NativeIntracomm extends PureIntracomm {
    public void handleCompletion(mpjdev.Status status) {
     try {
        byteBufferGetData(rBuffer, recvbuf, 0, recvoffset, recvcount * size, recvtype.getType());
-       rBuffer.clear();
+       bufferAllocator.free(wBuffer);
+       bufferAllocator.free(rBuffer);
+       //rBuffer.clear();
       
     }
     catch (Exception e) {
@@ -1581,7 +1683,7 @@ public class NativeIntracomm extends PureIntracomm {
 
     int size = this.mpjdevComm.size();
 
-    ByteBuffer wBuffer = null;
+    //ByteBuffer wBuffer = null;
     int numSendBytes = -1;
     int totalSendCount = 0;
     int totalRecvCount = 0;
@@ -1591,7 +1693,8 @@ public class NativeIntracomm extends PureIntracomm {
       totalSendCount += sendcount[i];
     }
     numSendBytes = totalSendCount * sendtype.getByteSize();
-    wBuffer = ByteBuffer.allocateDirect(numSendBytes);
+    ByteBuffer wBuffer = bufferAllocator.allocate(numSendBytes);
+    //ByteBuffer wBuffer = ByteBuffer.allocateDirect(numSendBytes);
 
     //ByteBuffer rBuffer = null;
     int numRecvBytes = -1;
@@ -1600,7 +1703,8 @@ public class NativeIntracomm extends PureIntracomm {
       totalRecvCount += recvcount[i];
     }
     numRecvBytes = totalRecvCount * recvtype.getByteSize();
-    ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+    ByteBuffer rBuffer = bufferAllocator.allocate(numRecvBytes);
+    //ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
 
     int sendcountBytes[] = new int[sendcount.length];// or size?
     int sdisplsBytes[] = new int[sdispls.length];// or size?
@@ -1642,6 +1746,9 @@ public class NativeIntracomm extends PureIntracomm {
       try {
            for (int i = 0; i < size; i++)
              byteBufferGetData(rBuffer, recvbuf, 0, rdispls[i], recvcount[i],recvtype.getType());
+
+             bufferAllocator.free(wBuffer);
+             bufferAllocator.free(rBuffer);
 
            rBuffer.clear();
         
@@ -1807,6 +1914,9 @@ public class NativeIntracomm extends PureIntracomm {
    * <tt>MPI.BXOR</tt>, <tt>MPI.MINLOC</tt> and <tt>MPI.MAXLOC</tt>.
    */
 
+     //Ireduce not working properly, need fixes
+
+
   public Request Ireduce(Object sendbuf, int sendoffset, Object recvbuf,
       int recvoffset, int count, Datatype type, Op op, int root) {
 
@@ -1822,7 +1932,11 @@ public class NativeIntracomm extends PureIntracomm {
     int numRecvBytes = -1;
     int recvcount = count; // naive case, TODO: fix this for MAXLOC etc?
     numRecvBytes = recvcount * type.getByteSize();
-    ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+
+
+    //ByteBuffer rBuffer = ByteBuffer.allocateDirect(numRecvBytes);
+    ByteBuffer rBuffer = bufferAllocator.allocate(numRecvBytes);
+
     try {
 
       request  = nativeIntracomm.Ireduce(sendbuf, rBuffer, count, type, op, root);
@@ -1839,7 +1953,9 @@ public class NativeIntracomm extends PureIntracomm {
 
            // this should copy the values compatably
             byteBufferGetData(rBuffer, recvbuf, 0, recvoffset, recvcount,type.getType());
-            rBuffer.clear();
+            //rBuffer.clear();
+            bufferAllocator.free(rBuffer);
+
         }
         catch (Exception e) {
          throw new MPIException(e);

@@ -86,7 +86,9 @@ public class JGFBarrierBench implements JGFSection1{
 
   }
 
-  public static void main(String[] argv) throws MPIException{
+  public static void main(String[] argv) throws Exception{
+    JGFBarrierBench p150 = new JGFBarrierBench(argv);
+
   }
 
   public JGFBarrierBench(String[] argv) throws Exception {

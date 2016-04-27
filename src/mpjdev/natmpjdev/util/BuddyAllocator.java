@@ -21,7 +21,7 @@ public class BuddyAllocator implements Allocator {
 	public synchronized ByteBuffer allocate(int size) {
 		ByteBuffer a = allocate(nextPowerOfTwo(size), tree);
 		if (a == null && throwExceptionOnAllocationFailure) {
-			print();
+			//print();
 			throw new IllegalArgumentException("Can not allocate a bytebuffer of size " + size + ".");
 		}
 		if (a != null)
