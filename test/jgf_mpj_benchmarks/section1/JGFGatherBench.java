@@ -199,7 +199,9 @@ public class JGFGatherBench implements JGFSection1{
   }
 
 
-  public static void main(String[] argv) throws MPIException{
+  public static void main(String[] argv) throws Exception{
+    JGFGatherBench p150 = new JGFGatherBench(argv);
+
   }
 
   public JGFGatherBench(String[] argv) throws Exception {
