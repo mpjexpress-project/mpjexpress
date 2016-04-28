@@ -16,7 +16,7 @@ public class CasLatencyTest extends OnesidedTestBase {
 	@Override
 	protected void initialize(String[] args) {
 		super.initialize(args);
-		getReporter().setColumnNames(new String[] { "Latency (µs)" });
+		getReporter().setColumnNames(new String[] { "Latency (us)" });
 	}
 	
 	private double collectResult(double tStart, double tEnd) {

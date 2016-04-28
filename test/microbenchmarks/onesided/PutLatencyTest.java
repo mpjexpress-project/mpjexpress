@@ -14,7 +14,7 @@ public class PutLatencyTest extends OnesidedTestBase {
 	public void initialize(String[] args) {
 		super.initialize(args);
 		tStart = tEnd = disp = 0;
-		getReporter().setColumnNames(new String[] { "Size (MB)", "Latency (µs)" });
+		getReporter().setColumnNames(new String[] { "Size (MB)", "Latency (us)" });
 	}
 	
 	private double collectResult(int size, double tStart, double tEnd) {

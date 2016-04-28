@@ -15,7 +15,7 @@ public class GetAccumulateLatencyTest extends OnesidedTestBase {
 	@Override
 	protected void initialize(String[] args) {
 		super.initialize(args);
-		getReporter().setColumnNames(new String[] { "Size (bytes)", "Latency (µs)" });
+		getReporter().setColumnNames(new String[] { "Size (bytes)", "Latency (us)" });
 	}
 	
 	private double collectResult(int size, double tStart, double tEnd) {
