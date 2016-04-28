@@ -1050,3 +1050,15 @@ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Comm_nativeProbe
   return (jstring) cport;
 
 }
+
+/*
+ * Class:     mpjdev_natmpjdev_Comm
+ * Method:    nativeJoin
+ * Signature: (I)J
+ */
+JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Comm_nativeJoin
+  (JNIEnv *env, jobject jobj, jint fd) {
+     MPI_Comm intercomm;
+    MPI_Comm_join(fd, &intercomm);
+    return (jlong) intercomm;
+  }

@@ -1,0 +1,53 @@
+ import mpi.*;
+
+ public class manager {
+  static public void main(String[] args) throws Exception {
+    try {
+      manager a = new manager();
+a.spawn(args);
+System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+a.connect(args);
+
+    }
+    catch (Exception e) {
+    }
+  }
+
+  public manager() {
+  }
+
+  public void spawn(String[] args) throws Exception {
+
+    MPI.Init(args);
+
+    Comm comm, newcomm;
+
+    int[] maxprocs = {1,2};
+    String[] command = {"/home/noor/Documents/mpjexpress-code/mpjexpress/worker", "/home/noor/Documents/mpjexpress-code/mpjexpress/worker"};
+    String[][] argvs = {{"1", "2"}, {"3", "4"}};
+
+    newcomm = MPI.COMM_WORLD.Spawn_multiple(command, argvs, maxprocs, 0);
+
+    System.out.println("Spawn complete");
+
+    MPI.Finalize();
+  }
+
+public void connect(String[] args) throws Exception {
+
+    MPI.Init(args);
+
+    Comm comm, newcomm;
+
+    int[] maxprocs = {1,2};
+    String[] command = {"/home/noor/Documents/mpjexpress-code/mpjexpress/worker", "/home/noor/Documents/mpjexpress-code/mpjexpress/worker"};
+    String[][] argvs = {{"1", "2"}, {"3", "4"}};
+
+    newcomm = MPI.COMM_WORLD.Connect("port_name", 0);
+
+    System.out.println("Spawn complete");
+
+    MPI.Finalize();
+  }
+}
+

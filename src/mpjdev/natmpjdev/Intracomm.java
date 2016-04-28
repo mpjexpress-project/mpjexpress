@@ -930,18 +930,20 @@ public class Intracomm {
   private native long nativeConnect(String port_name, int root, long comm);
 
 
-  public long Spawn(String command, String[] argv, int maxprocs, int root) {
+  public Comm Spawn(String command, String[] argv, int maxprocs, int root) {
     System.out.println("INSIDE NATIVE SPAWN");
     long intercom = nativeSpawn(command, argv, maxprocs, root, mpjdevNativeComm.handle);
-   // return new Comm(intercom);
-    return intercom;
+   return new Comm(intercom);
+    //return intercom;
 
   }
 
-  public long Spawn_multiple(String[] commands, String[][] argv, int[] maxprocs, int root) {
+  public Comm Spawn_multiple(String[] commands, String[][] argv, int[] maxprocs, int root) {
     System.out.println("INSIDE NATIVE Spawn_multiple");
     long intercom = nativeSpawn_multiple(commands, argv, maxprocs, root, mpjdevNativeComm.handle);
-    return intercom;
+    //return intercom;
+       return new Comm(intercom);
+
   }
 
   public Comm Accept(String port_name, int root) {

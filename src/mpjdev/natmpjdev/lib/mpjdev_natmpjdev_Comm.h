@@ -231,6 +231,14 @@ JNIEXPORT void JNICALL Java_mpjdev_natmpjdev_Comm_nativeUnpublishName
 JNIEXPORT jstring JNICALL Java_mpjdev_natmpjdev_Comm_nativeLookupName
   (JNIEnv *, jobject, jstring);
 
+/*
+ * Class:     mpjdev_natmpjdev_Comm
+ * Method:    nativeJoin
+ * Signature: (I)J
+ */
+JNIEXPORT jlong JNICALL Java_mpjdev_natmpjdev_Comm_nativeJoin
+  (JNIEnv *, jobject, jint);
+
 #ifdef __cplusplus
 }
 #endif

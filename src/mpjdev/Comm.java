@@ -37,6 +37,8 @@
 package mpjdev;
 
 import mpjbuf.*;
+import java.net.Socket;
+
 
 public abstract class Comm {
 
@@ -126,6 +128,8 @@ public abstract class Comm {
   public abstract String Lookup_name(String service_name);
 
   public abstract Comm Get_parent();
+
+  public abstract Comm Join(Socket socket);
 
 
 }

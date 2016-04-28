@@ -69,6 +69,17 @@ public class Intercomm
 							   (mpjdev.natmpjdev.Comm) this.mpjdevComm); 
   }
 
+  Intercomm(mpjdev.Comm mpjdevComm, mpi.Comm local_comm) {
+    this.mpjdevComm = mpjdevComm;
+    this.intercomm = true;
+    this.local_comm = local_comm;
+
+
+    if(Constants.isNative)
+    nativeIntercomm = new mpjdev.natmpjdev.Intercomm(
+                 (mpjdev.natmpjdev.Comm) this.mpjdevComm); 
+  }
+
   /**
    * Size of remote group.
    * <p>

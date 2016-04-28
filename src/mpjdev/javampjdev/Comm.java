@@ -45,6 +45,8 @@ import mpjbuf.BufferFactory ;
 import xdev.ProcessID;
 import java.util.UUID;
 import java.util.Random;
+import java.net.Socket;
+
 
 import mpi.MPI;
 import mpjdev.*;
@@ -1264,6 +1266,11 @@ public class Comm extends mpjdev.Comm {
   public String Lookup_name(String service_name)
   {
     return new String();
+  }
+
+  public Comm Join(Socket socket)
+  {
+    return new Comm();
   }
     
 }

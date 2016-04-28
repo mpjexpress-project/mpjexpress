@@ -41,6 +41,8 @@ import mpjdev.*;
 import mpjbuf.*;
 import java.util.Hashtable;
 import java.nio.ByteBuffer;
+import java.net.Socket;
+
 
 public class Comm {
 
@@ -52,14 +54,14 @@ public class Comm {
   static final int NULL = 2;
   int code = -1;
 
-  Comm() {
+  public  Comm() {
   }
 
-  Comm(int code) {
+  public Comm(int code) {
     this.code = code;
   }
 
-  Comm(long handle) {
+  public Comm(long handle) {
   
   }
 
@@ -2473,32 +2475,40 @@ public class Comm {
 
   public Comm Get_parent()
   {
-    return new Comm();
+    return new Intercomm(mpjdevComm.Get_parent(), this);
+    //return new Comm();
   }
 
   public String Open_port(String port_name)
   {
-    return new String();
+    return mpjdevComm.Open_port(port_name);
+    //return new String();
   }
 
   public void Close_port(String port_name) 
   {
-    //....
+    mpjdevComm.Close_port(port_name);
   }
 
   public void Publish_name(String service_name, String port_name)
   {
-    //....
+    mpjdevComm.Publish_name(service_name, port_name);
   }
 
   public void Unpublish_name(String service_name, String port_name)
   {
-    //....
+    mpjdevComm.Unpublish_name(service_name, port_name);
   }
 
   public String Lookup_name(String service_name)
   {
-    return new String();
+    return mpjdevComm.Lookup_name(service_name);
+    //return new String();
+  }
+
+  public Comm Join(Socket socket)
+  {
+    return new Intercomm(mpjdevComm.Join(socket), this);
   }
 
 }

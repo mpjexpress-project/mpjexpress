@@ -37,6 +37,11 @@ package mpjdev.natmpjdev;
 
 import mpjbuf.*;
 import mpjdev.*;// for MPJException
+import java.net.Socket;
+import sun.misc.SharedSecrets;
+import java.io.FileDescriptor;
+import java.io.InputStream;
+import java.io.FileInputStream;
 
 public class Comm extends mpjdev.Comm {
 
@@ -511,6 +516,8 @@ public class Comm extends mpjdev.Comm {
 
   private native String nativeLookupName(String service_name);
 
+  private native long nativeJoin(int fd);
+
   public String Open_port(String port_name) {
     return nativeOpenPort(port_name);
 
@@ -533,11 +540,27 @@ public class Comm extends mpjdev.Comm {
     return nativeLookupName(service_name);
   }
 
-  public Comm Get_parent() {
+  public  Comm Get_parent() {
     long parentIntercomm = nativeGetParent();
     return new Comm(parentIntercomm);
   }
 
+  private static int getFileDescriptor(FileDescriptor fdes) throws java.io.IOException {
+    return SharedSecrets.getJavaIOFileDescriptorAccess().get(fdes);
+  }
+
+  public Comm Join(Socket socket) {
+    //Intercomm intercomm = new Intercomm(nativeJoin());
+    int fd = 0;
+    try {
+       fd = getFileDescriptor(((FileInputStream)socket.getInputStream()).getFD());
+    }
+    catch (Exception e) {
+
+    }
+    long intercomm = nativeJoin(fd);
+    return new Comm(intercomm);
+  }
 
 } // ends Comm class
 
