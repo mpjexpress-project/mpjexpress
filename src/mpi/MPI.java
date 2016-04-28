@@ -479,7 +479,7 @@ public class MPI {
    * Java binding of the MPI operation <tt>MPI_WTIME</tt>.
    */
   public static double Wtime() throws MPIException {
-    return (System.currentTimeMillis() / 1000);
+    return (System.currentTimeMillis() / 1000.0);
   }
 
   /**
