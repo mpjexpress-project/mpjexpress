@@ -14,10 +14,10 @@ public class PutBandwidthTest extends OnesidedTestBase {
 		getReporter().setColumnNames(new String[] { "Size (byte)", "Bandwidth (MB/s)" });
 	}
 
-	private double collectResult(int size, double tStart, double tEnd) {
+	private double collectResult(double size, double tStart, double tEnd) {
 		double bw = (size / (10 ^ 6) * getLoop() * WINDOW_SIZE_LARGE) / (tEnd - tStart);
 		if (getRank() == 0)
-			getReporter().collect(new Object[] { new Integer(size), new Double(bw) });
+			getReporter().collect(new Object[] { new Double(size), new Double(bw) });
 		return bw;
 	}
 

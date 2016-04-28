@@ -36,7 +36,7 @@ public class Win extends mpjdev.Win {
 	final static int FLOAT2 = 7;
 	final static int DOUBLE2 = 8;
 
-	private final Allocator bufferAllocator = Allocators.getNewAllocator();
+	private static final Allocator bufferAllocator = Allocators.getNewAllocator();
 
 
 	public static mpjdev.Win create(java.nio.ByteBuffer base, int disp_unit, mpjdev.Comm comm) {
@@ -639,10 +639,10 @@ public class Win extends mpjdev.Win {
 
 		synchronized void DoSync() {
 			for (SyncItem item : syncQueue) {
-				item.Sync(false);
+				item.Sync(true);
 			}
 			syncQueue.clear();
-			bufferAllocator.freeAll();
+			// bufferAllocator.freeAll();
 		}
 
 		synchronized void DoSync(int rank) {

@@ -38,4 +38,11 @@ public class Allocators {
 		d.setThrowExceptionOnAllocationFailure(true);
 		return d;
 	}
+
+	public static Allocator getNewAllocator(int cap)
+	{
+		BuddyAllocator d = new BuddyAllocator(cap);
+		d.setThrowExceptionOnAllocationFailure(true);
+		return d;
+	}
 }
