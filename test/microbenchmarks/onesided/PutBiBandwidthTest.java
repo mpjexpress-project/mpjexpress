@@ -23,22 +23,26 @@ public class PutBiBandwidthTest extends OnesidedTestBase {
 
 	@Override
 	protected void runTestWithFlush() {
-		throw new UnsupportedOperationException("Flush sync type is not supported in Put Bidirectional BW test");
+		System.out.println("Flush sync type is not supported in Put Bidirectional BW test");
+		// throw new UnsupportedOperationException("Flush sync type is not supported in Put Bidirectional BW test");
 	}
 
 	@Override
 	protected void runTestWithFlushLocal() {
-		throw new UnsupportedOperationException("Flush-local sync type is not supported in Put Bidirectional BW test");
+		System.out.println("Flush-local sync type is not supported in Put Bidirectional BW test");
+		// throw new UnsupportedOperationException("Flush-local sync type is not supported in Put Bidirectional BW test");
 	}
 
 	@Override
 	protected void runTestWithLockAll() {
-		throw new UnsupportedOperationException("Lock-all sync type is not supported in Put Bidirectional BW test");
+		System.out.println("Lock-all sync type is not supported in Put Bidirectional BW test");
+		// throw new UnsupportedOperationException("Lock-all sync type is not supported in Put Bidirectional BW test");
 	}
 	
 	@Override
 	protected void runTestWithLock() {
-		throw new UnsupportedOperationException("Lock sync type is not supported in Put Bidirectional BW test");
+		System.out.println("Lock sync type is not supported in Put Bidirectional BW test");
+		// throw new UnsupportedOperationException("Lock sync type is not supported in Put Bidirectional BW test");
 	}
 
 	@Override
