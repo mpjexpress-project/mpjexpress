@@ -167,6 +167,7 @@ public class Win extends mpjdev.Win {
 			// process provided as disp_unit during window creation. Since MPI is doing
 			// this, I have commented out my line.
 			nativePut(wBuffer, numBytes, target_rank, target_disp, numBytes, this.getHandle());
+			syncManager.AddSync(wBuffer, target_rank);
 			// nativeIntracomm.Put(wBuffer, numBytes, target_rank, target_disp*origin_datatype.getByteSize(), numBytes, win);
 
 			// Why you do this? :3
@@ -273,6 +274,7 @@ public class Win extends mpjdev.Win {
 
 			// Sync wbuffer back to origin_buffer when windows is syncrhonized
 			syncManager.AddSync(wResult, result_buffer, 0, 0, result_count, result_datatype.getType(), target_rank);
+			syncManager.AddSync(wBuffer, target_rank);
 
 			// Why you do this? :3
 			// wBuffer.clear();
@@ -565,12 +567,14 @@ public class Win extends mpjdev.Win {
 
 	public void flushLocal(int rank) {
 		nativeFlushLocalWin(rank, this.getHandle());
+		syncManager.DoFlush(rank);
 	}
 
 	private native void nativeFlushLocalWin(int rank, long win);
 
 	public void flushLocalAll() {
 		nativeFlushLocalAllWin(this.getHandle());
+		syncManager.DoFlush();
 	}
 
 	private native void nativeFlushLocalAllWin(long win);
@@ -584,7 +588,7 @@ public class Win extends mpjdev.Win {
 
 	/**
 	 * Helps synchronize temporary buffers back with user buffers at the end
-	 * of an RMA epoch.
+	 * of an RMA epoch and free temporary buffers not needed anymore.
 	 *
 	 * RMA operations often require to return a result. Since native MPI calls
 	 * can only take a raw memory, we use ByteBuffer as temporary buffers to
@@ -606,6 +610,13 @@ public class Win extends mpjdev.Win {
 			int count;
 			int typeCode;
 			int rank;
+			boolean freeOnly;
+
+			SyncItem(ByteBuffer src, int rank) {
+				this.src = src;
+				this.rank = rank;
+				this.freeOnly = true;
+			}
 
 			SyncItem(ByteBuffer src, Object dest, int srcOffset, int offset, int count, int typeCode, int rank) {
 				this.src = src;
@@ -615,11 +626,12 @@ public class Win extends mpjdev.Win {
 				this.count = count;
 				this.typeCode = typeCode;
 				this.rank = rank;
+				this.freeOnly = false;
 			}
 
 			void Sync(boolean freeBuffer) {
-				byteBufferGetData(src, dest, srcOffset, offset, count, typeCode);
-				// src.clear();
+				if(!freeOnly)
+					byteBufferGetData(src, dest, srcOffset, offset, count, typeCode);
 				if(freeBuffer)
 					bufferAllocator.free(src);
 				src = null;
@@ -637,6 +649,10 @@ public class Win extends mpjdev.Win {
 			syncQueue.add(new SyncItem(src, dest, srcOffset, offset, count, typeCode, rank));
 		}
 
+		synchronized void AddSync(ByteBuffer src, int rank) {
+			syncQueue.add(new SyncItem(src, rank));
+		}
+
 		synchronized void DoSync() {
 			for (SyncItem item : syncQueue) {
 				item.Sync(true);
@@ -650,12 +666,30 @@ public class Win extends mpjdev.Win {
 				SyncItem item = it.next();
 				if (item.rank == rank) {
 					item.Sync(true);
-					// System.out.println("Item synced");
 					it.remove();
 				}
 			}
 		}
 
+		synchronized void DoFlush() {
+			for (java.util.Iterator<SyncItem> it = syncQueue.iterator(); it.hasNext();) {
+				SyncItem item = it.next();
+				if (item.freeOnly) {
+					item.Sync(true);
+					it.remove();
+				}
+			}
+		}
+
+		synchronized void DoFlush(int rank) {
+			for (java.util.Iterator<SyncItem> it = syncQueue.iterator(); it.hasNext();) {
+				SyncItem item = it.next();
+				if (item.rank == rank && item.freeOnly) {
+					item.Sync(true);
+					it.remove();
+				}
+			}
+		}
 	}
 
 	/**
