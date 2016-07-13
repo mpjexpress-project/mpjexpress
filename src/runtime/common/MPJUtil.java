@@ -65,7 +65,7 @@ public class MPJUtil {
       String line = null;
       while ((line = bufferedReader.readLine()) != null) {
 	line = line.trim();
-	if (line != "" && !machineList.contains(line)) {
+	if (!line.equals("") && !machineList.contains(line)) {
 	  machineList.add(line);
 	}
       }
