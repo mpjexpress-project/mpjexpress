@@ -110,6 +110,7 @@ public class MPJAppMaster {
   private int containerCores;
   private int maxCores;
   private int mpjContainerPriority;
+  private String cp ;
   private int allocatedContainers;
   private int completedContainers;
   private List<Container> mpiContainers = new ArrayList<Container>();
@@ -137,6 +138,8 @@ public class MPJAppMaster {
     opts.addOption("containerCores",true,"Specifies mpj containers v-cores");
     opts.addOption("mpjContainerPriority",true,"Specifies the prioirty of" +
                                        "containers running MPI processes");
+    opts.addOption("cp",true,"Added to CLASSPATH in MPJ node " +
+                         "process environment");
     opts.addOption("debugYarn",false,"Specifies the debug flag");
 
   }
@@ -165,6 +168,8 @@ public class MPJAppMaster {
 
        mpjContainerPriority = Integer.parseInt(cliParser.getOptionValue
 						("mpjContainerPriority","0"));
+
+       cp = cliParser.getOptionValue("cp", null) ;
 
        if(cliParser.hasOption("appArgs")){
          appArgs = cliParser.getOptionValues("appArgs");
@@ -382,6 +387,11 @@ public class MPJAppMaster {
     Apps.addToEnvironment(containerEnv,
                           Environment.CLASSPATH.name(),
                           Environment.PWD.$() + File.separator + "*");
+
+    if(cp != null) {
+      Apps.addToEnvironment(containerEnv, Environment.CLASSPATH.name(),
+                            cp, File.pathSeparator);
+    }
   }
 
   

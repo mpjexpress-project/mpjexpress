@@ -110,6 +110,7 @@ public class MPJYarnClient {
   private int amPriority;
   private String  mpjContainerPriority; 
   private String hdfsFolder;
+  private String cp ;
   private boolean debugYarn = false;
   private Log logger = null;
   private int SERVER_PORT = 0;
@@ -153,6 +154,8 @@ public class MPJYarnClient {
                                        "containers running MPI processes");
     opts.addOption("hdfsFolder",true,"Specifies the HDFS folder where AM,"+
                          "Wrapper and user code jar files will be uploaded");
+    opts.addOption("cp",true,"Added to CLASSPATH in MPJ node " +
+                         "process environment");
     opts.addOption("debugYarn",false,"Specifies the debug flag");
   }
   
@@ -195,6 +198,8 @@ public class MPJYarnClient {
                                              ("mpjContainerPriority","0");
       
       hdfsFolder = cliParser.getOptionValue("hdfsFolder","/");
+
+      cp = cliParser.getOptionValue("cp", null) ;
 
       if(cliParser.hasOption("appArgs")){  
         appArgs = cliParser.getOptionValues("appArgs");
@@ -371,6 +376,10 @@ public class MPJYarnClient {
       commands.add(containerMem);
       commands.add("--containerCores");   
       commands.add(containerCores);
+      if(cp != null) {
+        commands.add("--cp");   
+        commands.add(cp);
+      }
       
       if(debugYarn){
         commands.add("--debugYarn");
