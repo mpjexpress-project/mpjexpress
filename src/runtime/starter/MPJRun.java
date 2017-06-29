@@ -100,6 +100,7 @@ public class MPJRun {
   private String amPriority;
   private String mpjContainerPriority;
   private String hdfsFolder;
+  private String cp ;
 
   String machinesFile = DEFAULT_MACHINES_FILE_NAME;
   private int psl = DEFAULT_PROTOCOL_SWITCH_LIMIT;
@@ -274,6 +275,11 @@ public class MPJRun {
       if(hdfsFolder != null){
         commands.add("--hdfsFolder");
         commands.add(hdfsFolder);
+      }
+
+      if(cp != null){
+        commands.add("--cp");
+        commands.add(cp);
       }
 
       //debugYarn flag
@@ -511,6 +517,7 @@ public class MPJRun {
         }
         i++;
       }
+
       else if (args[i].equals("-dport")) {
         D_SER_PORT = new Integer(args[i + 1]).intValue();
         i++;
@@ -552,8 +559,9 @@ public class MPJRun {
       }
 
       else if (args[i].equals("-cp") | args[i].equals("-classpath")) {
+        cp = args[i + 1] ;
         jvmArgs.add("-cp");
-        jvmArgs.add(args[i + 1]);
+        jvmArgs.add(cp);
         i++;
       }
 
