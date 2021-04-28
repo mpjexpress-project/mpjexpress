@@ -1,5 +1,5 @@
       QuickStart Guide: Running MPJ Express on UNIX/Linux/Mac platform
-                  Last Updated: Sat April 18 11:51:20 PKT 2015
+                  Last Updated: Wed April 28 11:51:20 EDT 2021
                                 Version 0.44
 
 Introduction
@@ -23,7 +23,6 @@ MPJ Express can be configured in two ways:
    ii) mxdev - uses Myrinet eXpress (MX) library for Myrinet networks
    iii) hybdev - for clusters of multicore processors
    iv) native - uses a native MPI library (like MPICH, MVAPICH, Open MPI) 
-
 
 This document contains steps to help you execute your first MPJ Express program
 on UNIX/Linux/Mac platforms. Windows users should consult README-win.txt.
@@ -60,30 +59,31 @@ Running MPJ Express Programs in the Cluster Configuration
    addresses of all machines involved in the parallel execution.
 3. Execution:
 -- For niodev, hybdev and mxdev
-	i) Start daemons: mpjboot machines
-	ii) Execute: mpjrun.sh -np 4 -dev niodev HelloWorld
-		-- For -dev <device> here device can be niodev, 
-		hybdev or mxdev
-	iii) Stop daemons: mpjhalt machines  
--- For native deive
-	i) Compile JNI wrapper library:
-		a) Make sure cmake (2.6 or above) is installed on the system
-		b) Make sure a native MPI library is installed on the system 
-		   and working. To install MPICH for example go to
-		   http://www.mpich.org/downloads/ and download the native MPI 
-		   library, install and make sure that its working.
-		c) Create build directory: cd $MPJ_HOME/src/natmpjdev/lib; 
-		   			   mkdir build 
-	        d) Generate Makefile using cmake: cmake ..
-		e) make: make 
-		f) install: make install
-	ii) Execute: mpjrun.sh -np 4 -dev native HelloWorld
+     i) Start daemons: mpjboot machines
+    ii) Execute: mpjrun.sh -np 4 -dev niodev HelloWorld
+          -- For -dev <device> here device can be niodev, hybdev or mxdev
+   iii) Stop daemons: mpjhalt machines
+-- For native device
+     i) Compile JNI wrapper library:
+        a) Make sure a native MPI library is installed on the 
+           system and working. MVAPICH can be downloaded from 
+	   http://mvapich.cse.ohio-state.edu and installed.
+           Make sure that the native MPI library is working 
+           before moving to the next step.
+        b) Change directory to native code as follows: 
+           cd $MPJ_HOME/src/mpjdev/natmpjdev/lib;
+        c) Run make: make - this will generate libnativempjdev.so file.
+        d) Install: make install - this will copy the libnativempjdev.so 
+           to the $MPJ_HOME/lib directory.
+    ii) Execute the Hello World MPJ code: 
+        a) $MPILIB/bin/mpirun_rsh -export-all -np 2 gpu05 gpu06 MV2_CPU_BINDING_LEVEL=SOCKET MV2_CPU_BINDING_POLICY=SCATTER java -cp $MPJ_HOME/lib/mpj.jar:. -Djava.library.path=$MPJ_HOME/lib HelloWorld 0 0 native
+        b) mpjrun.sh -np 4 -dev native HelloWorld (not working)
 
 For detials read the linuxguide.pdf that can be found in $MPJ_HOME/doc
 
-Running MPJ Express Programs on HADOOP Clusters
+Running MPJ Express Programs on Apache Hadoop Clusters
 =========================================================
-To run your MPJ programs on HADOOP Clusters, please refer to "yarnguide.pdf"
+To run your MPJ programs on Apache Hadoop Clusters, please refer to "yarnguide.pdf"
 in $MPJ_HOME/doc folder
 
 Known Issues
